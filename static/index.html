@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>HubProdutividade · Cliquedf</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07090c;--s1:#0d1117;--s2:#131920;--border:#1e2731;
+  --text:#c9d4e0;--muted:#46586a;
+  --cyan:#00d4ff;--green:#00e5a0;--red:#ff4d6a;--amber:#ffb83f;--orange:#ff7849;--purple:#a78bfa;
+  --sw:240px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Bricolage Grotesque',sans-serif;display:flex}
+
+/* NOISE */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+
+/* SIDEBAR */
+.sb{width:var(--sw);background:var(--s1);border-right:1px solid var(--border);height:100vh;display:flex;flex-direction:column;flex-shrink:0}
+.sb-top{padding:22px 16px 0;flex:1;overflow-y:auto}
+.sb-brand{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+.sb-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--cyan),#0060ff);border-radius:9px;display:grid;place-items:center;font-size:17px;flex-shrink:0;box-shadow:0 0 16px rgba(0,212,255,.25)}
+.sb-title{font-size:14px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
+.sb-ver{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.sb-sec{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;font-weight:700;padding:0 6px;margin:18px 0 5px}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;margin-bottom:1px;border:1px solid transparent;user-select:none}
+.sb-item:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.sb-item.active{color:var(--cyan);background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.14)}
+.sb-item .ic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sb-footer{padding:14px 16px;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:8px}
+.sb-av{width:28px;height:28px;border-radius:7px;background:var(--s2);border:1px solid var(--border);display:grid;place-items:center;font-size:12px;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:700;line-height:1.2}
+.sb-role{font-size:10px;color:var(--muted)}
+.live{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin-right:4px;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:50px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:10px;flex-shrink:0}
+.topbar-title{font-size:14px;font-weight:800}
+.topbar-path{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.date-chip{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)}
+.btn-sync{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--cyan);border-radius:6px;padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Bricolage Grotesque',sans-serif}
+.btn-sync:hover{background:rgba(0,212,255,.18)}
+.btn-sync:disabled{opacity:.5;cursor:not-allowed}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:22px}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* PAGES */
+.page{display:none;animation:fadeUp .3s ease}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGE HEADER */
+.pg-hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px}
+.pg-title{font-size:21px;font-weight:800;letter-spacing:-.02em}
+.pg-title span{color:var(--cyan)}
+.pg-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.status-pill{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace}
+
+/* ALERTS */
+.alerts{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.alert-chip{padding:4px 11px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;border:1px solid}
+.alert-chip.red{background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.22);color:var(--red)}
+.alert-chip.amber{background:rgba(255,184,63,.07);border-color:rgba(255,184,63,.22);color:var(--amber)}
+.alert-chip.green{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.22);color:var(--green)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;gap:10px;margin-bottom:18px}
+.kpi-grid.c5{grid-template-columns:repeat(5,1fr)}
+.kpi-grid.c4{grid-template-columns:repeat(4,1fr)}
+.kpi-grid.c3{grid-template-columns:repeat(3,1fr)}
+.kpi{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:16px 14px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.kpi:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.07)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--cyan));opacity:.7}
+.kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:8px}
+.kpi-val{font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:var(--ac,var(--cyan));line-height:1}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:5px}
+.kpi-trend{position:absolute;top:14px;right:12px;font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:4px}
+.kpi-trend.up{background:rgba(0,229,160,.12);color:var(--green)}
+.kpi-trend.dn{background:rgba(255,77,106,.12);color:var(--red)}
+
+/* CARD GRID */
+.card-grid{display:grid;gap:14px;margin-bottom:18px}
+.card-grid.c2{grid-template-columns:1fr 1fr}
+.card-grid.c3{grid-template-columns:1fr 1fr 1fr}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:18px}
+.card-head{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:7px}
+.card-head::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:0 0 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+thead th.r{text-align:right}
+tbody td{padding:9px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.025);vertical-align:middle}
+tbody td.r{text-align:right;font-family:'DM Mono',monospace;font-size:11px}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,.012)}
+
+/* RANK */
+.rpos{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:5px;font-size:9px;font-weight:800;font-family:'DM Mono',monospace;margin-right:7px}
+.rpos.p1{background:rgba(255,184,63,.15);color:var(--amber)}
+.rpos.p2{background:rgba(0,212,255,.1);color:var(--cyan)}
+.rpos.p3{background:rgba(0,229,160,.08);color:var(--green)}
+.rpos.pn{background:var(--border);color:var(--muted)}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace}
+.badge.green{background:rgba(0,229,160,.1);color:var(--green)}
+.badge.red{background:rgba(255,77,106,.1);color:var(--red)}
+.badge.amber{background:rgba(255,184,63,.1);color:var(--amber)}
+.badge.cyan{background:rgba(0,212,255,.08);color:var(--cyan)}
+.badge.orange{background:rgba(255,120,73,.1);color:var(--orange)}
+.badge.muted{background:var(--border);color:var(--muted)}
+
+/* BAR */
+.bar-bg{background:var(--border);height:3px;border-radius:3px;margin-top:4px}
+.bar-fill{height:3px;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+/* META PROGRESS */
+.meta-track{background:var(--border);border-radius:5px;height:7px;position:relative;margin-top:8px}
+.meta-fill{height:7px;border-radius:5px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+.meta-marker{position:absolute;top:-3px;width:2px;height:13px;background:var(--amber);border-radius:2px}
+.meta-marker::after{content:attr(data-l);position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--amber);font-family:'DM Mono',monospace;white-space:nowrap}
+
+/* PERIODO TABS */
+.tabs{display:flex;gap:4px;margin-bottom:16px}
+.tab{padding:5px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
+.tab.active{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.2);color:var(--cyan)}
+.tab:hover:not(.active){color:var(--text);border-color:rgba(255,255,255,.1)}
+
+/* TÉCNICO CARDS */
+.tec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.tec-card{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:16px;transition:transform .2s,border-color .2s}
+.tec-card:hover{transform:translateY(-2px);border-color:rgba(0,212,255,.18)}
+.tec-name{font-size:13px;font-weight:800;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tec-meta{font-size:10px;color:var(--muted);margin-bottom:10px}
+.tec-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tec-stat{background:var(--s2);border-radius:6px;padding:7px;text-align:center}
+.tec-stat-val{font-size:15px;font-weight:800;font-family:'DM Mono',monospace}
+.tec-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
+
+/* TG PREVIEW */
+.tg-box{background:#0a0e13;border:1px solid var(--border);border-radius:10px;padding:18px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.9}
+.tg-box .tc{color:var(--cyan);font-weight:500}
+.tg-box .tg{color:var(--green)}
+.tg-box .tr{color:var(--red)}
+.tg-box .ta{color:var(--amber)}
+.tg-box .tm{color:var(--muted)}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:12px;font-family:'DM Mono',monospace}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;margin-right:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* STAGGER */
+.kpi:nth-child(1){animation:fadeUp .3s .03s ease both}
+.kpi:nth-child(2){animation:fadeUp .3s .06s ease both}
+.kpi:nth-child(3){animation:fadeUp .3s .09s ease both}
+.kpi:nth-child(4){animation:fadeUp .3s .12s ease both}
+.kpi:nth-child(5){animation:fadeUp .3s .15s ease both}
+
+@media(max-width:1200px){.kpi-grid.c5{grid-template-columns:repeat(3,1fr)}.tec-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sb">
+  <div class="sb-top">
+    <div class="sb-brand">
+      <div class="sb-logo">📡</div>
+      <div>
+        <div class="sb-title">HubProdutividade</div>
+        <div class="sb-ver">Cliquedf · v1.0</div>
+      </div>
+    </div>
+
+    <div class="sb-sec">Produtividade</div>
+    <div class="sb-item active" onclick="nav('dashboard')"><span class="ic">🚀</span> Visão Geral</div>
+    <div class="sb-item" onclick="nav('ranking')"><span class="ic">🏆</span> Ranking Técnicos</div>
+    <div class="sb-item" onclick="nav('os')"><span class="ic">🔧</span> OS por Tipo</div>
+    <div class="sb-item" onclick="nav('metas')"><span class="ic">🎯</span> Metas</div>
+
+    <div class="sb-sec">Gestão</div>
+    <div class="sb-item" onclick="nav('tecnicos')"><span class="ic">👷</span> Técnicos</div>
+    <div class="sb-item" onclick="nav('telegram')"><span class="ic">📨</span> Telegram</div>
+
+    <div class="sb-sec">Admin</div>
+    <div class="sb-item" onclick="nav('usuarios')"><span class="ic">👥</span> Usuários</div>
+    <div class="sb-item" onclick="nav('permissoes')"><span class="ic">🔐</span> Permissões</div>
+  </div>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-av">🛠️</div>
+      <div>
+        <div class="sb-uname">Ailton</div>
+        <div class="sb-role"><span class="live"></span>Dev · Online</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="tb-title">Visão Geral</div>
+      <div class="topbar-path" id="tb-path">/produtividade/</div>
+    </div>
+    <div class="topbar-right">
+      <div class="date-chip" id="date-chip"></div>
+      <button class="btn-sync" id="btn-sync" onclick="syncAgora()">↻ Sync IXC</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Visão <span>Operacional</span></div>
+          <div class="pg-sub" id="db-sub">Carregando dados do IXC...</div>
+        </div>
+        <div class="status-pill" id="db-status">⏳ Carregando</div>
+      </div>
+      <div class="alerts" id="db-alerts"></div>
+      <div class="kpi-grid c5" id="db-kpis">
+        <div class="loading"><div class="spinner"></div>Buscando OS...</div>
+      </div>
+      <div class="card-grid c2">
+        <div class="card">
+          <div class="card-head">📊 OS por Categoria</div>
+          <div id="db-cats"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">🏆 Top Técnicos Hoje</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Técnico</th><th class="r">OS</th><th class="r">Efic.</th><th class="r">Score</th></tr></thead>
+              <tbody id="db-ranking"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">🎯 Meta do Dia</div>
+        <div id="db-meta"></div>
+      </div>
+    </div>
+
+    <!-- ── RANKING ── -->
+    <div class="page" id="page-ranking">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Ranking <span>Técnicos</span></div>
+          <div class="pg-sub">Classificação por score, eficiência e OS finalizadas</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="loadRanking('hoje',this)">Hoje</button>
+        <button class="tab" onclick="loadRanking('semana',this)">7 dias</button>
+        <button class="tab" onclick="loadRanking('mes',this)">Mês</button>
+      </div>
+      <div class="card">
+        <div class="card-head">📋 Classificação Completa</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Técnico</th>
+                <th class="r">Serviço</th><th class="r">Suporte</th><th class="r">Infra</th><th class="r">Retirada</th>
+                <th class="r">Total</th><th class="r">Efic.</th><th class="r">Score</th>
+              </tr>
+            </thead>
+            <tbody id="rk-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OS TIPOS ── -->
+    <div class="page" id="page-os">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">OS por <span>Tipo</span></div>
+          <div class="pg-sub">Distribuição de ordens por categoria de serviço</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="loadOS('hoje',this)">Hoje</button>
+        <button class="tab" onclick="loadOS('semana',this)">7 dias</button>
+        <button class="tab" onclick="loadOS('mes',this)">Mês</button>
+      </div>
+      <div class="kpi-grid c4" id="os-kpis"></div>
+      <div class="card-grid c2">
+        <div class="card">
+          <div class="card-head">📊 Por Categoria</div>
+          <div id="os-cats"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">👷 Técnico × Tipo</div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Técnico</th><th class="r">Serv.</th><th class="r">Sup.</th><th class="r">Infra</th><th class="r">Ret.</th><th class="r">Total</th></tr></thead>
+              <tbody id="os-tec-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── METAS ── -->
+    <div class="page" id="page-metas">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Gestão de <span>Metas</span></div>
+          <div class="pg-sub">Metas da equipe e individuais</div>
+        </div>
+      </div>
+      <div id="metas-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ── TÉCNICOS ── -->
+    <div class="page" id="page-tecnicos">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Gestão de <span>Técnicos</span></div>
+          <div class="pg-sub">11 técnicos ativos · Mapeados no IXC Soft</div>
+        </div>
+      </div>
+      <div class="tec-grid" id="tec-cards">
+        <div class="loading"><div class="spinner"></div>Carregando...</div>
+      </div>
+    </div>
+
+    <!-- ── TELEGRAM ── -->
+    <div class="page" id="page-telegram">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Relatório <span>Telegram</span></div>
+          <div class="pg-sub">Preview dos relatórios automáticos</div>
+        </div>
+      </div>
+      <div class="card-grid c2">
+        <div class="card">
+          <div class="card-head">📨 Relatório Horário</div>
+          <div class="tg-box" id="tg-hora"></div>
+        </div>
+        <div class="card">
+          <div class="card-head">🏆 Ranking Final 18h</div>
+          <div class="tg-box" id="tg-rank"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── USUÁRIOS ── -->
+    <div class="page" id="page-usuarios">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Gestão de <span>Usuários</span></div>
+          <div class="pg-sub">Controle de acesso por nível</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">👥 Usuários Cadastrados</div>
+        <table>
+          <thead><tr><th>Login</th><th>Nome</th><th class="r">Nível</th><th class="r">Status</th></tr></thead>
+          <tbody id="usr-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── PERMISSÕES ── -->
+    <div class="page" id="page-permissoes">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Gestão de <span>Permissões</span></div>
+          <div class="pg-sub">Acesso por módulo e nível</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">🔐 Permissões por Módulo</div>
+        <table>
+          <thead><tr><th>Módulo</th><th>Código</th><th class="r">Op.</th><th class="r">Sup.</th><th class="r">Ger.</th><th class="r">Dir.</th></tr></thead>
+          <tbody id="perm-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+const API = '';
+const META_DIA = 150;
+
+// ── Helpers ──────────────────────────────────
+function sc(s){ return s>=20?'var(--green)':s>=10?'var(--amber)':'var(--red)' }
+function scBg(s){ return s>=20?'rgba(0,229,160,.1)':s>=10?'rgba(255,184,63,.1)':'rgba(255,77,106,.1)' }
+function pctIc(p){ return p>=100?'🏆':p>=80?'✅':p>=50?'🟡':'🔴' }
+function rposClass(i){ return ['p1','p2','p3','pn','pn','pn','pn','pn','pn','pn','pn'][i]||'pn' }
+function nivelLabel(n){ return {1:'Operador',2:'Supervisor',3:'Gerente',4:'Diretoria',99:'Dev'}[n]||n }
+function nivelBadge(n){
+  const m={1:'cyan',2:'green',3:'amber',4:'orange',99:'red'}
+  return `<span class="badge ${m[n]||'cyan'}">${nivelLabel(n)}</span>`
+}
+async function api(path){
+  const r = await fetch(API+path)
+  return r.json()
+}
+
+// ── Date chip ────────────────────────────────
+document.getElementById('date-chip').textContent =
+  new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})
+
+// ── Navigation ───────────────────────────────
+const PAGES = {
+  dashboard: {title:'Visão Geral',       path:'/produtividade/',          load:loadDashboard},
+  ranking:   {title:'Ranking Técnicos',  path:'/produtividade/ranking',   load:()=>loadRanking('hoje')},
+  os:        {title:'OS por Tipo',       path:'/produtividade/os-tipo',   load:()=>loadOS('hoje')},
+  metas:     {title:'Metas',             path:'/produtividade/metas',     load:loadMetas},
+  tecnicos:  {title:'Técnicos',          path:'/produtividade/tecnicos',  load:loadTecnicos},
+  telegram:  {title:'Telegram',          path:'/produtividade/telegram',  load:loadTelegram},
+  usuarios:  {title:'Usuários',          path:'/admin/usuarios',          load:loadUsuarios},
+  permissoes:{title:'Permissões',        path:'/admin/permissoes',        load:loadPermissoes},
+}
+let currentPage = 'dashboard'
+
+function nav(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'))
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'))
+  document.getElementById('page-'+id).classList.add('active')
+  document.querySelectorAll('.sb-item').forEach(i=>{
+    if(i.getAttribute('onclick')===`nav('${id}')`) i.classList.add('active')
+  })
+  const p = PAGES[id]
+  document.getElementById('tb-title').textContent = p.title
+  document.getElementById('tb-path').textContent  = p.path
+  currentPage = id
+  if(p.load) p.load()
+}
+
+async function syncAgora(){
+  const btn = document.getElementById('btn-sync')
+  btn.textContent = '↻ Sincronizando...'
+  btn.disabled = true
+  await fetch('/api/sync', {method:'POST'}).catch(()=>{})
+  setTimeout(()=>{
+    btn.textContent = '↻ Sync IXC'
+    btn.disabled = false
+    if(PAGES[currentPage].load) PAGES[currentPage].load()
+  }, 1500)
+}
+
+// ── DASHBOARD ────────────────────────────────
+async function loadDashboard(){
+  const d = await api('/api/dashboard/')
+  const r = d.resumo
+  const fins   = r.finalizadas || 0
+  const total  = r.total || 0
+  const meta   = d.meta_dia || META_DIA
+  const efic   = total>0 ? (fins/total*100).toFixed(1) : 0
+  const pctMeta= Math.round(fins/meta*100)
+  const rt     = total>0 ? ((r.outros||0)/total*100).toFixed(1) : 0
+
+  // Status
+  let status = '🟢 Operação Estável'
+  if(pctMeta < 50) status = '🔴 Atenção — Meta em Risco'
+  else if(pctMeta < 80) status = '🟡 Abaixo da Meta'
+  document.getElementById('db-status').textContent = status
+  document.getElementById('db-sub').textContent =
+    `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')} · ${total} OS hoje`
+
+  // Alertas
+  const al = []
+  if(pctMeta < 50) al.push({t:`Meta em risco (${pctMeta}%)`,c:'red'})
+  if(r.execucao > 20) al.push({t:`${r.execucao} OS em aberto`,c:'amber'})
+  if(fins === total && total > 0) al.push({t:'100% finalizadas!',c:'green'})
+  document.getElementById('db-alerts').innerHTML =
+    al.map(a=>`<span class="alert-chip ${a.c}">⚠️ ${a.t}</span>`).join('')
+
+  // KPIs
+  document.getElementById('db-kpis').innerHTML = `
+    <div class="kpi" style="--ac:var(--cyan)">
+      <div class="kpi-lbl">Total OS</div>
+      <div class="kpi-val">${total}</div>
+      <div class="kpi-sub">hoje</div>
+    </div>
+    <div class="kpi" style="--ac:var(--green)">
+      <div class="kpi-lbl">Finalizadas</div>
+      <div class="kpi-val">${fins}</div>
+      <div class="kpi-sub">${pctMeta}% da meta</div>
+      <div class="kpi-trend ${pctMeta>=80?'up':'dn'}">${pctMeta}%</div>
+    </div>
+    <div class="kpi" style="--ac:var(--amber)">
+      <div class="kpi-lbl">Em Aberto</div>
+      <div class="kpi-val">${r.execucao||0}</div>
+      <div class="kpi-sub">em campo</div>
+    </div>
+    <div class="kpi" style="--ac:var(--purple)">
+      <div class="kpi-lbl">Eficiência</div>
+      <div class="kpi-val">${efic}%</div>
+      <div class="kpi-sub">fin/total</div>
+    </div>
+    <div class="kpi" style="--ac:var(--orange)">
+      <div class="kpi-lbl">Meta Dia</div>
+      <div class="kpi-val">${meta}</div>
+      <div class="kpi-sub">faltam ${Math.max(0,meta-fins)}</div>
+    </div>
+  `
+
+  // Categorias
+  const cats = [
+    {n:'Serviço',  v:r.servicos||0,  c:'var(--cyan)'},
+    {n:'Suporte',  v:r.suportes||0,  c:'var(--amber)'},
+    {n:'Infra',    v:r.infra||0,     c:'var(--purple)'},
+    {n:'Retirada', v:r.retiradas||0, c:'var(--orange)'},
+    {n:'Outros',   v:r.outros||0,    c:'var(--muted)'},
+  ]
+  const maxC = Math.max(...cats.map(c=>c.v), 1)
+  document.getElementById('db-cats').innerHTML = cats.map(c=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:12px;font-weight:600">${c.n}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${c.c}">${c.v}</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(c.v/maxC*100)}%;background:${c.c}"></div></div>
+    </div>
+  `).join('')
+
+  // Top ranking
+  document.getElementById('db-ranking').innerHTML = d.tecnicos.slice(0,6).map((t,i)=>`
+    <tr>
+      <td><span class="rpos ${rposClass(i)}">${i+1}</span><strong>${t.nome}</strong></td>
+      <td class="r">${t.finalizadas||0}</td>
+      <td class="r"><span class="badge ${(t.eficiencia||0)>=80?'green':(t.eficiencia||0)>=50?'amber':'red'}">${t.eficiencia||0}%</span></td>
+      <td class="r"><span class="badge" style="background:${scBg(t.score)};color:${sc(t.score)}">${t.score||0}</span></td>
+    </tr>
+  `).join('')
+
+  // Meta progress
+  const pct = Math.min(pctMeta, 100)
+  document.getElementById('db-meta').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;text-align:center">
+      <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Finalizadas</div></div>
+      <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber)">${Math.max(0,meta-fins)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Restantes</div></div>
+      <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--green)">${pct}%</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Atingimento</div></div>
+      <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${meta}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta</div></div>
+    </div>
+    <div class="meta-track">
+      <div class="meta-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div>
+      <div class="meta-marker" style="left:50%" data-l="50%"></div>
+    </div>
+  `
+}
+
+// ── RANKING ──────────────────────────────────
+async function loadRanking(periodo='hoje', btn=null){
+  if(btn){ document.querySelectorAll('#page-ranking .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active') }
+  const d = await api(`/api/ranking/?periodo=${periodo}`)
+  document.getElementById('rk-table').innerHTML = d.ranking.map((t,i)=>`
+    <tr>
+      <td><span class="rpos ${rposClass(i)}">${i+1}</span></td>
+      <td><strong>${t.nome}</strong></td>
+      <td class="r">${t.servicos||0}</td>
+      <td class="r">${t.suportes||0}</td>
+      <td class="r">${t.infra||0}</td>
+      <td class="r">${t.retiradas||0}</td>
+      <td class="r" style="color:var(--cyan);font-weight:700">${t.finalizadas||0}</td>
+      <td class="r"><span class="badge ${(t.eficiencia||0)>=80?'green':(t.eficiencia||0)>=50?'amber':'red'}">${t.eficiencia||0}%</span></td>
+      <td class="r"><span class="badge" style="background:${scBg(t.score)};color:${sc(t.score)}">${t.score||0}</span></td>
+    </tr>
+  `).join('')
+}
+
+// ── OS TIPOS ─────────────────────────────────
+async function loadOS(periodo='hoje', btn=null){
+  if(btn){ document.querySelectorAll('#page-os .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active') }
+  const d = await api(`/api/os-tipos/?periodo=${periodo}`)
+  const cats = d.categorias || []
+  const total = cats.reduce((s,c)=>s+(c.total||0),0)
+
+  // KPIs
+  const catMap = Object.fromEntries(cats.map(c=>[c.categoria, c]))
+  const kpis = [
+    {n:'Serviço',  k:'servico',  c:'var(--cyan)'},
+    {n:'Suporte',  k:'suporte',  c:'var(--amber)'},
+    {n:'Infra',    k:'infra',    c:'var(--purple)'},
+    {n:'Retirada', k:'retirada', c:'var(--orange)'},
+  ]
+  document.getElementById('os-kpis').innerHTML = kpis.map(k=>{
+    const cat = catMap[k.k] || {}
+    const v = cat.total || 0
+    const pct = total>0 ? (v/total*100).toFixed(1) : 0
+    return `<div class="kpi" style="--ac:${k.c}">
+      <div class="kpi-lbl">${k.n}</div>
+      <div class="kpi-val">${v}</div>
+      <div class="kpi-sub">${pct}% do total</div>
+    </div>`
+  }).join('')
+
+  // Barras
+  const maxC = Math.max(...cats.map(c=>c.total||0), 1)
+  const cores = {servico:'var(--cyan)',suporte:'var(--amber)',infra:'var(--purple)',retirada:'var(--orange)',outros:'var(--muted)'}
+  document.getElementById('os-cats').innerHTML = cats.length ? cats.map(c=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:12px;font-weight:600;text-transform:capitalize">${c.categoria}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${cores[c.categoria]||'var(--muted)'}">
+          ${c.finalizadas||0}/${c.total||0}
+        </span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round((c.total||0)/maxC*100)}%;background:${cores[c.categoria]||'var(--muted)'}"></div></div>
+    </div>
+  `).join('') : '<div class="loading">Sem OS no período</div>'
+
+  // Técnico × tipo
+  document.getElementById('os-tec-table').innerHTML = (d.por_tecnico||[]).map(t=>`
+    <tr>
+      <td><strong>${t.nome}</strong></td>
+      <td class="r">${t.servicos||0}</td>
+      <td class="r">${t.suportes||0}</td>
+      <td class="r">${t.infra||0}</td>
+      <td class="r">${t.retiradas||0}</td>
+      <td class="r" style="color:var(--cyan);font-weight:700">${t.total||0}</td>
+    </tr>
+  `).join('')
+}
+
+// ── METAS ────────────────────────────────────
+async function loadMetas(){
+  const [metas, dash] = await Promise.all([
+    api('/api/metas/'),
+    api('/api/dashboard/')
+  ])
+  const meta_dia = dash.meta_dia || META_DIA
+  const fins = dash.resumo?.finalizadas || 0
+  const pct = Math.min(Math.round(fins/meta_dia*100),100)
+
+  document.getElementById('metas-content').innerHTML = `
+    <div class="kpi-grid c3" style="margin-bottom:18px">
+      ${dash.tecnicos.slice(0,6).map(t=>{
+        const f = t.finalizadas||0
+        const m = t.meta_dia||8
+        const p = Math.min(Math.round(f/m*100),100)
+        const cor = p>=80?'var(--green)':p>=50?'var(--amber)':'var(--red)'
+        return `<div class="kpi" style="--ac:${cor}">
+          <div class="kpi-lbl">${t.nome.split(' ')[0]}</div>
+          <div class="kpi-val">${f}<span style="font-size:13px;color:var(--muted)">/${m}</span></div>
+          <div class="kpi-sub">Meta diária · ${p}%</div>
+          <div class="bar-bg" style="margin-top:8px"><div class="bar-fill" style="width:${p}%;background:${cor}"></div></div>
+        </div>`
+      }).join('')}
+    </div>
+    <div class="card">
+      <div class="card-head">🎯 Meta Equipe Hoje</div>
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:12px">
+        <div style="font-size:32px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}<span style="font-size:16px;color:var(--muted)">/${meta_dia}</span></div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'}">${pct}% ${pctIc(pct)}</div>
+          <div style="font-size:11px;color:var(--muted)">Faltam ${Math.max(0,meta_dia-fins)} OS</div>
+        </div>
+      </div>
+      <div class="meta-track">
+        <div class="meta-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div>
+        <div class="meta-marker" style="left:50%" data-l="50%"></div>
+      </div>
+    </div>
+  `
+}
+
+// ── TÉCNICOS ─────────────────────────────────
+async function loadTecnicos(){
+  const [tecs, dash] = await Promise.all([api('/api/tecnicos/'), api('/api/dashboard/')])
+  const tecMap = Object.fromEntries(dash.tecnicos.map(t=>[t.id,t]))
+  document.getElementById('tec-cards').innerHTML = tecs.map(t=>{
+    const d = tecMap[t.id] || {}
+    const fins = d.finalizadas||0
+    const total = d.total||0
+    const score = d.score||0
+    const efic = d.eficiencia||0
+    return `<div class="tec-card">
+      <div class="tec-name">${t.nome}</div>
+      <div class="tec-meta">ID IXC: ${t.ixc_funcionario_id} · Meta: ${t.meta_dia} OS/dia</div>
+      <div class="tec-stats">
+        <div class="tec-stat">
+          <div class="tec-stat-val" style="color:var(--green)">${fins}</div>
+          <div class="tec-stat-lbl">OS Fin.</div>
+        </div>
+        <div class="tec-stat">
+          <div class="tec-stat-val" style="color:var(--amber)">${efic}%</div>
+          <div class="tec-stat-lbl">Efic.</div>
+        </div>
+        <div class="tec-stat">
+          <div class="tec-stat-val" style="color:${sc(score)}">${score}</div>
+          <div class="tec-stat-lbl">Score</div>
+        </div>
+      </div>
+    </div>`
+  }).join('')
+}
+
+// ── TELEGRAM ─────────────────────────────────
+async function loadTelegram(){
+  const d = await api('/api/dashboard/')
+  const r = d.resumo
+  const fins = r.finalizadas||0
+  const meta = d.meta_dia||META_DIA
+  const pct = Math.round(fins/meta*100)
+  const agora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  const hoje = new Date().toLocaleDateString('pt-BR')
+
+  document.getElementById('tg-hora').innerHTML = `
+    <div class="tc">📡 HubProdutividade · Cliquedf</div>
+    <div class="tm">🕐 ${agora} · ${hoje}</div>
+    <div class="tm">━━━━━━━━━━━━━━━━━</div>
+    <div>🎯 Meta dia: <span class="tc">${fins}/${meta}</span> (${pctIc(pct)} ${pct}%)</div>
+    <div>✅ Finalizadas: <span class="tg">${fins}</span></div>
+    <div>🔄 Em aberto: <span class="ta">${r.execucao||0}</span></div>
+    <div>📊 Total OS: <span class="tc">${r.total||0}</span></div>
+    <div class="tm">━━━━━━━━━━━━━━━━━</div>
+    <div><b>Por técnico:</b></div>
+    ${d.tecnicos.slice(0,5).map(t=>{
+      const f=t.finalizadas||0; const m=t.meta_dia||8
+      const p=Math.round(f/m*100)
+      return `<div>${pctIc(p)} ${t.nome.split(' ')[0]}: <span class="tc">${f}</span>/${m} OS</div>`
+    }).join('')}
+  `
+
+  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟']
+  document.getElementById('tg-rank').innerHTML = `
+    <div class="tc">🏆 Ranking Final · Cliquedf</div>
+    <div class="tm">📅 ${hoje}</div>
+    <div class="tm">━━━━━━━━━━━━━━━━━</div>
+    ${d.tecnicos.map((t,i)=>{
+      const cls = i===0?'tg':i===1?'ta':i===2?'tc':'tm'
+      return `<div class="${cls}">${medals[i]||'·'} ${t.nome.split(' ')[0]}: <b>${t.finalizadas||0} OS</b> · Score ${t.score||0}</div>`
+    }).join('')}
+    <div class="tm">━━━━━━━━━━━━━━━━━</div>
+    <div>📊 Total equipe: <span class="tg">${fins} OS</span></div>
+    <div>🎯 Meta atingida: <span class="${pct>=80?'tg':pct>=50?'ta':'tr'}">${pct}%</span></div>
+  `
+}
+
+// ── USUÁRIOS ─────────────────────────────────
+async function loadUsuarios(){
+  const d = await api('/api/admin/usuarios/')
+  document.getElementById('usr-table').innerHTML = d.map(u=>`
+    <tr>
+      <td style="font-family:'DM Mono',monospace;color:var(--cyan)">${u.login}</td>
+      <td><strong>${u.nome}</strong></td>
+      <td class="r">${nivelBadge(u.nivel)}</td>
+      <td class="r"><span class="badge ${u.ativo?'green':'red'}">${u.ativo?'Ativo':'Inativo'}</span></td>
+    </tr>
+  `).join('')
+}
+
+// ── PERMISSÕES ───────────────────────────────
+async function loadPermissoes(){
+  const d = await api('/api/admin/permissoes/')
+  const modulos = [...new Set(d.map(r=>r.modulo))]
+  document.getElementById('perm-table').innerHTML = modulos.map(mod=>{
+    const niveis = [1,2,3,4].map(n=>{
+      const row = d.find(r=>r.modulo===mod && r.nivel===n)
+      const ok = row?.permitido
+      return `<td class="r"><span class="badge ${ok?'green':'muted'}">${ok?'✓':'—'}</span></td>`
+    }).join('')
+    return `<tr><td><strong>${mod}</strong></td><td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${mod}</td>${niveis}</tr>`
+  }).join('')
+}
+
+// ── INIT ─────────────────────────────────────
+loadDashboard()
+</script>
+</body>
+</html>
