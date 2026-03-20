@@ -14,11 +14,11 @@ async def get_ranking(periodo: str = Query("hoje", enum=["hoje","semana","mes"])
     db = get_db()
 
     if periodo == "hoje":
-        filtro = "date(o.data_abertura) = date(datetime('now','-3 hours'))"
+        filtro = "DATE(o.data_fechamento) = DATE(datetime('now','-3 hours'))"
     elif periodo == "semana":
-        filtro = "date(o.data_abertura) >= date(datetime('now','-3 hours'), '-7 days')"
+        filtro = "DATE(o.data_fechamento) >= DATE(datetime('now','-3 hours'), '-7 days')"
     else:
-        filtro = "strftime('%Y-%m', o.data_abertura) = strftime('%Y-%m', datetime('now','-3 hours'))"
+        filtro = "strftime('%Y-%m', o.data_fechamento) = strftime('%Y-%m', datetime('now','-3 hours'))"
 
     rows = db.execute(f"""
         SELECT

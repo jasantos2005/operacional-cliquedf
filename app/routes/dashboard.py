@@ -12,7 +12,7 @@ def get_db():
 @router.get("/")
 async def get_dashboard():
     db = get_db()
-    hoje = "date(datetime('now','-3 hours'))"
+    hoje = "DATE(datetime('now','-3 hours'))"
 
     resumo = dict(db.execute(f"""
         SELECT
@@ -25,7 +25,7 @@ async def get_dashboard():
             SUM(categoria='retirada')    AS retiradas,
             SUM(categoria='outros')      AS outros
         FROM prod_os_cache
-        WHERE date(data_abertura) = {hoje}
+        WHERE DATE(data_fechamento) = {hoje}
     """).fetchone())
 
     rows = db.execute(f"""
@@ -41,7 +41,7 @@ async def get_dashboard():
         FROM prod_tecnicos t
         LEFT JOIN prod_os_cache o
             ON o.tecnico_id = t.id
-            AND date(o.data_abertura) = {hoje}
+            AND DATE(o.data_fechamento) = {hoje}
         WHERE t.ativo = 1
         GROUP BY t.id
         ORDER BY finalizadas DESC
