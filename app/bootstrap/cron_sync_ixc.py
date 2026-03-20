@@ -46,7 +46,6 @@ def sync():
     db = sqlite3.connect(DB_PATH)
     db.row_factory = sqlite3.Row
 
-    # Mapa ixc_funcionario_id → id local
     rows = db.execute("SELECT id, ixc_funcionario_id FROM prod_tecnicos WHERE ativo=1").fetchall()
     tec_map = {r["ixc_funcionario_id"]: r["id"] for r in rows}
     ids_ixc = list(tec_map.keys())
@@ -75,10 +74,16 @@ def sync():
                 o.data_fechamento   AS data_fechamento
             FROM su_oss_chamado o
             WHERE o.id_tecnico IN ({placeholders})
-              AND DATE(CONVERT_TZ(o.data_abertura, '+00:00', '-03:00'))
-                  = DATE(CONVERT_TZ(NOW(), '+00:00', '-03:00'))
               AND o.status IN ('A','F','C')
-            ORDER BY o.data_abertura DESC
+              AND (
+                DATE(o.data_fechamento) = CURDATE()
+                OR (
+                  o.status = 'A'
+                  AND DATE(CONVERT_TZ(o.data_abertura,'+00:00','-03:00'))
+                      = DATE(CONVERT_TZ(NOW(),'+00:00','-03:00'))
+                )
+              )
+            ORDER BY o.data_fechamento DESC
         """, ids_ixc)
         os_list = cur.fetchall()
     ixc.close()
