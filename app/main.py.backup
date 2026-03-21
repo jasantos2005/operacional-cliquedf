@@ -40,7 +40,3 @@ async def health():
         "operacao": os.getenv("OPERACAO"),
         "versao": "1.0.0"
     }
-
-# Dashboard V2 com filtros avançados
-from app.routes import dashboard_v2
-app.include_router(dashboard_v2.router, prefix="/api/dashboard/v2", tags=["Dashboard V2"])

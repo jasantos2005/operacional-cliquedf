@@ -1,0 +1,11 @@
+[0;1;32m●[0m hubprod_cliquedf.service - HubProdutividade — Cliquedf
+     Loaded: loaded (]8;;file://srv1287626/etc/systemd/system/hubprod_cliquedf.service/etc/systemd/system/hubprod_cliquedf.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Fri 2026-03-20 23:26:05 UTC; 11ms ago
+   Main PID: 427427 (uvicorn)
+      Tasks: 1 (limit: 9483)
+     Memory: 2.8M (peak: 2.8M)
+        CPU: 9ms
+     CGroup: /system.slice/hubprod_cliquedf.service
+             └─[0;38;5;245m427427 /opt/automacoes/cliquedf/operacional/venv/bin/python3 /opt/automacoes/cliquedf/operacional/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8003[0m
+
+Mar 20 23:26:05 srv1287626 systemd[1]: Started hubprod_cliquedf.service - HubProdutividade — Cliquedf.
