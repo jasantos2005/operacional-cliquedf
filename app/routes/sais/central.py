@@ -1,0 +1,119 @@
+"""
+SAIS — Central Operacional
+OS críticas, técnicos ociosos, regiões críticas.
+"""
+import sqlite3
+from datetime import datetime, timedelta
+from typing import Optional
+from fastapi import APIRouter, Query
+
+router = APIRouter()
+DB_PATH = "/opt/automacoes/cliquedf/operacional/prod_local.db"
+
+
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    return conn
+
+
+def hoje_brt():
+    return (datetime.now() + timedelta(hours=-3)).strftime("%Y-%m-%d")
+
+
+@router.get("/os-criticas")
+async def get_os_criticas():
+    """OS atrasadas e em risco de SLA."""
+    db = get_db()
+    agora = datetime.now()
+    limite_4h = (agora - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M:%S")
+
+    rows = db.execute("""
+        SELECT
+            o.ixc_os_id, o.status, o.categoria,
+            o.data_abertura, o.data_fechamento,
+            t.nome AS tecnico,
+            COALESCE(a.assunto, 'Assunto ' || o.ixc_assunto_id) AS assunto,
+            ROUND((julianday('now') - julianday(o.data_abertura)) * 24, 1) AS horas_abertas
+        FROM prod_os_cache o
+        LEFT JOIN prod_tecnicos t ON t.id = o.tecnico_id
+        LEFT JOIN prod_assuntos a ON a.id = o.ixc_assunto_id
+        WHERE o.status IN ('execucao', 'aberta')
+          AND o.data_abertura < ?
+        ORDER BY horas_abertas DESC
+    """, (limite_4h,)).fetchall()
+    db.close()
+
+    return {"os_criticas": [dict(r) for r in rows], "total": len(rows)}
+
+
+@router.get("/tecnicos-ociosos")
+async def get_tecnicos_ociosos():
+    """Técnicos sem OS há mais de 1.5h."""
+    db = get_db()
+    config = db.execute(
+        "SELECT valor FROM sais_config WHERE chave='tecnico_ocioso_horas'"
+    ).fetchone()
+    horas = float(config["valor"]) if config else 1.5
+    limite = (datetime.now() - timedelta(hours=horas)).strftime("%Y-%m-%d %H:%M:%S")
+
+    tecnicos = db.execute("SELECT id, nome FROM prod_tecnicos WHERE ativo=1").fetchall()
+    ociosos = []
+
+    for t in tecnicos:
+        ultima = db.execute("""
+            SELECT MAX(COALESCE(data_fechamento, data_abertura)) as ultima,
+                   status
+            FROM prod_os_cache
+            WHERE tecnico_id=?
+              AND DATE(COALESCE(data_fechamento, data_abertura), '+3 hours') = ?
+        """, (t["id"], hoje_brt())).fetchone()
+
+        if ultima and ultima["ultima"] and ultima["ultima"] < limite:
+            dt = datetime.strptime(str(ultima["ultima"])[:19], "%Y-%m-%d %H:%M:%S")
+            h = round((datetime.now() - dt).total_seconds() / 3600, 1)
+            ociosos.append({
+                "tecnico_id": t["id"],
+                "nome": t["nome"],
+                "horas_ocioso": h,
+                "ultimo_status": ultima["status"],
+            })
+
+    db.close()
+    return {"tecnicos_ociosos": ociosos, "total": len(ociosos)}
+
+
+@router.get("/resumo-critico")
+async def get_resumo_critico():
+    """Resumo rápido para o topo da Central Operacional."""
+    db = get_db()
+    agora = datetime.now()
+
+    atrasadas = db.execute("""
+        SELECT COUNT(*) as total FROM prod_os_cache
+        WHERE status IN ('execucao','aberta')
+          AND data_abertura < ?
+    """, ((agora - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M:%S"),)).fetchone()
+
+    alertas_criticos = db.execute(
+        "SELECT COUNT(*) as total FROM sais_alertas WHERE criticidade='critico' AND lido=0"
+    ).fetchone()
+
+    audits_criticas = db.execute(
+        "SELECT COUNT(*) as total FROM sais_auditorias WHERE criticidade='critica' AND resolvida=0"
+    ).fetchone()
+
+    agendadas_hoje = db.execute("""
+        SELECT COUNT(*) as total FROM prod_os_cache
+        WHERE status='agendada'
+          AND DATE(data_agenda, '+3 hours') = ?
+    """, (hoje_brt(),)).fetchone()
+
+    db.close()
+    return {
+        "os_atrasadas":       atrasadas["total"] if atrasadas else 0,
+        "alertas_criticos":   alertas_criticos["total"] if alertas_criticos else 0,
+        "audits_criticas":    audits_criticas["total"] if audits_criticas else 0,
+        "agendadas_hoje":     agendadas_hoje["total"] if agendadas_hoje else 0,
+    }
