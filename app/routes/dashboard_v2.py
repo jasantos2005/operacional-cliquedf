@@ -27,11 +27,11 @@ def build_filtro_sql(
     
     # Filtro de data
     if data_inicio and data_fim:
-        condicoes.append(f"DATE(data_fechamento) BETWEEN '{data_inicio}' AND '{data_fim}'")
+        condicoes.append(f"DATE(COALESCE(data_fechamento, data_agenda, data_abertura)) BETWEEN '{data_inicio}' AND '{data_fim}'")
     elif data_inicio:
-        condicoes.append(f"DATE(data_fechamento) >= '{data_inicio}'")
+        condicoes.append(f"DATE(COALESCE(data_fechamento, data_agenda, data_abertura)) >= '{data_inicio}'")
     elif data_fim:
-        condicoes.append(f"DATE(data_fechamento) <= '{data_fim}'")
+        condicoes.append(f"DATE(COALESCE(data_fechamento, data_agenda, data_abertura)) <= '{data_fim}'")
     
     # Filtro de status
     if status and len(status) > 0:

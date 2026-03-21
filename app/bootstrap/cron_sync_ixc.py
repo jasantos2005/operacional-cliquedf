@@ -20,7 +20,7 @@ CATEGORIAS = {
     "retirada": {6,22,39,40,89,111},
 }
 
-STATUS_MAP = {"A": "aberta", "F": "finalizada", "C": "cancelada"}
+STATUS_MAP = {"A": "aberta", "F": "finalizada", "C": "cancelada", "AG": "agendada", "RAG": "agendada", "EN": "execucao", "AS": "execucao", "EX": "execucao"}
 
 def classificar(assunto_id):
     for cat, ids in CATEGORIAS.items():
@@ -71,14 +71,16 @@ def sync():
                 o.id_assunto        AS ixc_assunto_id,
                 o.status            AS status_raw,
                 o.data_abertura     AS data_abertura,
-                o.data_fechamento   AS data_fechamento
+                o.data_fechamento   AS data_fechamento,
+                o.data_agenda       AS data_agenda
             FROM su_oss_chamado o
             WHERE o.id_tecnico IN ({placeholders})
-              AND o.status IN ('A','F','C')
+              AND o.status IN ('A','F','C','AG','RAG','EN','AS','EX')
               AND (
                 DATE(o.data_fechamento) = CURDATE()
+                OR DATE(o.data_agenda) BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
                 OR (
-                  o.status = 'A'
+                  o.status IN ('A','EN','AS','EX')
                   AND DATE(CONVERT_TZ(o.data_abertura,'+00:00','-03:00'))
                       = DATE(CONVERT_TZ(NOW(),'+00:00','-03:00'))
                 )
@@ -99,7 +101,8 @@ def sync():
         categoria    = classificar(o["ixc_assunto_id"] or 0)
         status       = STATUS_MAP.get(o["status_raw"], "aberta")
         data_ab      = str(o["data_abertura"])  if o["data_abertura"]  else None
-        data_fech    = str(o["data_fechamento"]) if o["data_fechamento"] else None
+        data_fech    = str(o["data_fechamento"]) if o["data_fechamento"] and str(o["data_fechamento"]) != "0000-00-00 00:00:00" else None
+        data_agenda  = str(o["data_agenda"]) if o.get("data_agenda") else None
 
         cats[categoria] = cats.get(categoria, 0) + 1
 
@@ -110,19 +113,19 @@ def sync():
         if existe:
             db.execute("""
                 UPDATE prod_os_cache
-                SET status=?, data_fechamento=?,
+                SET status=?, data_fechamento=?, data_agenda=?,
                     sincronizado_em=datetime('now','-3 hours')
                 WHERE ixc_os_id=?
-            """, (status, data_fech, ixc_os_id))
+            """, (status, data_fech, data_agenda, ixc_os_id))
             atualizados += 1
         else:
             db.execute("""
                 INSERT INTO prod_os_cache
                     (ixc_os_id, tecnico_id, ixc_assunto_id, categoria,
-                     status, data_abertura, data_fechamento)
-                VALUES (?,?,?,?,?,?,?)
+                     status, data_abertura, data_fechamento, data_agenda)
+                VALUES (?,?,?,?,?,?,?,?)
             """, (ixc_os_id, tec_local_id, o["ixc_assunto_id"],
-                  categoria, status, data_ab, data_fech))
+                  categoria, status, data_ab, data_fech, data_agenda))
             inseridos += 1
 
     db.commit()
