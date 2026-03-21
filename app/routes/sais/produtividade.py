@@ -22,7 +22,7 @@ def hoje_brt():
 @router.get("/ranking")
 async def get_ranking(data: Optional[str] = Query(None), limit: int = Query(20)):
     """Ranking de produtividade do dia."""
-    from app.engines.score_engine import ranking_dia
+    from app.engines.score_engine import ranking_dia, calcular_pontos_tecnico
     data = data or hoje_brt()
     ranking = ranking_dia(data, limit)
     return {"data": data, "ranking": ranking}
@@ -80,9 +80,13 @@ async def get_produtividade_tecnico(
 
     db.close()
 
+    # Pontuação do dia
+    pontos_hoje = calcular_pontos_tecnico(tecnico_id, data)
+
     return {
         "tecnico": dict(tecnico),
         "score_hoje": score_hoje,
+        "pontos_hoje": pontos_hoje,
         "historico_30d": historico,
         "por_categoria": [dict(r) for r in cats],
         "tempo_medio": [dict(r) for r in tempo_medio],

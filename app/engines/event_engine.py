@@ -206,9 +206,9 @@ def detectar_tecnicos_ociosos(db) -> list:
 def detectar_meta(db) -> Optional[dict]:
     """Verifica status da meta do dia."""
     config = db.execute(
-        "SELECT valor FROM sais_config WHERE chave='meta_dia'"
+        "SELECT valor FROM sais_config WHERE chave='meta_dia_pontos'"
     ).fetchone()
-    meta = int(config["valor"]) if config else 150
+    meta = int(config["valor"]) if config else 80
     hoje = (datetime.now() + timedelta(hours=-3)).strftime("%Y-%m-%d")
     hoje = datetime.now().strftime("%Y-%m-%d")
     fins = db.execute("""
@@ -231,7 +231,7 @@ def detectar_meta(db) -> Optional[dict]:
         return {
             "tipo": "meta_em_risco",
             "titulo": f"Meta em risco ({pct}%)",
-            "subtitulo": f"{total_fins}/{meta} OS finalizadas",
+            "subtitulo": f"{total_fins}/{meta} pts",
             "pct": pct,
         }
     return None

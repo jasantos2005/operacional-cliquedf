@@ -53,6 +53,18 @@ async def get_resumo(data: Optional[str] = Query(None)):
     efic  = round(fins / total * 100, 1) if total > 0 else 0
     pct_meta = round(fins / meta * 100) if meta > 0 else 0
 
+    # Pontuação ponderada por assunto
+    pontos_row = db.execute("""
+        SELECT SUM(COALESCE(p.pontuacao, 0)) AS pontos
+        FROM prod_os_cache o
+        LEFT JOIN prod_assuntos_pontuacao p
+            ON p.id_assunto_ixc = o.ixc_assunto_id AND p.ativo = 1
+        WHERE o.status = 'finalizada'
+          AND DATE(o.data_fechamento, '+3 hours') = ?
+    """, (data,)).fetchone()
+
+    total_pontos = pontos_row["pontos"] or 0 if pontos_row else 0
+
     # Técnicos ativos no dia
     tecs_ativos = db.execute("""
         SELECT COUNT(DISTINCT tecnico_id) as total
@@ -79,8 +91,9 @@ async def get_resumo(data: Optional[str] = Query(None)):
         "eficiencia": efic,
         "meta_percentual": pct_meta,
         "tecnicos_ativos": tecs_ativos["total"] if tecs_ativos else 0,
-        "alertas_pendentes": alertas["total"] if alertas else 0,
+        "alertas_pendentes":   alertas["total"] if alertas else 0,
         "auditorias_criticas": audits["total"] if audits else 0,
+        "total_pontos":        total_pontos,
     }
 
 

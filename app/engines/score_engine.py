@@ -1,32 +1,25 @@
 """
-SAIS — Motor de Score de Produtividade
-Calcula score e eficiência por técnico.
+SAIS — Motor de Score v2.0
+Usa pontuação ponderada por assunto (prod_assuntos_pontuacao).
+Mantém contagem de OS para exibição, mas metas são baseadas em pontos.
 
-Fórmula:
-    score = (servicos * 3) + (suportes * 2) + (infra * 2) + (retiradas * 1)
-            - (retrabalhos * 4) - (auditorias_graves * 3)
-    eficiencia = ((total - retrabalhos) / total) * 100
+Regras:
+- Produtividade = soma dos pontos das OS finalizadas
+- Meta diária   = 80 pontos (configurável por técnico)
+- Meta mensal   = 1780 pontos (configurável por técnico)
+- OS sem pontuação mapeada = 0 pontos + log de inconsistência
+- OS cancelada = não pontua
 """
 import sqlite3
+import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
 DB_PATH = "/opt/automacoes/cliquedf/operacional/prod_local.db"
+log = logging.getLogger("SCORE")
 
-PONTOS = {
-    "servico":  3,
-    "suporte":  2,
-    "infra":    2,
-    "retirada": 1,
-    "outros":   1,
-}
-
-PENALIDADES = {
-    "retrabalho":       -4,
-    "auditoria_critica": -3,
-    "auditoria_alta":    -2,
-    "sla_estourado":     -2,
-}
+META_DIA_PADRAO = 80
+META_MES_PADRAO = 1780
 
 
 def get_db():
@@ -36,107 +29,169 @@ def get_db():
     return conn
 
 
-def calcular_score_tecnico(tecnico_id: int, data: str = None) -> dict:
+def hoje_brt():
+    return (datetime.now() + timedelta(hours=-3)).strftime("%Y-%m-%d")
+
+
+def get_meta_tecnico(db, tecnico_id: int, tipo: str = "pontos_dia") -> int:
+    """Retorna meta do técnico (pontos_dia ou pontos_mes)."""
+    row = db.execute("""
+        SELECT valor FROM prod_metas
+        WHERE tecnico_id=? AND tipo=? AND vigente=1
+        LIMIT 1
+    """, (tecnico_id, tipo)).fetchone()
+    if row:
+        return int(row["valor"])
+    # Fallback para config global
+    cfg = db.execute(
+        "SELECT valor FROM sais_config WHERE chave=?",
+        ('meta_tec_dia' if tipo == 'pontos_dia' else 'meta_tec_mes',)
+    ).fetchone()
+    return int(cfg["valor"]) if cfg else (META_DIA_PADRAO if "dia" in tipo else META_MES_PADRAO)
+
+
+def get_pontuacao(db, assunto_id: int) -> int:
+    """Retorna pontuação de um assunto. 0 se não mapeado."""
+    row = db.execute("""
+        SELECT pontuacao FROM prod_assuntos_pontuacao
+        WHERE id_assunto_ixc=? AND ativo=1
+    """, (assunto_id,)).fetchone()
+    return row["pontuacao"] if row else 0
+
+
+def calcular_pontos_tecnico(tecnico_id: int, data: str = None) -> dict:
     """
-    Calcula score completo de um técnico para uma data.
+    Calcula pontos e stats completos de um técnico para uma data.
+    Retorna contagem de OS (para exibição) + pontos (para metas).
     """
     db = get_db()
-    data = data or datetime.now().strftime("%Y-%m-%d")
+    data = data or hoje_brt()
 
-    # OS finalizadas do dia
+    # OS finalizadas com pontuação
     rows = db.execute("""
-        SELECT categoria, COUNT(*) as total
-        FROM prod_os_cache
-        WHERE tecnico_id = ?
-          AND status = 'finalizada'
-          AND DATE(COALESCE(data_fechamento, data_abertura)) = ?
-        GROUP BY categoria
+        SELECT
+            o.ixc_os_id,
+            o.ixc_assunto_id,
+            o.categoria,
+            COALESCE(p.pontuacao, 0) AS pontos,
+            p.id IS NULL AS sem_mapeamento
+        FROM prod_os_cache o
+        LEFT JOIN prod_assuntos_pontuacao p
+            ON p.id_assunto_ixc = o.ixc_assunto_id AND p.ativo = 1
+        WHERE o.tecnico_id = ?
+          AND o.status = 'finalizada'
+          AND DATE(o.data_fechamento, '+3 hours') = ?
     """, (tecnico_id, data)).fetchall()
 
-    cats = {r["categoria"]: r["total"] for r in rows}
+    # Totais
+    total_os     = len(rows)
+    total_pontos = sum(r["pontos"] for r in rows)
+    sem_mapa     = sum(1 for r in rows if r["sem_mapeamento"])
 
-    # Total e score base
-    total_os   = sum(cats.values())
-    score_base = sum(cats.get(cat, 0) * pts for cat, pts in PONTOS.items())
+    # Por categoria (contagem + pontos)
+    cats = {}
+    for r in rows:
+        cat = r["categoria"] or "outros"
+        if cat not in cats:
+            cats[cat] = {"os": 0, "pontos": 0}
+        cats[cat]["os"] += 1
+        cats[cat]["pontos"] += r["pontos"]
 
-    # Penalidades por auditorias
-    auditorias = db.execute("""
-        SELECT criticidade, COUNT(*) as total
-        FROM sais_auditorias
-        WHERE tecnico_id = ?
-          AND DATE(criado_em) = ?
-          AND resolvida = 0
-        GROUP BY criticidade
-    """, (tecnico_id, data)).fetchall()
+    # Metas
+    meta_dia = get_meta_tecnico(db, tecnico_id, "pontos_dia")
+    meta_mes = get_meta_tecnico(db, tecnico_id, "pontos_mes")
 
-    penalidade = 0
-    for a in auditorias:
-        if a["criticidade"] == "critica":
-            penalidade += a["total"] * abs(PENALIDADES["auditoria_critica"])
-        elif a["criticidade"] == "alta":
-            penalidade += a["total"] * abs(PENALIDADES["auditoria_alta"])
+    pct_meta_dia = round(total_pontos / meta_dia * 100, 1) if meta_dia > 0 else 0
 
-    score_final = max(0, score_base - penalidade)
+    # Pontos no mês
+    mes_inicio = data[:7] + "-01"
+    pontos_mes_row = db.execute("""
+        SELECT SUM(COALESCE(p.pontuacao, 0)) AS total
+        FROM prod_os_cache o
+        LEFT JOIN prod_assuntos_pontuacao p ON p.id_assunto_ixc = o.ixc_assunto_id AND p.ativo=1
+        WHERE o.tecnico_id = ?
+          AND o.status = 'finalizada'
+          AND DATE(o.data_fechamento, '+3 hours') >= ?
+    """, (tecnico_id, mes_inicio)).fetchone()
+    pontos_mes = pontos_mes_row["total"] or 0
+    pct_meta_mes = round(pontos_mes / meta_mes * 100, 1) if meta_mes > 0 else 0
 
-    # Meta do técnico
-    meta_row = db.execute("""
-        SELECT meta_dia FROM prod_tecnicos WHERE id = ?
-    """, (tecnico_id,)).fetchone()
-    meta_dia = meta_row["meta_dia"] if meta_row else 8
+    # Log de inconsistências
+    if sem_mapa > 0:
+        db.execute("""
+            INSERT OR IGNORE INTO sais_auditorias
+                (os_id, tecnico_id, tipo, subtipo, criticidade, descricao)
+            SELECT o.ixc_os_id, o.tecnico_id,
+                   'pontuacao', 'assunto_sem_mapeamento', 'baixa',
+                   'OS finalizada com assunto sem pontuação mapeada: assunto_id=' || o.ixc_assunto_id
+            FROM prod_os_cache o
+            LEFT JOIN prod_assuntos_pontuacao p ON p.id_assunto_ixc = o.ixc_assunto_id AND p.ativo=1
+            WHERE o.tecnico_id = ?
+              AND o.status = 'finalizada'
+              AND DATE(o.data_fechamento, '+3 hours') = ?
+              AND p.id IS NULL
+        """, (tecnico_id, data))
 
-    # Eficiência
-    retrabalhos = 0  # TODO: detectar via audit_engine
-    eficiencia = round(((total_os - retrabalhos) / total_os * 100), 1) if total_os > 0 else 0
-
-    # Percentual da meta
-    pct_meta = round(total_os / meta_dia * 100, 1) if meta_dia > 0 else 0
-
+    db.commit()
     db.close()
 
     return {
-        "tecnico_id":   tecnico_id,
-        "data":         data,
-        "total_os":     total_os,
+        "tecnico_id":    tecnico_id,
+        "data":          data,
+        # Contagem (exibição)
+        "total_os":      total_os,
         "por_categoria": cats,
-        "score_base":   score_base,
-        "penalidade":   penalidade,
-        "score_final":  score_final,
-        "eficiencia":   eficiencia,
-        "meta_dia":     meta_dia,
-        "pct_meta":     pct_meta,
-        "retrabalhos":  retrabalhos,
+        # Pontos (metas)
+        "total_pontos":  total_pontos,
+        "pontos_mes":    pontos_mes,
+        "sem_mapeamento": sem_mapa,
+        # Metas
+        "meta_dia":      meta_dia,
+        "meta_mes":      meta_mes,
+        "pct_meta_dia":  pct_meta_dia,
+        "pct_meta_mes":  pct_meta_mes,
+        # Compatibilidade legada
+        "score_final":   total_pontos,
+        "eficiencia":    pct_meta_dia,
+        "pct_meta":      pct_meta_dia,
     }
 
 
 def ranking_dia(data: str = None, limit: int = 20) -> list:
     """
-    Gera ranking completo de todos os técnicos para uma data.
+    Ranking de técnicos ordenado por PONTOS (não quantidade de OS).
+    Mantém contagem de OS para exibição.
     """
     db = get_db()
-    data = data or datetime.now().strftime("%Y-%m-%d")
+    data = data or hoje_brt()
 
     tecnicos = db.execute(
-        "SELECT id, nome, meta_dia FROM prod_tecnicos WHERE ativo = 1"
+        "SELECT id, nome FROM prod_tecnicos WHERE ativo=1"
     ).fetchall()
     db.close()
 
     ranking = []
     for t in tecnicos:
-        score = calcular_score_tecnico(t["id"], data)
+        r = calcular_pontos_tecnico(t["id"], data)
         ranking.append({
-            "posicao":      0,
-            "tecnico_id":   t["id"],
-            "nome":         t["nome"],
-            "total_os":     score["total_os"],
-            "score":        score["score_final"],
-            "eficiencia":   score["eficiencia"],
-            "pct_meta":     score["pct_meta"],
-            "meta_dia":     score["meta_dia"],
-            "por_categoria": score["por_categoria"],
+            "posicao":       0,
+            "tecnico_id":    t["id"],
+            "nome":          t["nome"],
+            # Contagem (exibição)
+            "total_os":      r["total_os"],
+            "por_categoria": {cat: v["os"] for cat, v in r["por_categoria"].items()},
+            # Pontos (ranking e meta)
+            "total_pontos":  r["total_pontos"],
+            "meta_dia":      r["meta_dia"],
+            "pct_meta_dia":  r["pct_meta_dia"],
+            # Legado
+            "score":         r["total_pontos"],
+            "eficiencia":    r["pct_meta_dia"],
+            "pct_meta":      r["pct_meta_dia"],
         })
 
-    ranking.sort(key=lambda x: (x["score"], x["total_os"]), reverse=True)
-
+    # Ordenar por PONTOS
+    ranking.sort(key=lambda x: (x["total_pontos"], x["total_os"]), reverse=True)
     for i, r in enumerate(ranking):
         r["posicao"] = i + 1
 
@@ -144,17 +199,55 @@ def ranking_dia(data: str = None, limit: int = 20) -> list:
 
 
 def historico_tecnico(tecnico_id: int, dias: int = 7) -> list:
-    """
-    Histórico de score dos últimos N dias para um técnico.
-    """
+    """Histórico de pontos dos últimos N dias."""
     resultado = []
     for i in range(dias - 1, -1, -1):
-        data = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
-        score = calcular_score_tecnico(tecnico_id, data)
+        data = (datetime.now() + timedelta(hours=-3, days=-i)).strftime("%Y-%m-%d")
+        r = calcular_pontos_tecnico(tecnico_id, data)
         resultado.append({
-            "data":     data,
-            "total_os": score["total_os"],
-            "score":    score["score_final"],
-            "eficiencia": score["eficiencia"],
+            "data":          data,
+            "total_os":      r["total_os"],
+            "total_pontos":  r["total_pontos"],
+            "pct_meta_dia":  r["pct_meta_dia"],
+            # Legado
+            "score":         r["total_pontos"],
+            "eficiencia":    r["pct_meta_dia"],
         })
     return resultado
+
+
+def resumo_pontos_equipe(data: str = None) -> dict:
+    """Resumo de pontos da equipe para o dashboard."""
+    db = get_db()
+    data = data or hoje_brt()
+
+    row = db.execute("""
+        SELECT
+            COUNT(*) AS total_os,
+            COUNT(CASE WHEN o.status='finalizada' THEN 1 END) AS finalizadas,
+            SUM(CASE WHEN o.status='finalizada' THEN COALESCE(p.pontuacao,0) ELSE 0 END) AS total_pontos,
+            COUNT(CASE WHEN o.status='finalizada' AND p.id IS NULL THEN 1 END) AS sem_mapeamento
+        FROM prod_os_cache o
+        LEFT JOIN prod_assuntos_pontuacao p ON p.id_assunto_ixc = o.ixc_assunto_id AND p.ativo=1
+        WHERE DATE(COALESCE(o.data_fechamento, o.data_agenda, o.data_abertura), '+3 hours') = ?
+    """, (data,)).fetchone()
+
+    meta_cfg = db.execute(
+        "SELECT valor FROM sais_config WHERE chave='meta_dia_pontos'"
+    ).fetchone()
+    meta_dia = int(meta_cfg["valor"]) if meta_cfg else META_DIA_PADRAO
+
+    total_pontos = row["total_pontos"] or 0
+    pct_meta = round(total_pontos / meta_dia * 100, 1) if meta_dia > 0 else 0
+
+    db.close()
+
+    return {
+        "data":           data,
+        "total_os":       row["total_os"] or 0,
+        "finalizadas":    row["finalizadas"] or 0,
+        "total_pontos":   total_pontos,
+        "meta_dia":       meta_dia,
+        "pct_meta":       pct_meta,
+        "sem_mapeamento": row["sem_mapeamento"] or 0,
+    }
