@@ -3,260 +3,300 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>HubProdutividade · Cliquedf</title>
+<title>SAIS · HubProdutividade</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --bg:#07090c;--s1:#0d1117;--s2:#131920;--border:#1e2731;
-  --text:#c9d4e0;--muted:#46586a;
+  --bg:#07090c;--s1:#0d1117;--s2:#131920;--s3:#1c2333;--border:#1e2731;
+  --text:#c9d4e0;--muted:#46586a;--sub:#2d3d50;
   --cyan:#00d4ff;--green:#00e5a0;--red:#ff4d6a;--amber:#ffb83f;--orange:#ff7849;--purple:#a78bfa;
-  --sw:240px;
+  --sw:220px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
 body{background:var(--bg);color:var(--text);font-family:'Bricolage Grotesque',sans-serif;display:flex}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.02'/%3E%3C/svg%3E");pointer-events:none;z-index:9998}
 
-/* NOISE */
-body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+/* ══ SIDEBAR ══════════════════════════════════════ */
+.sb{width:var(--sw);background:var(--s1);border-right:1px solid var(--border);height:100vh;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.sb-top{flex:1;overflow-y:auto;padding:16px 12px 0}
+.sb-brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding:0 4px}
+.sb-logo{width:34px;height:34px;background:linear-gradient(135deg,var(--cyan),#0060ff);border-radius:8px;display:grid;place-items:center;font-size:16px;flex-shrink:0;box-shadow:0 0 14px rgba(0,212,255,.2)}
+.sb-title{font-size:13px;font-weight:800;letter-spacing:-.01em;line-height:1.2}
+.sb-ver{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace}
 
-/* SIDEBAR */
-.sb{width:var(--sw);background:var(--s1);border-right:1px solid var(--border);height:100vh;display:flex;flex-direction:column;flex-shrink:0}
-.sb-top{padding:22px 16px 0;flex:1;overflow-y:auto}
-.sb-brand{display:flex;align-items:center;gap:10px;margin-bottom:26px}
-.sb-logo{width:36px;height:36px;background:linear-gradient(135deg,var(--cyan),#0060ff);border-radius:9px;display:grid;place-items:center;font-size:17px;flex-shrink:0;box-shadow:0 0 16px rgba(0,212,255,.25)}
-.sb-title{font-size:14px;font-weight:800;letter-spacing:-.01em;line-height:1.15}
-.sb-ver{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
-.sb-sec{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;font-weight:700;padding:0 6px;margin:18px 0 5px}
-.sb-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;margin-bottom:1px;border:1px solid transparent;user-select:none}
+/* Menu grupos */
+.sb-group{margin-bottom:4px}
+.sb-group-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 8px;border-radius:6px;cursor:pointer;
+  font-size:11px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;
+  transition:all .15s;user-select:none;
+  border:1px solid transparent;
+}
+.sb-group-header:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.sb-group-header.active{color:var(--cyan);background:rgba(0,212,255,.06);border-color:rgba(0,212,255,.12)}
+.sb-group-header .ic{font-size:13px;margin-right:6px}
+.sb-group-header .arrow{font-size:10px;transition:transform .2s;margin-left:auto}
+.sb-group-header.open .arrow{transform:rotate(90deg)}
+
+/* Submenus */
+.sb-sub{display:none;padding-left:8px;margin-top:2px}
+.sb-sub.open{display:block}
+.sb-item{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 8px;border-radius:6px;
+  font-size:12px;font-weight:600;color:var(--muted);
+  cursor:pointer;transition:all .15s;
+  margin-bottom:1px;border:1px solid transparent;
+}
 .sb-item:hover{color:var(--text);background:rgba(255,255,255,.04)}
-.sb-item.active{color:var(--cyan);background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.14)}
-.sb-item .ic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
-.sb-footer{padding:14px 16px;border-top:1px solid var(--border)}
+.sb-item.active{color:var(--cyan);background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.12)}
+.sb-item .dot{width:5px;height:5px;border-radius:50%;background:var(--border);flex-shrink:0}
+.sb-item.active .dot{background:var(--cyan)}
+
+.sb-footer{padding:12px;border-top:1px solid var(--border)}
 .sb-user{display:flex;align-items:center;gap:8px}
-.sb-av{width:28px;height:28px;border-radius:7px;background:var(--s2);border:1px solid var(--border);display:grid;place-items:center;font-size:12px;flex-shrink:0}
-.sb-uname{font-size:12px;font-weight:700;line-height:1.2}
-.sb-role{font-size:10px;color:var(--muted)}
-.live{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin-right:4px;animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.sb-av{width:26px;height:26px;border-radius:6px;background:var(--s2);border:1px solid var(--border);display:grid;place-items:center;font-size:11px;flex-shrink:0}
+.sb-uname{font-size:11px;font-weight:700;line-height:1.2}
+.sb-role{font-size:9px;color:var(--muted)}
+.live{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);margin-right:3px;animation:blink 2s infinite}
 
-/* MAIN */
+/* ══ MAIN ══════════════════════════════════════════ */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{height:50px;background:var(--s1);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 22px;gap:10px;flex-shrink:0}
-.topbar-title{font-size:14px;font-weight:800}
-.topbar-path{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.topbar{
+  height:48px;background:var(--s1);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 20px;gap:10px;flex-shrink:0;
+}
+.topbar-title{font-size:13px;font-weight:800}
+.topbar-path{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.date-chip{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)}
-.btn-sync{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--cyan);border-radius:6px;padding:5px 13px;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Bricolage Grotesque',sans-serif}
+.date-chip{background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted)}
+.ws-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .3s}
+.ws-dot.connected{background:var(--green);box-shadow:0 0 6px rgba(0,229,160,.4)}
+.btn-sync{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--cyan);border-radius:5px;padding:4px 12px;font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Bricolage Grotesque',sans-serif}
 .btn-sync:hover{background:rgba(0,212,255,.18)}
-.btn-sync:disabled{opacity:.5;cursor:not-allowed}
+.btn-tv{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.2);color:var(--purple);border-radius:5px;padding:4px 12px;font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Bricolage Grotesque',sans-serif}
+.btn-tv:hover{background:rgba(167,139,250,.18)}
 
-/* CONTENT */
-.content{flex:1;overflow-y:auto;padding:22px}
-.content::-webkit-scrollbar{width:4px}
-.content::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+/* Badges de alerta no topbar */
+.badge-alert{background:var(--red);color:#fff;border-radius:10px;font-size:9px;font-weight:800;padding:1px 6px;font-family:'DM Mono',monospace;min-width:18px;text-align:center}
 
-/* PAGES */
-.page{display:none;animation:fadeUp .3s ease}
+.content{flex:1;overflow-y:auto;padding:20px}
+.page{display:none;animation:fadeUp .25s ease}
 .page.active{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 
-/* PAGE HEADER */
-.pg-hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px}
-.pg-title{font-size:21px;font-weight:800;letter-spacing:-.02em}
+/* ══ COMPONENTES COMUNS ═══════════════════════════ */
+.pg-hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px}
+.pg-title{font-size:20px;font-weight:800;letter-spacing:-.02em}
 .pg-title span{color:var(--cyan)}
 .pg-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.status-pill{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace}
 
-/* ALERTS */
-.alerts{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;min-height:30px}
-.alert-chip{padding:4px 11px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;border:1px solid;display:flex;align-items:center;gap:5px}
-.alert-chip.red{background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.22);color:var(--red)}
-.alert-chip.amber{background:rgba(255,184,63,.07);border-color:rgba(255,184,63,.22);color:var(--amber)}
-.alert-chip.green{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.22);color:var(--green)}
-
-/* KPI GRID */
 .kpi-grid{display:grid;gap:10px;margin-bottom:16px}
 .kpi-grid.c5{grid-template-columns:repeat(5,1fr)}
 .kpi-grid.c4{grid-template-columns:repeat(4,1fr)}
 .kpi-grid.c3{grid-template-columns:repeat(3,1fr)}
-.kpi{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:16px 14px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.kpi-grid.c2{grid-template-columns:repeat(2,1fr)}
+.kpi{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden;transition:all .2s;cursor:pointer}
 .kpi:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.07)}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--cyan));opacity:.7}
-.kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:8px}
-.kpi-val{font-size:24px;font-weight:800;font-family:'DM Mono',monospace;color:var(--ac,var(--cyan));line-height:1}
-.kpi-sub{font-size:10px;color:var(--muted);margin-top:5px}
-.kpi-trend{position:absolute;top:14px;right:12px;font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:4px}
-.kpi-trend.up{background:rgba(0,229,160,.12);color:var(--green)}
-.kpi-trend.dn{background:rgba(255,77,106,.12);color:var(--red)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--cyan))}
+.kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:700;margin-bottom:7px}
+.kpi-val{font-size:22px;font-weight:800;font-family:'DM Mono',monospace;color:var(--ac,var(--cyan));line-height:1}
+.kpi-sub{font-size:9px;color:var(--muted);margin-top:4px}
+.kpi-badge{position:absolute;top:12px;right:10px;font-size:9px;font-family:'DM Mono',monospace;padding:2px 6px;border-radius:4px}
+.kpi-badge.up{background:rgba(0,229,160,.12);color:var(--green)}
+.kpi-badge.dn{background:rgba(255,77,106,.12);color:var(--red)}
 
-/* CARD GRID */
-.card-grid{display:grid;gap:14px;margin-bottom:16px}
+.card-grid{display:grid;gap:12px;margin-bottom:16px}
 .card-grid.c2{grid-template-columns:1fr 1fr}
 .card-grid.c3{grid-template-columns:1fr 1fr 1fr}
-.card{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:18px}
-.card-head{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:16px;display:flex;align-items:center;gap:7px}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px}
+.card-head{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:7px}
 .card-head::after{content:'';flex:1;height:1px;background:var(--border)}
 
-/* TABLE */
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;font-family:'DM Mono',monospace}
+.badge.green{background:rgba(0,229,160,.1);color:var(--green)}
+.badge.red{background:rgba(255,77,106,.1);color:var(--red)}
+.badge.amber{background:rgba(255,184,63,.1);color:var(--amber)}
+.badge.cyan{background:rgba(0,212,255,.08);color:var(--cyan)}
+.badge.purple{background:rgba(167,139,250,.1);color:var(--purple)}
+.badge.muted{background:var(--border);color:var(--muted)}
+
+.alert-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;min-height:28px}
+.alert-chip{padding:4px 10px;border-radius:5px;font-size:10px;font-weight:700;border:1px solid;display:flex;align-items:center;gap:5px;cursor:pointer;transition:opacity .2s}
+.alert-chip:hover{opacity:.8}
+.alert-chip.red{background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.22);color:var(--red)}
+.alert-chip.amber{background:rgba(255,184,63,.07);border-color:rgba(255,184,63,.22);color:var(--amber)}
+.alert-chip.green{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.22);color:var(--green)}
+
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-thead th{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:0 0 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+thead th{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 0 8px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
 thead th.r{text-align:right}
-tbody td{padding:9px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.025);vertical-align:middle}
-tbody td.r{text-align:right;font-family:'DM Mono',monospace;font-size:11px}
-tbody tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:rgba(255,255,255,.012)}
+tbody td{padding:8px 0;font-size:11px;border-bottom:1px solid rgba(255,255,255,.02);vertical-align:middle}
+tbody td.r{text-align:right;font-family:'DM Mono',monospace;font-size:10px}
+tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 
-/* RANK */
-.rpos{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:5px;font-size:9px;font-weight:800;font-family:'DM Mono',monospace;margin-right:7px}
+.rpos{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:5px;font-size:9px;font-weight:800;font-family:'DM Mono',monospace;margin-right:6px}
 .rpos.p1{background:rgba(255,184,63,.15);color:var(--amber)}
 .rpos.p2{background:rgba(0,212,255,.1);color:var(--cyan)}
 .rpos.p3{background:rgba(0,229,160,.08);color:var(--green)}
 .rpos.pn{background:var(--border);color:var(--muted)}
 
-/* BADGE */
-.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace}
-.badge.green{background:rgba(0,229,160,.1);color:var(--green)}
-.badge.red{background:rgba(255,77,106,.1);color:var(--red)}
-.badge.amber{background:rgba(255,184,63,.1);color:var(--amber)}
-.badge.cyan{background:rgba(0,212,255,.08);color:var(--cyan)}
-.badge.orange{background:rgba(255,120,73,.1);color:var(--orange)}
-.badge.muted{background:var(--border);color:var(--muted)}
-
-/* BAR */
-.bar-bg{background:var(--border);height:3px;border-radius:3px;margin-top:4px}
+.bar-bg{background:var(--border);height:3px;border-radius:3px;margin-top:3px}
 .bar-fill{height:3px;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
 
-/* META PROGRESS */
-.meta-track{background:var(--border);border-radius:5px;height:7px;position:relative;margin-top:8px}
-.meta-fill{height:7px;border-radius:5px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
-.meta-marker{position:absolute;top:-3px;width:2px;height:13px;background:var(--amber);border-radius:2px}
-.meta-marker::after{content:attr(data-l);position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--amber);font-family:'DM Mono',monospace;white-space:nowrap}
+.loading{display:flex;align-items:center;justify-content:center;padding:32px;color:var(--muted);font-size:11px;font-family:'DM Mono',monospace}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;flex-shrink:0}
+.empty{text-align:center;padding:28px;color:var(--muted);font-size:11px}
+.empty-icon{font-size:24px;margin-bottom:6px}
 
-/* PERIODO TABS */
-.tabs{display:flex;gap:4px;margin-bottom:16px}
-.tab{padding:5px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
-.tab.active{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.2);color:var(--cyan)}
-.tab:hover:not(.active){color:var(--text);border-color:rgba(255,255,255,.1)}
-
-/* TÉCNICO CARDS */
-.tec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.tec-card{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:16px;transition:transform .2s,border-color .2s}
-.tec-card:hover{transform:translateY(-2px);border-color:rgba(0,212,255,.18)}
-.tec-name{font-size:13px;font-weight:800;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tec-meta{font-size:10px;color:var(--muted);margin-bottom:10px}
-.tec-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.tec-stat{background:var(--s2);border-radius:6px;padding:7px;text-align:center}
-.tec-stat-val{font-size:15px;font-weight:800;font-family:'DM Mono',monospace}
-.tec-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:1px}
-
-/* TG PREVIEW */
-.tg-box{background:#0a0e13;border:1px solid var(--border);border-radius:10px;padding:18px;font-family:'DM Mono',monospace;font-size:12px;line-height:1.9}
-.tg-box .tc{color:var(--cyan);font-weight:500}
-.tg-box .tg{color:var(--green)}
-.tg-box .tr{color:var(--red)}
-.tg-box .ta{color:var(--amber)}
-.tg-box .tm{color:var(--muted)}
-
-/* LOADING */
-.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:12px;font-family:'DM Mono',monospace}
-.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;margin-right:10px;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* STAGGER */
-.kpi:nth-child(1){animation:fadeUp .3s .03s ease both}
-.kpi:nth-child(2){animation:fadeUp .3s .06s ease both}
-.kpi:nth-child(3){animation:fadeUp .3s .09s ease both}
-.kpi:nth-child(4){animation:fadeUp .3s .12s ease both}
-.kpi:nth-child(5){animation:fadeUp .3s .15s ease both}
-
-/* ══════════════════════════════════════════
-   DASHBOARD V2 — FILTROS + MODAIS
-   ══════════════════════════════════════════ */
-
-/* Filtros bar */
-.filtros-container{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-.filtro-group{display:flex;flex-direction:column;gap:4px}
-.filtro-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
-.filtro-input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;min-width:128px;transition:all .2s}
-.filtro-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,.1)}
-.filtro-input::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:pointer}
-.btn-hoje{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--cyan);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;transition:all .2s;white-space:nowrap}
-.btn-hoje:hover{background:rgba(0,212,255,.15)}
-.filtro-sep{width:1px;background:var(--border);align-self:stretch;margin:0 2px}
-.filtros-status{display:flex;gap:5px;flex-wrap:wrap}
-.btn-status{background:var(--bg);border:1.5px solid var(--border);color:var(--muted);padding:6px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:'Bricolage Grotesque',sans-serif;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap}
-.btn-status .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
-.btn-status.active-finalizada{background:rgba(0,229,160,.1);border-color:var(--green);color:var(--green)}
-.btn-status.active-agendada{background:rgba(0,212,255,.1);border-color:var(--cyan);color:var(--cyan)}
-.btn-status.active-aguardando{background:rgba(255,184,63,.1);border-color:var(--amber);color:var(--amber)}
-.btn-status.active-execucao{background:rgba(167,139,250,.1);border-color:var(--purple);color:var(--purple)}
-.btn-aplicar{background:linear-gradient(135deg,var(--cyan),#0070e0);border:none;color:#fff;padding:7px 18px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;transition:all .2s;margin-left:auto;white-space:nowrap}
-.btn-aplicar:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,212,255,.3)}
-
-/* Categorias clicáveis */
-.cat-item{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;margin-bottom:5px;border-radius:7px;transition:all .2s;cursor:pointer;border:1px solid transparent}
-.cat-item:hover{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06);transform:translateX(2px)}
-.cat-item:hover .cat-arrow{opacity:1;transform:translateX(0)}
-.cat-nome{font-size:12px;font-weight:600}
-.cat-right{display:flex;align-items:center;gap:8px}
-.cat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:700}
-.cat-arrow{font-size:13px;color:var(--muted);opacity:0;transform:translateX(-4px);transition:all .2s}
-.cat-bar{height:3px;background:var(--border);border-radius:3px;margin-bottom:7px;overflow:hidden}
-.cat-bar-fill{height:3px;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1);width:0}
-
-/* Top técnicos v2 */
-.tec-row{display:flex;align-items:center;padding:8px 10px;border-radius:7px;transition:all .2s;cursor:pointer;border:1px solid transparent;margin-bottom:3px}
-.tec-row:hover{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06)}
-.tec-pos2{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:800;font-family:'DM Mono',monospace;margin-right:8px;flex-shrink:0}
-.tec-pos2.p1{background:rgba(255,184,63,.15);color:var(--amber)}
-.tec-pos2.p2{background:rgba(0,212,255,.1);color:var(--cyan)}
-.tec-pos2.p3{background:rgba(0,229,160,.1);color:var(--green)}
-.tec-pos2.pn{background:var(--border);color:var(--muted)}
-
-/* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px}
-.modal-overlay.active{display:flex;animation:fadeIn .2s ease}
-#modal-tec{z-index:9500}
-.modal{background:var(--s1);border:1px solid var(--border);border-radius:14px;width:100%;max-width:640px;max-height:82vh;overflow:hidden;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.4,0,.2,1);box-shadow:0 24px 60px rgba(0,0,0,.6)}
-.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
-.modal-header-left{display:flex;flex-direction:column;gap:3px;min-width:0}
-.modal-title{font-size:14px;font-weight:800}
-.modal-breadcrumb{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.modal-breadcrumb b{font-weight:600}
-.modal-breadcrumb span{color:var(--muted)}
-.modal-close{background:var(--s2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;display:grid;place-items:center;cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0}
-.modal-close:hover{border-color:var(--red);color:var(--red)}
-.modal-stats{display:flex;border-bottom:1px solid var(--border)}
-.modal-stat{flex:1;padding:10px 16px;text-align:center;border-right:1px solid var(--border)}
-.modal-stat:last-child{border-right:none}
-.modal-stat-val{font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan);line-height:1}
-.modal-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
-.modal-body{padding:14px 18px;overflow-y:auto;flex:1}
-.modal-body::-webkit-scrollbar{width:4px}
-.modal-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-.modal-tec-item{display:flex;align-items:center;padding:10px 12px;border-radius:8px;transition:all .2s;cursor:pointer;background:var(--s2);border:1px solid var(--border);margin-bottom:7px}
-.modal-tec-item:hover{border-color:rgba(0,212,255,.3);transform:translateX(2px)}
-.os-item{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:7px;transition:all .2s}
-.os-item:hover{border-color:rgba(0,212,255,.22);transform:translateX(2px)}
-.os-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.os-id{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--cyan)}
-.os-status-chip{font-size:9px;padding:2px 8px;border-radius:4px;font-weight:700;text-transform:uppercase;font-family:'DM Mono',monospace}
+/* Lista de OS clicável */
+.os-row{display:flex;align-items:center;padding:9px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .2s}
+.os-row:hover{border-color:rgba(0,212,255,.25);transform:translateX(2px)}
+.os-id{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--cyan);margin-right:10px;flex-shrink:0}
+.os-info{flex:1;min-width:0}
+.os-assunto{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.os-meta{font-size:10px;color:var(--muted);display:flex;gap:10px;margin-top:2px}
+.os-status-chip{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;text-transform:uppercase;font-family:'DM Mono',monospace;flex-shrink:0;margin-left:8px}
 .os-status-chip.finalizada{background:rgba(0,229,160,.12);color:var(--green)}
 .os-status-chip.agendada{background:rgba(0,212,255,.12);color:var(--cyan)}
 .os-status-chip.aguardando{background:rgba(255,184,63,.12);color:var(--amber)}
 .os-status-chip.execucao,.os-status-chip.aberta{background:rgba(167,139,250,.12);color:var(--purple)}
-.os-info{font-size:10px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
-.empty-state{text-align:center;padding:32px 20px;color:var(--muted);font-size:12px}
-.empty-state-icon{font-size:28px;margin-bottom:8px}
 
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+/* Técnico row */
+.tec-row{display:flex;align-items:center;padding:8px 10px;border-radius:7px;background:var(--s2);border:1px solid var(--border);margin-bottom:5px;cursor:pointer;transition:all .2s}
+.tec-row:hover{border-color:rgba(0,212,255,.25);transform:translateX(2px)}
 
-@media(max-width:1200px){
-  .kpi-grid.c5{grid-template-columns:repeat(3,1fr)}
-  .tec-grid{grid-template-columns:repeat(2,1fr)}
+/* ══ MODAIS ════════════════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px}
+.modal-overlay.active{display:flex;animation:fadeIn .2s ease}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:14px;width:100%;max-width:720px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.4,0,.2,1);box-shadow:0 28px 70px rgba(0,0,0,.7)}
+.modal.wide{max-width:900px}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-shrink:0}
+.modal-header-left{display:flex;flex-direction:column;gap:3px;min-width:0}
+.modal-title{font-size:14px;font-weight:800}
+.modal-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.modal-close{background:var(--s2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;display:grid;place-items:center;cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+
+/* Tabs dentro do modal */
+.modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0}
+.modal-tab{padding:10px 16px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.modal-tab:hover{color:var(--text)}
+.modal-tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+.modal-tab-content{display:none;padding:16px 20px;overflow-y:auto;flex:1}
+.modal-tab-content.active{display:block}
+
+/* Stats do modal */
+.modal-stats{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-stat{flex:1;padding:10px 14px;text-align:center;border-right:1px solid var(--border)}
+.modal-stat:last-child{border-right:none}
+.modal-stat-val{font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan);line-height:1}
+.modal-stat-lbl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+
+/* SLA bar */
+.sla-bar{height:8px;background:var(--border);border-radius:4px;margin:8px 0;overflow:hidden}
+.sla-bar-fill{height:8px;border-radius:4px;transition:width 1s ease}
+
+/* ══ AGENDA ════════════════════════════════════════ */
+.agenda-grid{display:flex;flex-direction:column;gap:10px}
+.agenda-tec{background:var(--s2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.agenda-tec-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--s3);border-bottom:1px solid var(--border);cursor:pointer}
+.agenda-tec-nome{font-size:12px;font-weight:700;flex:1}
+.agenda-tec-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan)}
+.agenda-os{padding:8px 14px}
+.agenda-os-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer}
+.agenda-os-item:last-child{border-bottom:none}
+.agenda-os-item:hover .agenda-os-id{color:var(--cyan)}
+.agenda-hora{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:50px;flex-shrink:0}
+.agenda-os-id{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--sub);width:60px;flex-shrink:0;transition:color .2s}
+.agenda-os-nome{font-size:11px;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ══ CENTRAL OPERACIONAL ═══════════════════════════ */
+.critico-card{background:var(--s2);border:1px solid rgba(255,77,106,.2);border-radius:9px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px}
+.critico-card:hover{border-color:rgba(255,77,106,.4);transform:translateX(2px)}
+.critico-card.amber{border-color:rgba(255,184,63,.2)}
+.critico-card.amber:hover{border-color:rgba(255,184,63,.4)}
+.critico-icon{font-size:18px;flex-shrink:0}
+.critico-info{flex:1;min-width:0}
+.critico-titulo{font-size:12px;font-weight:700}
+.critico-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.critico-badge{flex-shrink:0}
+
+/* ══ MODO TV ════════════════════════════════════════ */
+#tv-overlay{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:none;flex-direction:column;padding:24px;
+  font-family:'Bricolage Grotesque',sans-serif;
 }
+#tv-overlay.active{display:flex}
+.tv-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.tv-logo{font-size:18px;font-weight:800;color:var(--cyan)}
+.tv-clock{font-family:'DM Mono',monospace;font-size:28px;font-weight:700;color:var(--text)}
+.tv-date{font-size:12px;color:var(--muted);text-align:right}
+.tv-body{display:grid;grid-template-columns:2fr 1fr;gap:20px;flex:1;overflow:hidden}
+.tv-left{display:flex;flex-direction:column;gap:16px}
+.tv-right{display:flex;flex-direction:column;gap:16px}
+.tv-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.tv-kpi{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;position:relative;overflow:hidden}
+.tv-kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--cyan))}
+.tv-kpi-val{font-size:36px;font-weight:800;font-family:'DM Mono',monospace;color:var(--ac,var(--cyan));line-height:1}
+.tv-kpi-lbl{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.1em}
+.tv-section{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px;flex:1;overflow:hidden;display:flex;flex-direction:column}
+.tv-section-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.tv-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.tv-ranking-item{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.tv-ranking-item:last-child{border-bottom:none}
+.tv-rank-pos{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:10px;font-weight:800;font-family:'DM Mono',monospace;margin-right:8px;flex-shrink:0}
+.tv-rank-nome{flex:1;font-size:13px;font-weight:700}
+.tv-rank-os{font-family:'DM Mono',monospace;font-size:14px;font-weight:800;color:var(--cyan);margin-right:8px}
+.tv-recent-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px}
+.tv-recent-item:last-child{border-bottom:none}
+.tv-recent-id{font-family:'DM Mono',monospace;font-size:10px;color:var(--cyan);margin-right:6px}
+.tv-btn-close{position:absolute;top:16px;right:16px;background:var(--s2);border:1px solid var(--border);color:var(--muted);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif}
+.tv-btn-close:hover{border-color:var(--red);color:var(--red)}
+
+/* TV Popup */
+#tv-popup-container{position:fixed;bottom:24px;right:24px;z-index:10000;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.tv-popup{
+  background:var(--s1);border:1px solid var(--border);border-radius:12px;
+  padding:14px 18px;min-width:280px;max-width:340px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  animation:slideUp .3s ease;
+}
+.tv-popup.green{border-color:rgba(0,229,160,.3);box-shadow:0 8px 32px rgba(0,229,160,.1)}
+.tv-popup.red{border-color:rgba(255,77,106,.3);box-shadow:0 8px 32px rgba(255,77,106,.1)}
+.tv-popup.amber{border-color:rgba(255,184,63,.3);box-shadow:0 8px 32px rgba(255,184,63,.1)}
+.tv-popup-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tv-popup-icon{font-size:16px}
+.tv-popup-titulo{font-size:12px;font-weight:800;flex:1}
+.tv-popup-sub{font-size:10px;color:var(--muted)}
+.tv-popup-bar{height:2px;background:rgba(255,255,255,.1);border-radius:1px;margin-top:8px;overflow:hidden}
+.tv-popup-bar-fill{height:2px;border-radius:1px;transition:width linear}
+.tv-popup-bar-fill.green{background:var(--green)}
+.tv-popup-bar-fill.red{background:var(--red)}
+.tv-popup-bar-fill.amber{background:var(--amber)}
+
+/* Meta progress */
+.meta-track{background:var(--border);border-radius:5px;height:6px;margin-top:8px;overflow:hidden}
+.meta-fill{height:6px;border-radius:5px;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+
+/* Tabs de período */
+.period-tabs{display:flex;gap:4px;margin-bottom:12px}
+.period-tab{padding:4px 12px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:transparent;transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
+.period-tab.active{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.2);color:var(--cyan)}
+.period-tab:hover:not(.active){color:var(--text)}
+
+@media(max-width:1100px){.kpi-grid.c5{grid-template-columns:repeat(3,1fr)}.card-grid.c3{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -267,22 +307,118 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
     <div class="sb-brand">
       <div class="sb-logo">📡</div>
       <div>
-        <div class="sb-title">HubProdutividade</div>
-        <div class="sb-ver">Cliquedf · v1.0</div>
+        <div class="sb-title">SAIS</div>
+        <div class="sb-ver">CliqueDF · v2.0</div>
       </div>
     </div>
-    <div class="sb-sec">Produtividade</div>
-    <div class="sb-item active" onclick="nav('dashboard')"><span class="ic">🚀</span> Visão Geral</div>
-    <div class="sb-item" onclick="nav('ranking')"><span class="ic">🏆</span> Ranking Técnicos</div>
-    <div class="sb-item" onclick="nav('os')"><span class="ic">🔧</span> OS por Tipo</div>
-    <div class="sb-item" onclick="nav('metas')"><span class="ic">🎯</span> Metas</div>
-    <div class="sb-sec">Gestão</div>
-    <div class="sb-item" onclick="nav('tecnicos')"><span class="ic">👷</span> Técnicos</div>
-    <div class="sb-item" onclick="nav('telegram')"><span class="ic">📨</span> Telegram</div>
-    <div class="sb-sec">Admin</div>
-    <div class="sb-item" onclick="nav('usuarios')"><span class="ic">👥</span> Usuários</div>
-    <div class="sb-item" onclick="nav('permissoes')"><span class="ic">🔐</span> Permissões</div>
+
+    <!-- 1. VISÃO GERAL -->
+    <div class="sb-group">
+      <div class="sb-group-header active open" onclick="toggleGroup(this,'visao-geral')">
+        <span class="ic">📊</span> Visão Geral <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub open" id="grp-visao-geral">
+        <div class="sb-item active" onclick="nav('dashboard','visao-geral')"><span class="dot"></span> Dashboard do dia</div>
+        <div class="sb-item" onclick="nav('eventos','visao-geral')"><span class="dot"></span> Eventos em tempo real</div>
+        <div class="sb-item" onclick="nav('ultimas-os','visao-geral')"><span class="dot"></span> Últimas OS</div>
+      </div>
+    </div>
+
+    <!-- 2. CENTRAL OPERACIONAL -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'central')">
+        <span class="ic">🔥</span> Central Operacional <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-central">
+        <div class="sb-item" onclick="nav('os-atrasadas','central')"><span class="dot"></span> OS Atrasadas</div>
+        <div class="sb-item" onclick="nav('sla-risco','central')"><span class="dot"></span> Risco de SLA</div>
+        <div class="sb-item" onclick="nav('tecnicos-ociosos','central')"><span class="dot"></span> Técnicos Ociosos</div>
+        <div class="sb-item" onclick="nav('alertas','central')"><span class="dot"></span> Alertas <span id="badge-alertas" class="badge-alert" style="display:none">0</span></div>
+      </div>
+    </div>
+
+    <!-- 3. AGENDA -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'agenda')">
+        <span class="ic">📅</span> Agenda Inteligente <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-agenda">
+        <div class="sb-item" onclick="nav('agenda-dia','agenda')"><span class="dot"></span> Agenda do dia</div>
+        <div class="sb-item" onclick="nav('agenda-futura','agenda')"><span class="dot"></span> Agenda futura</div>
+        <div class="sb-item" onclick="nav('reagendamentos','agenda')"><span class="dot"></span> Reagendamentos</div>
+      </div>
+    </div>
+
+    <!-- 4. PRODUTIVIDADE -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'produtividade')">
+        <span class="ic">📈</span> Produtividade <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-produtividade">
+        <div class="sb-item" onclick="nav('ranking','produtividade')"><span class="dot"></span> Ranking Técnicos</div>
+        <div class="sb-item" onclick="nav('prod-assunto','produtividade')"><span class="dot"></span> Por Tipo de OS</div>
+        <div class="sb-item" onclick="nav('prod-eficiencia','produtividade')"><span class="dot"></span> Eficiência</div>
+      </div>
+    </div>
+
+    <!-- 5. AUDITORIA -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'auditoria')">
+        <span class="ic">🧾</span> Auditoria <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-auditoria">
+        <div class="sb-item" onclick="nav('audit-exec','auditoria')"><span class="dot"></span> Execução</div>
+        <div class="sb-item" onclick="nav('audit-tempo','auditoria')"><span class="dot"></span> Tempo</div>
+        <div class="sb-item" onclick="nav('audit-sla','auditoria')"><span class="dot"></span> SLA</div>
+        <div class="sb-item" onclick="nav('audit-comportamento','auditoria')"><span class="dot"></span> Comportamento</div>
+      </div>
+    </div>
+
+    <!-- 6. INDICADORES -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'indicadores')">
+        <span class="ic">📉</span> Indicadores <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-indicadores">
+        <div class="sb-item" onclick="nav('ind-sla','indicadores')"><span class="dot"></span> SLA</div>
+        <div class="sb-item" onclick="nav('ind-produtividade','indicadores')"><span class="dot"></span> Produtividade</div>
+        <div class="sb-item" onclick="nav('ind-tendencias','indicadores')"><span class="dot"></span> Tendências</div>
+      </div>
+    </div>
+
+    <!-- 7. TÉCNICOS -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'tecnicos')">
+        <span class="ic">👥</span> Técnicos <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-tecnicos">
+        <div class="sb-item" onclick="nav('tec-status','tecnicos')"><span class="dot"></span> Status atual</div>
+        <div class="sb-item" onclick="nav('tec-performance','tecnicos')"><span class="dot"></span> Performance</div>
+      </div>
+    </div>
+
+    <!-- 8. AUTOMAÇÕES -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'automacoes')">
+        <span class="ic">🤖</span> Automações <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-automacoes">
+        <div class="sb-item" onclick="nav('auto-logs','automacoes')"><span class="dot"></span> Logs de execução</div>
+      </div>
+    </div>
+
+    <!-- 9. ADMIN -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'admin')">
+        <span class="ic">⚙️</span> Admin <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-admin">
+        <div class="sb-item" onclick="nav('usuarios','admin')"><span class="dot"></span> Usuários</div>
+        <div class="sb-item" onclick="nav('permissoes','admin')"><span class="dot"></span> Permissões</div>
+      </div>
+    </div>
   </div>
+
   <div class="sb-footer">
     <div class="sb-user">
       <div class="sb-av">🛠️</div>
@@ -298,62 +434,30 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
 <div class="main">
   <div class="topbar">
     <div>
-      <div class="topbar-title" id="tb-title">Visão Geral</div>
-      <div class="topbar-path" id="tb-path">/produtividade/</div>
+      <div class="topbar-title" id="tb-title">Dashboard do dia</div>
+      <div class="topbar-path" id="tb-path">/visao-geral/dashboard</div>
     </div>
     <div class="topbar-right">
+      <div class="ws-dot" id="ws-dot" title="WebSocket"></div>
       <div class="date-chip" id="date-chip"></div>
-      <button class="btn-sync" id="btn-sync" onclick="syncAgora()">↻ Sync IXC</button>
+      <button class="btn-sync" onclick="syncAgora()">↻ Sync IXC</button>
+      <button class="btn-tv" onclick="abrirTV()">📺 TV</button>
     </div>
   </div>
 
   <div class="content">
 
-    <!-- ══════════════════════════════════════
-         DASHBOARD V2
-         ══════════════════════════════════════ -->
+    <!-- ══ DASHBOARD DO DIA ══════════════════════ -->
     <div class="page active" id="page-dashboard">
       <div class="pg-hd">
         <div>
           <div class="pg-title">Visão <span>Operacional</span></div>
-          <div class="pg-sub" id="db-sub">Carregando dados...</div>
+          <div class="pg-sub" id="db-sub">Carregando...</div>
         </div>
-        <div class="status-pill" id="db-status">⏳ Carregando</div>
+        <div id="db-status-pill" style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:5px 14px">⏳</div>
       </div>
-
-      <!-- FILTROS -->
-      <div class="filtros-container">
-        <div class="filtro-group">
-          <label class="filtro-label">Data Início</label>
-          <input type="date" id="filtro-inicio" class="filtro-input"/>
-        </div>
-        <div class="filtro-group">
-          <label class="filtro-label">Data Fim</label>
-          <input type="date" id="filtro-fim" class="filtro-input"/>
-        </div>
-        <button class="btn-hoje" onclick="setHoje()">📅 Hoje</button>
-        <div class="filtro-sep"></div>
-        <div class="filtro-group">
-          <label class="filtro-label">Status</label>
-          <div class="filtros-status" id="status-btns">
-            <button class="btn-status active-finalizada" data-status="finalizada"><span class="dot"></span>Finalizada</button>
-            <button class="btn-status" data-status="agendada"><span class="dot"></span>Agendada</button>
-            <button class="btn-status" data-status="aguardando"><span class="dot"></span>Aguardando</button>
-            <button class="btn-status" data-status="execucao"><span class="dot"></span>Execução</button>
-          </div>
-        </div>
-        <button class="btn-aplicar" onclick="aplicarFiltros()">🔍 Aplicar Filtros</button>
-      </div>
-
-      <!-- ALERTAS -->
-      <div class="alerts" id="db-alerts"></div>
-
-      <!-- KPIs -->
-      <div class="kpi-grid c5" id="db-kpis">
-        <div class="loading"><div class="spinner"></div>Buscando OS...</div>
-      </div>
-
-      <!-- CARDS -->
+      <div class="alert-chips" id="db-alertas"></div>
+      <div class="kpi-grid c5" id="db-kpis"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
       <div class="card-grid c2">
         <div class="card">
           <div class="card-head">📊 OS por Categoria</div>
@@ -364,652 +468,1150 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
           <div id="db-top-tecs"><div class="loading"><div class="spinner"></div></div></div>
         </div>
       </div>
-
-      <!-- META DO DIA -->
       <div class="card">
         <div class="card-head">🎯 Meta do Dia</div>
         <div id="db-meta"></div>
       </div>
     </div>
 
-    <!-- ══ RANKING ══ -->
+    <!-- ══ EVENTOS ══════════════════════════════ -->
+    <div class="page" id="page-eventos">
+      <div class="pg-hd"><div><div class="pg-title">Eventos <span>Tempo Real</span></div><div class="pg-sub">Atualizando via WebSocket</div></div></div>
+      <div id="eventos-list"><div class="loading"><div class="spinner"></div>Aguardando eventos...</div></div>
+    </div>
+
+    <!-- ══ ÚLTIMAS OS ═══════════════════════════ -->
+    <div class="page" id="page-ultimas-os">
+      <div class="pg-hd"><div><div class="pg-title">Últimas <span>OS</span></div><div class="pg-sub">Ordens de serviço do dia</div></div></div>
+      <div id="ultimas-os-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ OS ATRASADAS ═════════════════════════ -->
+    <div class="page" id="page-os-atrasadas">
+      <div class="pg-hd"><div><div class="pg-title">OS <span>Atrasadas</span></div><div class="pg-sub">Em campo há mais de 4 horas</div></div></div>
+      <div id="os-atrasadas-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ SLA RISCO ════════════════════════════ -->
+    <div class="page" id="page-sla-risco">
+      <div class="pg-hd"><div><div class="pg-title">Risco de <span>SLA</span></div><div class="pg-sub">OS que podem estourar o prazo</div></div></div>
+      <div id="sla-risco-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ TÉCNICOS OCIOSOS ══════════════════════ -->
+    <div class="page" id="page-tecnicos-ociosos">
+      <div class="pg-hd"><div><div class="pg-title">Técnicos <span>Ociosos</span></div><div class="pg-sub">Sem OS há mais de 1.5 horas</div></div></div>
+      <div id="ociosos-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ ALERTAS ══════════════════════════════ -->
+    <div class="page" id="page-alertas">
+      <div class="pg-hd"><div><div class="pg-title">Central de <span>Alertas</span></div><div class="pg-sub">Todos os alertas do sistema</div></div></div>
+      <div id="alertas-full-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ AGENDA DO DIA ════════════════════════ -->
+    <div class="page" id="page-agenda-dia">
+      <div class="pg-hd">
+        <div><div class="pg-title">Agenda <span>do Dia</span></div><div class="pg-sub" id="agenda-dia-sub">Carregando...</div></div>
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="loadAgendaDia(0,this)">Hoje</button>
+          <button class="period-tab" onclick="loadAgendaDia(1,this)">Amanhã</button>
+          <button class="period-tab" onclick="loadAgendaDia(2,this)">+2 dias</button>
+        </div>
+      </div>
+      <div id="agenda-dia-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ AGENDA FUTURA ════════════════════════ -->
+    <div class="page" id="page-agenda-futura">
+      <div class="pg-hd"><div><div class="pg-title">Agenda <span>Futura</span></div><div class="pg-sub">Próximos 7 dias</div></div></div>
+      <div id="agenda-futura-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ REAGENDAMENTOS ═══════════════════════ -->
+    <div class="page" id="page-reagendamentos">
+      <div class="pg-hd"><div><div class="pg-title">OS <span>Reagendadas</span></div><div class="pg-sub">Agendadas em datas passadas sem execução</div></div></div>
+      <div id="reagendamentos-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <!-- ══ RANKING ══════════════════════════════ -->
     <div class="page" id="page-ranking">
-      <div class="pg-hd"><div><div class="pg-title">Ranking <span>Técnicos</span></div><div class="pg-sub">Classificação por score, eficiência e OS finalizadas</div></div></div>
-      <div class="tabs">
-        <button class="tab active" onclick="loadRanking('hoje',this)">Hoje</button>
-        <button class="tab" onclick="loadRanking('semana',this)">7 dias</button>
-        <button class="tab" onclick="loadRanking('mes',this)">Mês</button>
+      <div class="pg-hd">
+        <div><div class="pg-title">Ranking <span>Técnicos</span></div><div class="pg-sub">Score: serviço×3 + suporte×2 + infra×2 + retirada×1</div></div>
+        <div class="period-tabs">
+          <button class="period-tab active" onclick="loadRanking(null,this)">Hoje</button>
+          <button class="period-tab" onclick="loadRankingOntem(this)">Ontem</button>
+        </div>
       </div>
       <div class="card">
-        <div class="card-head">📋 Classificação Completa</div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>#</th><th>Técnico</th><th class="r">Serviço</th><th class="r">Suporte</th><th class="r">Infra</th><th class="r">Retirada</th><th class="r">Total</th><th class="r">Efic.</th><th class="r">Score</th></tr></thead>
-            <tbody id="rk-table"></tbody>
+            <thead><tr><th>#</th><th>Técnico</th><th class="r">Serv.</th><th class="r">Sup.</th><th class="r">Infra</th><th class="r">Ret.</th><th class="r">Total</th><th class="r">Efic.</th><th class="r">Meta</th><th class="r">Score</th></tr></thead>
+            <tbody id="ranking-table"></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ══ OS TIPOS ══ -->
-    <div class="page" id="page-os">
-      <div class="pg-hd"><div><div class="pg-title">OS por <span>Tipo</span></div><div class="pg-sub">Distribuição de ordens por categoria de serviço</div></div></div>
-      <div class="tabs">
-        <button class="tab active" onclick="loadOS('hoje',this)">Hoje</button>
-        <button class="tab" onclick="loadOS('semana',this)">7 dias</button>
-        <button class="tab" onclick="loadOS('mes',this)">Mês</button>
-      </div>
-      <div class="kpi-grid c4" id="os-kpis"></div>
-      <div class="card-grid c2">
-        <div class="card"><div class="card-head">📊 Por Categoria</div><div id="os-cats"></div></div>
-        <div class="card">
-          <div class="card-head">👷 Técnico × Tipo</div>
-          <div class="tbl-wrap">
-            <table><thead><tr><th>Técnico</th><th class="r">Serv.</th><th class="r">Sup.</th><th class="r">Infra</th><th class="r">Ret.</th><th class="r">Total</th></tr></thead><tbody id="os-tec-table"></tbody></table>
-          </div>
-        </div>
-      </div>
+    <!-- ══ PRODUTIVIDADE POR ASSUNTO ══════════════ -->
+    <div class="page" id="page-prod-assunto">
+      <div class="pg-hd"><div><div class="pg-title">Produtividade <span>por Tipo</span></div><div class="pg-sub">Distribuição de OS por assunto hoje</div></div></div>
+      <div id="prod-assunto-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
-    <!-- ══ METAS ══ -->
-    <div class="page" id="page-metas">
-      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Metas</span></div><div class="pg-sub">Metas da equipe e individuais</div></div></div>
-      <div id="metas-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    <!-- ══ AUDITORIA ════════════════════════════ -->
+    <div class="page" id="page-audit-exec">
+      <div class="pg-hd"><div><div class="pg-title">Auditoria <span>Operacional</span></div><div class="pg-sub">Ocorrências detectadas automaticamente</div></div></div>
+      <div class="kpi-grid c4" id="audit-kpis"><div class="loading"><div class="spinner"></div></div></div>
+      <div id="audit-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
-    <!-- ══ TÉCNICOS ══ -->
-    <div class="page" id="page-tecnicos">
-      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Técnicos</span></div><div class="pg-sub">11 técnicos ativos · Mapeados no IXC Soft</div></div></div>
-      <div class="tec-grid" id="tec-cards"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    <!-- ══ TÉCNICOS STATUS ══════════════════════ -->
+    <div class="page" id="page-tec-status">
+      <div class="pg-hd"><div><div class="pg-title">Equipe <span>Técnica</span></div><div class="pg-sub">Status e desempenho em tempo real</div></div></div>
+      <div class="card-grid c3" id="tec-cards"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
-    <!-- ══ TELEGRAM ══ -->
-    <div class="page" id="page-telegram">
-      <div class="pg-hd"><div><div class="pg-title">Relatório <span>Telegram</span></div><div class="pg-sub">Preview dos relatórios automáticos</div></div></div>
-      <div class="card-grid c2">
-        <div class="card"><div class="card-head">📨 Relatório Horário</div><div class="tg-box" id="tg-hora"></div></div>
-        <div class="card"><div class="card-head">🏆 Ranking Final 18h</div><div class="tg-box" id="tg-rank"></div></div>
-      </div>
+    <!-- ══ AUTOMAÇÕES LOGS ══════════════════════ -->
+    <div class="page" id="page-auto-logs">
+      <div class="pg-hd"><div><div class="pg-title">Logs de <span>Automações</span></div><div class="pg-sub">Histórico de execuções dos motores SAIS</div></div></div>
+      <div id="auto-logs-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
-    <!-- ══ USUÁRIOS ══ -->
+    <!-- ══ USUÁRIOS ══════════════════════════════ -->
     <div class="page" id="page-usuarios">
-      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Usuários</span></div><div class="pg-sub">Controle de acesso por nível</div></div></div>
-      <div class="card">
-        <div class="card-head">👥 Usuários Cadastrados</div>
-        <table><thead><tr><th>Login</th><th>Nome</th><th class="r">Nível</th><th class="r">Status</th></tr></thead><tbody id="usr-table"></tbody></table>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Usuários</span></div><div class="pg-sub">Controle de acesso</div></div></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Login</th><th>Nome</th><th class="r">Nível</th><th class="r">Status</th></tr></thead><tbody id="usr-table"></tbody></table></div></div>
     </div>
 
-    <!-- ══ PERMISSÕES ══ -->
+    <!-- ══ PERMISSÕES ════════════════════════════ -->
     <div class="page" id="page-permissoes">
-      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Permissões</span></div><div class="pg-sub">Acesso por módulo e nível</div></div></div>
-      <div class="card">
-        <div class="card-head">🔐 Permissões por Módulo</div>
-        <table><thead><tr><th>Módulo</th><th>Código</th><th class="r">Op.</th><th class="r">Sup.</th><th class="r">Ger.</th><th class="r">Dir.</th></tr></thead><tbody id="perm-table"></tbody></table>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Permissões</span></div></div></div>
+      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Módulo</th><th class="r">Op.</th><th class="r">Sup.</th><th class="r">Ger.</th><th class="r">Dir.</th></tr></thead><tbody id="perm-table"></tbody></table></div></div>
     </div>
 
   </div><!-- /content -->
 </div><!-- /main -->
 
-<!-- ══ MODAL 1: TÉCNICOS DA CATEGORIA ══ -->
-<div class="modal-overlay" id="modal-cat" onclick="overlayClick(event,'modal-cat')">
-  <div class="modal">
+<!-- ══ MODAL OS ══════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-os" onclick="overlayClick(event,'modal-os')">
+  <div class="modal wide">
     <div class="modal-header">
       <div class="modal-header-left">
-        <div class="modal-title" id="modal-cat-title">Técnicos</div>
-        <div class="modal-breadcrumb" id="modal-cat-bread"></div>
+        <div class="modal-title" id="modal-os-title">OS #—</div>
+        <div class="modal-sub" id="modal-os-sub"></div>
       </div>
-      <button class="modal-close" onclick="fecharModal('modal-cat')">×</button>
+      <button class="modal-close" onclick="fecharModal('modal-os')">×</button>
     </div>
-    <div class="modal-stats" id="modal-cat-stats"></div>
-    <div class="modal-body" id="modal-cat-body"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab('os','resumo',this)">Resumo</div>
+      <div class="modal-tab" onclick="switchTab('os','sla',this)">SLA</div>
+      <div class="modal-tab" onclick="switchTab('os','auditoria',this)">Auditoria</div>
+      <div class="modal-tab" onclick="switchTab('os','historico',this)">Histórico</div>
+    </div>
+    <div id="os-tab-resumo"   class="modal-tab-content active"></div>
+    <div id="os-tab-sla"      class="modal-tab-content"></div>
+    <div id="os-tab-auditoria" class="modal-tab-content"></div>
+    <div id="os-tab-historico" class="modal-tab-content"></div>
   </div>
 </div>
 
-<!-- ══ MODAL 2: OS DO TÉCNICO ══ -->
+<!-- ══ MODAL TÉCNICO ════════════════════════════════ -->
 <div class="modal-overlay" id="modal-tec" onclick="overlayClick(event,'modal-tec')">
-  <div class="modal">
+  <div class="modal wide">
     <div class="modal-header">
       <div class="modal-header-left">
-        <div class="modal-title" id="modal-tec-title">OS do Técnico</div>
-        <div class="modal-breadcrumb" id="modal-tec-bread"></div>
+        <div class="modal-title" id="modal-tec-title">Técnico</div>
+        <div class="modal-sub" id="modal-tec-sub"></div>
       </div>
       <button class="modal-close" onclick="fecharModal('modal-tec')">×</button>
     </div>
     <div class="modal-stats" id="modal-tec-stats"></div>
-    <div class="modal-body" id="modal-tec-body"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchTab('tec','hoje',this)">Hoje</div>
+      <div class="modal-tab" onclick="switchTab('tec','agenda',this)">Agenda</div>
+      <div class="modal-tab" onclick="switchTab('tec','produtividade',this)">Produtividade</div>
+      <div class="modal-tab" onclick="switchTab('tec','auditoria',this)">Auditoria</div>
+      <div class="modal-tab" onclick="switchTab('tec','os-recentes',this)">OS Recentes</div>
+    </div>
+    <div id="tec-tab-hoje"        class="modal-tab-content active"></div>
+    <div id="tec-tab-agenda"      class="modal-tab-content"></div>
+    <div id="tec-tab-produtividade" class="modal-tab-content"></div>
+    <div id="tec-tab-auditoria"   class="modal-tab-content"></div>
+    <div id="tec-tab-os-recentes" class="modal-tab-content"></div>
   </div>
 </div>
 
+<!-- ══ MODO TV ══════════════════════════════════════ -->
+<div id="tv-overlay">
+  <button class="tv-btn-close" onclick="fecharTV()">✕ Fechar TV</button>
+  <div class="tv-header">
+    <div class="tv-logo">📡 SAIS · CliqueDF</div>
+    <div style="text-align:right">
+      <div class="tv-clock" id="tv-clock">--:--:--</div>
+      <div class="tv-date" id="tv-date"></div>
+    </div>
+  </div>
+  <div class="tv-body">
+    <div class="tv-left">
+      <div class="tv-kpis" id="tv-kpis"></div>
+      <div class="tv-section" style="flex:none">
+        <div class="tv-section-title">🏆 TOP TÉCNICOS</div>
+        <div id="tv-ranking"></div>
+      </div>
+    </div>
+    <div class="tv-right">
+      <div class="tv-section">
+        <div class="tv-section-title">⚡ ÚLTIMAS FINALIZAÇÕES</div>
+        <div id="tv-recentes"></div>
+      </div>
+      <div class="tv-section" style="flex:none">
+        <div class="tv-section-title">🚨 ALERTAS ATIVOS</div>
+        <div id="tv-alertas"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TV Popup container -->
+<div id="tv-popup-container"></div>
+
 <script>
 // ═══════════════════════════════════════════════════
-// CONFIG GLOBAL
+// CONFIG
 // ═══════════════════════════════════════════════════
-const API     = '';
-const API_V2  = '/api/dashboard/v2';
-const META_DIA = 150;
+const API    = '';
+const SAIS   = '/api/sais';
+const V2     = '/api/dashboard/v2';
 
-const CATS_V2 = [
-  { key:'servico',  label:'Serviço',  cor:'var(--cyan)',   resumoKey:'servicos',  icone:'🔧' },
-  { key:'suporte',  label:'Suporte',  cor:'var(--amber)',  resumoKey:'suportes',  icone:'🎧' },
-  { key:'infra',    label:'Infra',    cor:'var(--purple)', resumoKey:'infra',     icone:'🏗️' },
-  { key:'retirada', label:'Retirada', cor:'var(--orange)', resumoKey:'retiradas', icone:'📦' },
-];
-
-let filtrosV2 = { data_inicio: null, data_fim: null, status: ['finalizada'] };
-let ctxCategoria = null;
+const PAGES_CFG = {
+  'dashboard':         {title:'Dashboard do dia',      path:'/visao-geral/dashboard',       load:loadDashboard},
+  'eventos':           {title:'Eventos Tempo Real',     path:'/visao-geral/eventos',          load:loadEventos},
+  'ultimas-os':        {title:'Últimas OS',             path:'/visao-geral/ultimas-os',       load:loadUltimasOS},
+  'os-atrasadas':      {title:'OS Atrasadas',           path:'/central/os-atrasadas',         load:loadOsAtrasadas},
+  'sla-risco':         {title:'Risco de SLA',           path:'/central/sla-risco',            load:loadSlaRisco},
+  'tecnicos-ociosos':  {title:'Técnicos Ociosos',       path:'/central/tecnicos-ociosos',     load:loadOciosos},
+  'alertas':           {title:'Central de Alertas',     path:'/central/alertas',              load:loadAlertasFull},
+  'agenda-dia':        {title:'Agenda do Dia',          path:'/agenda/dia',                   load:()=>loadAgendaDia(0)},
+  'agenda-futura':     {title:'Agenda Futura',          path:'/agenda/futura',                load:loadAgendaFutura},
+  'reagendamentos':    {title:'Reagendamentos',         path:'/agenda/reagendamentos',        load:loadReagendamentos},
+  'ranking':           {title:'Ranking Técnicos',       path:'/produtividade/ranking',        load:()=>loadRanking(null)},
+  'prod-assunto':      {title:'Produtividade por Tipo', path:'/produtividade/por-assunto',    load:loadProdAssunto},
+  'prod-eficiencia':   {title:'Eficiência',             path:'/produtividade/eficiencia',     load:loadProdAssunto},
+  'audit-exec':        {title:'Auditoria Operacional',  path:'/auditoria/execucao',           load:loadAuditoria},
+  'audit-tempo':       {title:'Auditoria de Tempo',     path:'/auditoria/tempo',              load:()=>loadAuditoriaTipo('tempo')},
+  'audit-sla':         {title:'Auditoria de SLA',       path:'/auditoria/sla',                load:()=>loadAuditoriaTipo('sla')},
+  'audit-comportamento':{title:'Auditoria Comportamento',path:'/auditoria/comportamento',    load:()=>loadAuditoriaTipo('comportamento')},
+  'ind-sla':           {title:'Indicadores de SLA',     path:'/indicadores/sla',              load:loadDashboard},
+  'ind-produtividade': {title:'Indicadores Produtividade',path:'/indicadores/produtividade',  load:()=>loadRanking(null)},
+  'ind-tendencias':    {title:'Tendências',             path:'/indicadores/tendencias',       load:loadDashboard},
+  'tec-status':        {title:'Status Técnicos',        path:'/tecnicos/status',              load:loadTecnicos},
+  'tec-performance':   {title:'Performance Técnicos',   path:'/tecnicos/performance',         load:()=>loadRanking(null)},
+  'auto-logs':         {title:'Logs Automações',        path:'/automacoes/logs',              load:loadAutoLogs},
+  'usuarios':          {title:'Usuários',               path:'/admin/usuarios',               load:loadUsuarios},
+  'permissoes':        {title:'Permissões',             path:'/admin/permissoes',             load:loadPermissoes},
+};
 
 // ═══════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════
-function sc(s){ return s>=20?'var(--green)':s>=10?'var(--amber)':'var(--red)' }
-function scBg(s){ return s>=20?'rgba(0,229,160,.1)':s>=10?'rgba(255,184,63,.1)':'rgba(255,77,106,.1)' }
-function pctIc(p){ return p>=100?'🏆':p>=80?'✅':p>=50?'🟡':'🔴' }
-function rposClass(i){ return ['p1','p2','p3'][i]||'pn' }
-function nivelLabel(n){ return {1:'Operador',2:'Supervisor',3:'Gerente',4:'Diretoria',99:'Dev'}[n]||n }
-function nivelBadge(n){
-  const m={1:'cyan',2:'green',3:'amber',4:'orange',99:'red'}
-  return `<span class="badge ${m[n]||'cyan'}">${nivelLabel(n)}</span>`
-}
-async function api(path){ return fetch(API+path).then(r=>r.json()) }
-function esc(s){ return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;') }
-function fmtDate(d){
-  if(!d) return '—'
-  try{ return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) }
-  catch{ return d }
-}
-function labelStatus(s){ return {finalizada:'Finalizada',agendada:'Agendada',aguardando:'Aguardando',execucao:'Em Campo',aberta:'Em Campo'}[s]||s||'—' }
-function labelCat(k){ return {servico:'Serviço',suporte:'Suporte',infra:'Infra',retirada:'Retirada'}[k]||k||'—' }
+async function apiFetch(url){const r=await fetch(url);return r.json()}
+function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}catch{return d}}
+function fmtHora(d){if(!d)return'—';try{return new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}catch{return d}}
+function rposCls(i){return['p1','p2','p3'][i]||'pn'}
+function nivelLabel(n){return{1:'Operador',2:'Supervisor',3:'Gerente',4:'Diretoria',99:'Dev'}[n]||n}
+function esc(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function statusCls(s){return{finalizada:'finalizada',agendada:'agendada',aguardando:'aguardando',execucao:'execucao',aberta:'execucao'}[s]||'execucao'}
+function statusLabel(s){return{finalizada:'Finalizada',agendada:'Agendada',aguardando:'Aguardando',execucao:'Em Campo',aberta:'Em Campo'}[s]||s||'—'}
+function catCor(c){return{servico:'var(--cyan)',suporte:'var(--amber)',infra:'var(--purple)',retirada:'var(--orange)',outros:'var(--muted)'}[c]||'var(--muted)'}
+function criticidadeCls(c){return{critica:'red',alta:'red',media:'amber',baixa:'muted'}[c]||'muted'}
+
+// Date chip
+document.getElementById('date-chip').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})
 
 // ═══════════════════════════════════════════════════
-// DATE CHIP
+// NAVEGAÇÃO
 // ═══════════════════════════════════════════════════
-document.getElementById('date-chip').textContent =
-  new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})
+let currentPage='dashboard'
 
-// ═══════════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════════
-const PAGES = {
-  dashboard: {title:'Visão Geral',      path:'/produtividade/',         load:loadDashboard},
-  ranking:   {title:'Ranking Técnicos', path:'/produtividade/ranking',  load:()=>loadRanking('hoje')},
-  os:        {title:'OS por Tipo',      path:'/produtividade/os-tipo',  load:()=>loadOS('hoje')},
-  metas:     {title:'Metas',            path:'/produtividade/metas',    load:loadMetas},
-  tecnicos:  {title:'Técnicos',         path:'/produtividade/tecnicos', load:loadTecnicos},
-  telegram:  {title:'Telegram',         path:'/produtividade/telegram', load:loadTelegram},
-  usuarios:  {title:'Usuários',         path:'/admin/usuarios',         load:loadUsuarios},
-  permissoes:{title:'Permissões',       path:'/admin/permissoes',       load:loadPermissoes},
-}
-let currentPage = 'dashboard'
-
-function nav(id){
+function nav(id,grupo){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'))
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'))
-  document.getElementById('page-'+id).classList.add('active')
+  const pg=document.getElementById('page-'+id)
+  if(!pg) return
+  pg.classList.add('active')
+  // Ativar item no menu
   document.querySelectorAll('.sb-item').forEach(i=>{
-    if(i.getAttribute('onclick')===`nav('${id}')`) i.classList.add('active')
+    if(i.getAttribute('onclick')===`nav('${id}','${grupo}')`) i.classList.add('active')
   })
-  const p = PAGES[id]
-  document.getElementById('tb-title').textContent = p.title
-  document.getElementById('tb-path').textContent  = p.path
-  currentPage = id
-  if(p.load) p.load()
+  const cfg=PAGES_CFG[id]||{title:id,path:'/'+id}
+  document.getElementById('tb-title').textContent=cfg.title
+  document.getElementById('tb-path').textContent=cfg.path
+  currentPage=id
+  if(cfg.load) cfg.load()
 }
 
+function toggleGroup(el,nome){
+  el.classList.toggle('open')
+  const sub=document.getElementById('grp-'+nome)
+  if(sub) sub.classList.toggle('open')
+  // Marcar grupo como ativo
+  document.querySelectorAll('.sb-group-header').forEach(h=>h.classList.remove('active'))
+  if(el.classList.contains('open')) el.classList.add('active')
+}
+
+// ═══════════════════════════════════════════════════
+// WEBSOCKET
+// ═══════════════════════════════════════════════════
+let ws=null
+function conectarWS(){
+  const proto=location.protocol==='https:'?'wss':'ws'
+  ws=new WebSocket(`${proto}://${location.host}/ws`)
+  ws.onopen=()=>{
+    document.getElementById('ws-dot').classList.add('connected')
+  }
+  ws.onmessage=(e)=>{
+    const msg=JSON.parse(e.data)
+    if(msg.tipo==='ping') ws.send('pong')
+    else if(msg.tipo==='kpi_update') atualizarKPIs(msg.dados)
+    else if(msg.tipo==='tv_popup') mostrarPopupTV(msg.dados)
+    adicionarEvento(msg)
+  }
+  ws.onclose=()=>{
+    document.getElementById('ws-dot').classList.remove('connected')
+    setTimeout(conectarWS,5000) // reconectar
+  }
+}
+conectarWS()
+
+// ═══════════════════════════════════════════════════
+// SYNC
+// ═══════════════════════════════════════════════════
 async function syncAgora(){
-  const btn = document.getElementById('btn-sync')
-  btn.textContent='↻ Sincronizando...'; btn.disabled=true
+  const btn=document.querySelector('.btn-sync')
+  btn.textContent='↻ Sincronizando...'
+  btn.disabled=true
   await fetch('/api/sync',{method:'POST'}).catch(()=>{})
   setTimeout(()=>{
-    btn.textContent='↻ Sync IXC'; btn.disabled=false
-    if(PAGES[currentPage].load) PAGES[currentPage].load()
+    btn.textContent='↻ Sync IXC'
+    btn.disabled=false
+    if(PAGES_CFG[currentPage]?.load) PAGES_CFG[currentPage].load()
   },1500)
 }
 
 // ═══════════════════════════════════════════════════
-// FILTROS V2
-// ═══════════════════════════════════════════════════
-function setHoje(){
-  const hoje = new Date().toISOString().split('T')[0]
-  document.getElementById('filtro-inicio').value = hoje
-  document.getElementById('filtro-fim').value    = hoje
-}
-
-function setupStatusBtns(){
-  document.querySelectorAll('#status-btns .btn-status').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const cls=`active-${btn.dataset.status}`
-      btn.classList.toggle(cls)
-    })
-  })
-}
-
-function getStatusAtivos(){
-  return [...document.querySelectorAll('#status-btns .btn-status')]
-    .filter(b=>[...b.classList].some(c=>c.startsWith('active-')))
-    .map(b=>b.dataset.status)
-}
-
-function aplicarFiltros(){
-  filtrosV2.data_inicio = document.getElementById('filtro-inicio').value||null
-  filtrosV2.data_fim    = document.getElementById('filtro-fim').value||null
-  filtrosV2.status      = getStatusAtivos()
-  loadDashboard()
-}
-
-function buildParams(extra={}){
-  const p = new URLSearchParams()
-  if(filtrosV2.data_inicio) p.set('data_inicio',filtrosV2.data_inicio)
-  if(filtrosV2.data_fim)    p.set('data_fim',   filtrosV2.data_fim)
-  if(filtrosV2.status.length) p.set('status',filtrosV2.status.join(','))
-  Object.entries(extra).forEach(([k,v])=>{ if(v!=null) p.set(k,v) })
-  return p
-}
-
-// ═══════════════════════════════════════════════════
-// DASHBOARD V2
+// DASHBOARD
 // ═══════════════════════════════════════════════════
 async function loadDashboard(){
-  await Promise.all([loadAlertas(), loadResumo()])
+  try{
+    const [resumo,alertas,top]=await Promise.all([
+      apiFetch(`${SAIS}/visao-geral/resumo`),
+      apiFetch(`${SAIS}/visao-geral/alertas?limit=5&apenas_nao_lidos=true`),
+      apiFetch(`${SAIS}/produtividade/ranking`),
+    ])
+    renderDashboardKPIs(resumo)
+    renderDashboardAlertas(alertas.alertas||[])
+    renderDashboardCats(resumo.resumo)
+    renderTopTecs(top.ranking||[])
+    renderMeta(resumo)
+    // Atualizar badge
+    if(resumo.alertas_pendentes>0){
+      const b=document.getElementById('badge-alertas')
+      b.textContent=resumo.alertas_pendentes
+      b.style.display='inline'
+    }
+  }catch(e){console.error('dashboard:',e)}
 }
 
-async function loadAlertas(){
-  try{
-    const d = await fetch(`${API_V2}/alertas?${buildParams()}`).then(r=>r.json())
-    const icons = {erro:'⚠️',aviso:'🔔',sucesso:'✅'}
-    document.getElementById('db-alerts').innerHTML =
-      (d.alertas||[]).map(a=>`<div class="alert-chip ${a.cor}">${icons[a.tipo]||'•'} ${a.mensagem}</div>`).join('')
-  }catch(e){}
+function renderDashboardKPIs(d){
+  const r=d.resumo||{}
+  const pct=d.meta_percentual||0
+  document.getElementById('db-sub').textContent=
+    `Atualizado às ${new Date().toLocaleTimeString('pt-BR')} · ${r.total||0} OS no período`
+  document.getElementById('db-status-pill').textContent=
+    pct>=80?'🟢 Meta ok':pct>=50?'🟡 Atenção':'🔴 Meta em risco'
+  document.getElementById('db-kpis').innerHTML=`
+    <div class="kpi" style="--ac:var(--cyan)" onclick="nav('ultimas-os','visao-geral')">
+      <div class="kpi-lbl">Total OS</div><div class="kpi-val">${r.total||0}</div>
+      <div class="kpi-sub">hoje</div>
+    </div>
+    <div class="kpi" style="--ac:var(--green)" onclick="abrirModalListaOS('finalizada')">
+      <div class="kpi-lbl">Finalizadas</div><div class="kpi-val">${r.finalizadas||0}</div>
+      <div class="kpi-sub">${pct}% da meta</div>
+      <div class="kpi-badge ${pct>=80?'up':'dn'}">${pct}%</div>
+    </div>
+    <div class="kpi" style="--ac:var(--amber)" onclick="nav('os-atrasadas','central')">
+      <div class="kpi-lbl">Em Campo</div><div class="kpi-val">${r.em_campo||0}</div>
+      <div class="kpi-sub">em execução</div>
+    </div>
+    <div class="kpi" style="--ac:var(--cyan)" onclick="nav('agenda-dia','agenda')">
+      <div class="kpi-lbl">Agendadas</div><div class="kpi-val">${r.agendadas||0}</div>
+      <div class="kpi-sub">hoje</div>
+    </div>
+    <div class="kpi" style="--ac:var(--orange)" onclick="nav('ranking','produtividade')">
+      <div class="kpi-lbl">Técnicos</div><div class="kpi-val">${d.tecnicos_ativos||0}</div>
+      <div class="kpi-sub">ativos hoje</div>
+    </div>
+  `
 }
 
-async function loadResumo(){
-  try{
-    const d = await fetch(`${API_V2}/resumo?${buildParams()}`).then(r=>r.json())
-    const r   = d.resumo||{}
-    const fins = r.finalizadas||0
-    const total= r.total||0
-    const meta = d.meta_dia||META_DIA
-    const pct  = d.meta_percentual||0
-    const efic = d.eficiencia||0
+function renderDashboardAlertas(alertas){
+  const icons={critico:'🚨',aviso:'⚠️',info:'💬'}
+  const cors={critico:'red',aviso:'amber',info:'green'}
+  document.getElementById('db-alertas').innerHTML=alertas.slice(0,4).map(a=>`
+    <div class="alert-chip ${cors[a.criticidade]||'amber'}" onclick="marcarAlertaLido(${a.id})">
+      ${icons[a.criticidade]||'•'} ${a.titulo}
+    </div>
+  `).join('')||''
+}
 
-    // Status pill
-    let statusTxt='🟢 Operação Estável'
-    if(pct<50) statusTxt='🔴 Atenção — Meta em Risco'
-    else if(pct<80) statusTxt='🟡 Abaixo da Meta'
-    document.getElementById('db-status').textContent = statusTxt
-    document.getElementById('db-sub').textContent =
-      `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')} · ${total} OS no período`
+function renderDashboardCats(res){
+  const cats=[
+    {key:'servicos', label:'Serviço',  cor:'var(--cyan)'},
+    {key:'suportes', label:'Suporte',  cor:'var(--amber)'},
+    {key:'infra',    label:'Infra',    cor:'var(--purple)'},
+    {key:'retiradas',label:'Retirada', cor:'var(--orange)'},
+  ]
+  const vals=cats.map(c=>res[c.key]||0)
+  const maxV=Math.max(...vals,1)
+  document.getElementById('db-cats').innerHTML=cats.map((c,i)=>`
+    <div style="margin-bottom:10px;cursor:pointer" onclick="nav('prod-assunto','produtividade')">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+        <span style="font-size:11px;font-weight:600">${c.label}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:${c.cor}">${vals[i]}</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(vals[i]/maxV*100)}%;background:${c.cor}"></div></div>
+    </div>
+  `).join('')
+}
 
-    // KPIs
-    document.getElementById('db-kpis').innerHTML = `
-      <div class="kpi" style="--ac:var(--cyan)">
-        <div class="kpi-lbl">Total OS</div>
-        <div class="kpi-val">${total}</div>
-        <div class="kpi-sub">no período</div>
-      </div>
-      <div class="kpi" style="--ac:var(--green)">
-        <div class="kpi-lbl">Finalizadas</div>
-        <div class="kpi-val">${fins}</div>
-        <div class="kpi-sub">${pct}% da meta</div>
-        <div class="kpi-trend ${pct>=80?'up':'dn'}">${pct}%</div>
-      </div>
-      <div class="kpi" style="--ac:var(--amber)">
-        <div class="kpi-lbl">Em Execução</div>
-        <div class="kpi-val">${r.execucao||0}</div>
-        <div class="kpi-sub">em campo</div>
-      </div>
-      <div class="kpi" style="--ac:var(--purple)">
-        <div class="kpi-lbl">Eficiência</div>
-        <div class="kpi-val">${efic}%</div>
-        <div class="kpi-sub">fin/total</div>
-      </div>
-      <div class="kpi" style="--ac:var(--orange)">
-        <div class="kpi-lbl">Meta Dia</div>
-        <div class="kpi-val">${meta}</div>
-        <div class="kpi-sub">${Math.max(0,meta-fins)>0?`faltam ${Math.max(0,meta-fins)}`:'✓ atingida'}</div>
+function renderTopTecs(ranking){
+  if(!ranking.length){
+    document.getElementById('db-top-tecs').innerHTML=`<div class="empty"><div class="empty-icon">👥</div>Nenhum técnico hoje</div>`
+    return
+  }
+  document.getElementById('db-top-tecs').innerHTML=ranking.slice(0,8).map((t,i)=>{
+    const pct=t.pct_meta||0
+    const cls=pct>=80?'green':pct>=50?'amber':'red'
+    return `
+      <div class="tec-row" onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}')">
+        <span class="rpos ${rposCls(i)}">${i+1}</span>
+        <div style="flex:1;font-size:12px;font-weight:600">${t.nome}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan);font-weight:700;margin-right:8px">${t.total_os} OS</div>
+        <span class="badge ${cls}">${pct}%</span>
       </div>
     `
+  }).join('')
+}
 
-    // Categorias clicáveis
-    const vals = CATS_V2.map(c=>r[c.resumoKey]||0)
-    const maxC = Math.max(...vals,1)
-    document.getElementById('db-cats').innerHTML = CATS_V2.map((c,i)=>{
-      const val=vals[i]; const pctBar=Math.round(val/maxC*100)
-      return `
-        <div class="cat-item" onclick="abrirModalCat('${c.key}','${c.label}','${c.cor}')">
-          <div class="cat-nome">${c.icone} ${c.label}</div>
-          <div class="cat-right">
-            <div class="cat-val" style="color:${c.cor}">${val}</div>
-            <div class="cat-arrow">›</div>
+function renderMeta(d){
+  const fins=d.resumo?.finalizadas||0
+  const meta=d.meta_dia||150
+  const pct=Math.min(d.meta_percentual||0,100)
+  const cor=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'
+  document.getElementById('db-meta').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;text-align:center">
+      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Finalizadas</div></div>
+      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber)">${Math.max(0,meta-fins)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Restantes</div></div>
+      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:${cor}">${pct}%</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Atingimento</div></div>
+      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${meta}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta</div></div>
+    </div>
+    <div class="meta-track"><div class="meta-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div></div>
+  `
+}
+
+// ═══════════════════════════════════════════════════
+// EVENTOS
+// ═══════════════════════════════════════════════════
+const eventosBuffer=[]
+function adicionarEvento(msg){
+  if(msg.tipo==='ping'||msg.tipo==='connected') return
+  eventosBuffer.unshift({...msg,recebido:new Date().toLocaleTimeString('pt-BR')})
+  if(eventosBuffer.length>50) eventosBuffer.pop()
+  if(currentPage==='eventos') renderEventos()
+}
+function loadEventos(){renderEventos()}
+function renderEventos(){
+  const el=document.getElementById('eventos-list')
+  if(!eventosBuffer.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📡</div>Aguardando eventos do WebSocket...</div>`;return}
+  el.innerHTML=eventosBuffer.map(e=>`
+    <div class="os-row" style="margin-bottom:6px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-right:10px;flex-shrink:0">${e.recebido}</div>
+      <div style="flex:1"><div style="font-size:11px;font-weight:600">${e.tipo}</div><div style="font-size:10px;color:var(--muted)">${JSON.stringify(e.dados||{}).slice(0,80)}</div></div>
+    </div>
+  `).join('')
+}
+
+// ═══════════════════════════════════════════════════
+// ÚLTIMAS OS
+// ═══════════════════════════════════════════════════
+async function loadUltimasOS(){
+  const d=await apiFetch(`${SAIS}/visao-geral/eventos-recentes?limit=30`)
+  const el=document.getElementById('ultimas-os-list')
+  if(!d.eventos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>Nenhuma OS hoje</div>`;return}
+  el.innerHTML=d.eventos.map(o=>`
+    <div class="os-row" onclick="abrirModalOS(${o.ixc_os_id})">
+      <div class="os-id">#${o.ixc_os_id}</div>
+      <div class="os-info">
+        <div class="os-assunto">${o.assunto||'—'}</div>
+        <div class="os-meta"><span>${o.tecnico||'—'}</span><span>${fmtData(o.data_fechamento||o.data_abertura)}</span></div>
+      </div>
+      <span class="os-status-chip ${statusCls(o.status)}">${statusLabel(o.status)}</span>
+    </div>
+  `).join('')
+}
+function fmtData(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}catch{return d}}
+
+// ═══════════════════════════════════════════════════
+// CENTRAL OPERACIONAL
+// ═══════════════════════════════════════════════════
+async function loadOsAtrasadas(){
+  const d=await apiFetch(`${SAIS}/central/os-criticas`)
+  const el=document.getElementById('os-atrasadas-list')
+  if(!d.os_criticas?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS atrasada</div>`;return}
+  el.innerHTML=d.os_criticas.map(o=>`
+    <div class="critico-card" onclick="abrirModalOS(${o.ixc_os_id})">
+      <div class="critico-icon">⏰</div>
+      <div class="critico-info">
+        <div class="critico-titulo">OS #${o.ixc_os_id} — ${o.assunto||'—'}</div>
+        <div class="critico-sub">${o.tecnico||'—'} · Aberta há ${o.horas_abertas}h · ${o.categoria||''}</div>
+      </div>
+      <span class="badge red">${o.horas_abertas}h</span>
+    </div>
+  `).join('')
+}
+
+async function loadSlaRisco(){
+  document.getElementById('sla-risco-content').innerHTML=`<div class="empty"><div class="empty-icon">📊</div>Motor de SLA em processamento — dados disponíveis após o próximo ciclo de auditoria (15 min)</div>`
+}
+
+async function loadOciosos(){
+  const d=await apiFetch(`${SAIS}/central/tecnicos-ociosos`)
+  const el=document.getElementById('ociosos-list')
+  if(!d.tecnicos_ociosos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhum técnico ocioso</div>`;return}
+  el.innerHTML=d.tecnicos_ociosos.map(t=>`
+    <div class="critico-card amber" onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}')">
+      <div class="critico-icon">💤</div>
+      <div class="critico-info">
+        <div class="critico-titulo">${t.nome}</div>
+        <div class="critico-sub">Sem OS há ${t.horas_ocioso}h · Último status: ${t.ultimo_status||'—'}</div>
+      </div>
+      <span class="badge amber">${t.horas_ocioso}h</span>
+    </div>
+  `).join('')
+}
+
+async function loadAlertasFull(){
+  const d=await apiFetch(`${SAIS}/visao-geral/alertas?limit=50`)
+  const el=document.getElementById('alertas-full-list')
+  if(!d.alertas?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhum alerta</div>`;return}
+  const icons={critico:'🚨',aviso:'⚠️',info:'💬'}
+  const cors={critico:'red',aviso:'amber',info:'green'}
+  el.innerHTML=d.alertas.map(a=>`
+    <div class="critico-card ${cors[a.criticidade]||'amber'}" onclick="marcarAlertaLido(${a.id})">
+      <div class="critico-icon">${icons[a.criticidade]||'•'}</div>
+      <div class="critico-info">
+        <div class="critico-titulo">${a.titulo}</div>
+        <div class="critico-sub">${a.mensagem||''} · ${fmtData(a.criado_em)} ${a.lido?'· ✓ lido':''}</div>
+      </div>
+      <span class="badge ${cors[a.criticidade]||'amber'}">${a.criticidade}</span>
+    </div>
+  `).join('')
+}
+
+async function marcarAlertaLido(id){
+  await fetch(`${SAIS}/visao-geral/alertas/${id}/lido`,{method:'POST'})
+  loadAlertasFull()
+}
+
+// ═══════════════════════════════════════════════════
+// AGENDA
+// ═══════════════════════════════════════════════════
+async function loadAgendaDia(offsetDias=0, btn=null){
+  if(btn){document.querySelectorAll('#page-agenda-dia .period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
+  const data=new Date(Date.now()+(offsetDias-3)*0 ) // offset simples
+  const dataStr=new Date(new Date().getTime()+(offsetDias*86400000)).toISOString().split('T')[0]
+  const d=await apiFetch(`${SAIS}/agenda/dia?data=${dataStr}`)
+  document.getElementById('agenda-dia-sub').textContent=`${d.total||0} OS agendadas para ${dataStr}`
+  const el=document.getElementById('agenda-dia-content')
+  if(!d.por_tecnico?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📅</div>Nenhuma OS agendada</div>`;return}
+  el.innerHTML=d.por_tecnico.map(t=>`
+    <div class="agenda-tec">
+      <div class="agenda-tec-header" onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}')">
+        <span style="font-size:14px">👷</span>
+        <span class="agenda-tec-nome">${t.nome}</span>
+        <span class="agenda-tec-count">${t.os.length} OS</span>
+      </div>
+      <div class="agenda-os">
+        ${t.os.map(o=>`
+          <div class="agenda-os-item" onclick="abrirModalOS(${o.ixc_os_id})">
+            <span class="agenda-hora">${fmtHora(o.data_agenda)}</span>
+            <span class="agenda-os-id">#${o.ixc_os_id}</span>
+            <span class="agenda-os-nome">${o.assunto||'—'}</span>
+            <span class="badge cyan" style="flex-shrink:0">${o.categoria||'—'}</span>
           </div>
-        </div>
-        <div class="cat-bar"><div class="cat-bar-fill" style="background:${c.cor}" data-w="${pctBar}"></div></div>
-      `
-    }).join('')
-    requestAnimationFrame(()=>{
-      document.querySelectorAll('.cat-bar-fill[data-w]').forEach(el=>{ el.style.width=el.dataset.w+'%' })
-    })
-
-    // Meta bar
-    const pctMeta = Math.min(pct,100)
-    document.getElementById('db-meta').innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;text-align:center">
-        <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Finalizadas</div></div>
-        <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber)">${Math.max(0,meta-fins)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Restantes</div></div>
-        <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--green)">${pctMeta}%</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Atingimento</div></div>
-        <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${meta}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta</div></div>
+        `).join('')}
       </div>
-      <div class="meta-track">
-        <div class="meta-fill" style="width:${pctMeta}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div>
-        <div class="meta-marker" style="left:50%" data-l="50%"></div>
+    </div>
+  `).join('')
+}
+
+async function loadAgendaFutura(){
+  const d=await apiFetch(`${SAIS}/agenda/futura?dias=7`)
+  const el=document.getElementById('agenda-futura-content')
+  if(!d.agenda_futura?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📅</div>Nenhuma OS agendada nos próximos 7 dias</div>`;return}
+  el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Data</th><th class="r">Total</th><th class="r">Serviço</th><th class="r">Suporte</th><th class="r">Infra</th><th class="r">Retirada</th></tr></thead>
+    <tbody>${d.agenda_futura.map(r=>`
+      <tr onclick="loadAgendaDiaData('${r.data}')">
+        <td><strong>${r.data}</strong></td>
+        <td class="r" style="color:var(--cyan);font-weight:700">${r.total}</td>
+        <td class="r">${r.servicos||0}</td>
+        <td class="r">${r.suportes||0}</td>
+        <td class="r">${r.infra||0}</td>
+        <td class="r">${r.retiradas||0}</td>
+      </tr>
+    `).join('')}</tbody>
+  </table></div></div>`
+}
+
+async function loadReagendamentos(){
+  const d=await apiFetch(`${SAIS}/agenda/reagendamentos?limit=30`)
+  const el=document.getElementById('reagendamentos-list')
+  if(!d.reagendamentos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS reagendada pendente</div>`;return}
+  el.innerHTML=d.reagendamentos.map(o=>`
+    <div class="os-row" onclick="abrirModalOS(${o.ixc_os_id})">
+      <div class="os-id">#${o.ixc_os_id}</div>
+      <div class="os-info">
+        <div class="os-assunto">${o.assunto||'—'}</div>
+        <div class="os-meta"><span>${o.tecnico||'—'}</span><span>Agendada para ${fmtData(o.data_agenda)}</span><span style="color:var(--red)">${o.horas_atraso}h de atraso</span></div>
       </div>
-    `
-
-    // Top técnicos
-    loadTopTecnicos()
-
-  }catch(e){
-    document.getElementById('db-kpis').innerHTML=`<div style="color:var(--red);font-size:12px;padding:16px;grid-column:1/-1">⚠️ Erro ao carregar dados</div>`
-  }
-}
-
-async function loadTopTecnicos(){
-  const container = document.getElementById('db-top-tecs')
-  container.innerHTML=`<div class="loading"><div class="spinner"></div></div>`
-  try{
-    const p = buildParams()
-    const respostas = await Promise.all(
-      CATS_V2.map(c=>fetch(`${API_V2}/categoria/${c.key}/tecnicos?${p}`).then(r=>r.json()))
-    )
-    const mapa={}
-    respostas.forEach(d=>{
-      (d.tecnicos||[]).forEach(t=>{
-        if(!mapa[t.id]) mapa[t.id]={id:t.id,nome:t.nome,total:0,finalizadas:0}
-        mapa[t.id].total      +=t.total_os
-        mapa[t.id].finalizadas+=t.finalizadas
-      })
-    })
-    const lista=Object.values(mapa).sort((a,b)=>b.finalizadas-a.finalizadas).slice(0,8)
-    if(!lista.length){
-      container.innerHTML=`<div class="empty-state"><div class="empty-state-icon">👥</div>Nenhum técnico no período</div>`
-      return
-    }
-    container.innerHTML = lista.map((t,i)=>{
-      const pct=t.total>0?Math.round(t.finalizadas/t.total*100):0
-      const cls=pct>=80?'green':pct>=50?'amber':'red'
-      const pos=i<3?`p${i+1}`:'pn'
-      return `
-        <div class="tec-row" onclick="abrirModalTecnico(${t.id},'${esc(t.nome)}',null,'Top Técnicos')">
-          <div class="tec-pos2 ${pos}">${i+1}</div>
-          <div style="flex:1;font-size:12px;font-weight:600">${t.nome}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan);font-weight:700;margin-right:8px">${t.finalizadas} <span style="color:var(--muted);font-size:10px">OS</span></div>
-          <div class="badge ${cls}">${pct}%</div>
-        </div>
-      `
-    }).join('')
-  }catch(e){
-    container.innerHTML=`<div class="empty-state"><div class="empty-state-icon">⚠️</div>Erro ao carregar</div>`
-  }
+      <span class="badge red">${o.horas_atraso}h</span>
+    </div>
+  `).join('')
 }
 
 // ═══════════════════════════════════════════════════
-// MODAL 1: TÉCNICOS DA CATEGORIA
+// RANKING / PRODUTIVIDADE
 // ═══════════════════════════════════════════════════
-async function abrirModalCat(catKey,catLabel,catCor){
-  ctxCategoria={key:catKey,label:catLabel,cor:catCor}
-  document.getElementById('modal-cat-title').textContent=`${catLabel} — Técnicos`
-  document.getElementById('modal-cat-bread').innerHTML=
-    `<b>Visão Geral</b> <span>›</span> <b style="color:${catCor}">${catLabel}</b>`
-  document.getElementById('modal-cat-stats').innerHTML=''
-  document.getElementById('modal-cat-body').innerHTML=`<div class="loading"><div class="spinner"></div>Carregando...</div>`
-  abrirModal('modal-cat')
-  try{
-    const d=await fetch(`${API_V2}/categoria/${catKey}/tecnicos?${buildParams()}`).then(r=>r.json())
-    const tecnicos=d.tecnicos||[]
-    document.getElementById('modal-cat-stats').innerHTML=`
-      <div class="modal-stat"><div class="modal-stat-val" style="color:${catCor}">${d.total_os||0}</div><div class="modal-stat-lbl">Total OS</div></div>
-      <div class="modal-stat"><div class="modal-stat-val">${d.total_tecnicos||0}</div><div class="modal-stat-lbl">Técnicos</div></div>
-    `
-    if(!tecnicos.length){
-      document.getElementById('modal-cat-body').innerHTML=`<div class="empty-state"><div class="empty-state-icon">👷</div>Nenhum técnico nesta categoria no período</div>`
-      return
-    }
-    document.getElementById('modal-cat-body').innerHTML=tecnicos.map((t,i)=>{
-      const pct=t.percentual_finalizacao||0
-      const cls=pct>=80?'green':pct>=50?'amber':'red'
-      const pos=i<3?`p${i+1}`:'pn'
-      return `
-        <div class="modal-tec-item" onclick="abrirModalTecnico(${t.id},'${esc(t.nome)}','${catKey}','${esc(catLabel)}')">
-          <div class="tec-pos2 ${pos}">${i+1}</div>
-          <div style="flex:1;font-size:13px;font-weight:600">${t.nome}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--cyan);font-weight:700;margin-right:8px">${t.total_os} OS</div>
-          <div class="badge ${cls}">${pct}%</div>
-        </div>
-      `
-    }).join('')
-  }catch(e){
-    document.getElementById('modal-cat-body').innerHTML=`<div class="empty-state"><div class="empty-state-icon">⚠️</div>Erro ao carregar dados</div>`
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// MODAL 2: OS DO TÉCNICO
-// ═══════════════════════════════════════════════════
-async function abrirModalTecnico(tecId,tecNome,catKey,catLabel){
-  const cor=ctxCategoria?.cor||'var(--cyan)'
-  const bread = catKey && ctxCategoria
-    ? `<b>Visão Geral</b> <span>›</span> <b style="color:${cor}">${catLabel}</b> <span>›</span> <b style="color:var(--text)">${tecNome}</b>`
-    : `<b>${catLabel||'Top Técnicos'}</b> <span>›</span> <b style="color:var(--text)">${tecNome}</b>`
-
-  document.getElementById('modal-tec-title').textContent=`OS — ${tecNome}`
-  document.getElementById('modal-tec-bread').innerHTML=bread
-  document.getElementById('modal-tec-stats').innerHTML=''
-  document.getElementById('modal-tec-body').innerHTML=`<div class="loading"><div class="spinner"></div>Carregando...</div>`
-  abrirModal('modal-tec')
-
-  try{
-    const extra=catKey?{categoria:catKey}:{}
-    const d=await fetch(`${API_V2}/tecnico/${tecId}/os?${buildParams(extra)}`).then(r=>r.json())
-    const lista=d.os_list||[]
-    const fins=lista.filter(o=>o.status==='finalizada').length
-    const pct=lista.length>0?Math.round(fins/lista.length*100):0
-    const pctCor=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'
-
-    document.getElementById('modal-tec-stats').innerHTML=`
-      <div class="modal-stat"><div class="modal-stat-val">${lista.length}</div><div class="modal-stat-lbl">Total OS</div></div>
-      <div class="modal-stat"><div class="modal-stat-val" style="color:var(--green)">${fins}</div><div class="modal-stat-lbl">Finalizadas</div></div>
-      <div class="modal-stat"><div class="modal-stat-val" style="color:${pctCor}">${pct}%</div><div class="modal-stat-lbl">Eficiência</div></div>
-    `
-    if(!lista.length){
-      document.getElementById('modal-tec-body').innerHTML=`<div class="empty-state"><div class="empty-state-icon">📋</div>Nenhuma OS encontrada para ${tecNome}</div>`
-      return
-    }
-    document.getElementById('modal-tec-body').innerHTML=lista.map(os=>`
-      <div class="os-item">
-        <div class="os-header">
-          <div class="os-id">OS #${os.os_id}</div>
-          <div class="os-status-chip ${os.status||'execucao'}">${labelStatus(os.status)}</div>
-        </div>
-        <div class="os-info">
-          <span>📂 ${labelCat(os.categoria)}</span>
-          <span>📅 ${fmtDate(os.data_fechamento||os.data_abertura)}</span>
-          ${os.assunto?`<span>🔖 ${os.assunto}</span>`:''}
-        </div>
-      </div>
-    `).join('')
-  }catch(e){
-    document.getElementById('modal-tec-body').innerHTML=`<div class="empty-state"><div class="empty-state-icon">⚠️</div>Erro ao carregar OS</div>`
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// MODAL UTILS
-// ═══════════════════════════════════════════════════
-function abrirModal(id){
-  document.getElementById(id).classList.add('active')
-}
-function fecharModal(id){
-  document.getElementById(id).classList.remove('active')
-}
-function overlayClick(e,id){
-  if(e.target===e.currentTarget) fecharModal(id)
-}
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Escape') return
-  const abertos=[...document.querySelectorAll('.modal-overlay.active')]
-  if(abertos.length) fecharModal(abertos[abertos.length-1].id)
-})
-
-// ═══════════════════════════════════════════════════
-// OUTRAS PÁGINAS (inalteradas)
-// ═══════════════════════════════════════════════════
-async function loadRanking(periodo='hoje',btn=null){
-  if(btn){ document.querySelectorAll('#page-ranking .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active') }
-  const d=await api(`/api/ranking/?periodo=${periodo}`)
-  document.getElementById('rk-table').innerHTML=d.ranking.map((t,i)=>`
-    <tr>
-      <td><span class="rpos ${rposClass(i)}">${i+1}</span></td>
+async function loadRanking(data,btn=null){
+  if(btn){document.querySelectorAll('#page-ranking .period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
+  const url=data?`${SAIS}/produtividade/ranking?data=${data}`:`${SAIS}/produtividade/ranking`
+  const d=await apiFetch(url)
+  document.getElementById('ranking-table').innerHTML=(d.ranking||[]).map((t,i)=>`
+    <tr onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}')">
+      <td><span class="rpos ${rposCls(i)}">${i+1}</span></td>
       <td><strong>${t.nome}</strong></td>
-      <td class="r">${t.servicos||0}</td><td class="r">${t.suportes||0}</td><td class="r">${t.infra||0}</td><td class="r">${t.retiradas||0}</td>
-      <td class="r" style="color:var(--cyan);font-weight:700">${t.finalizadas||0}</td>
-      <td class="r"><span class="badge ${(t.eficiencia||0)>=80?'green':(t.eficiencia||0)>=50?'amber':'red'}">${t.eficiencia||0}%</span></td>
-      <td class="r"><span class="badge" style="background:${scBg(t.score)};color:${sc(t.score)}">${t.score||0}</span></td>
+      <td class="r">${t.por_categoria?.servico||0}</td>
+      <td class="r">${t.por_categoria?.suporte||0}</td>
+      <td class="r">${t.por_categoria?.infra||0}</td>
+      <td class="r">${t.por_categoria?.retirada||0}</td>
+      <td class="r" style="color:var(--cyan);font-weight:700">${t.total_os}</td>
+      <td class="r"><span class="badge ${t.eficiencia>=80?'green':t.eficiencia>=50?'amber':'red'}">${t.eficiencia}%</span></td>
+      <td class="r"><span class="badge ${t.pct_meta>=80?'green':t.pct_meta>=50?'amber':'red'}">${t.pct_meta}%</span></td>
+      <td class="r"><span class="badge cyan">${t.score}</span></td>
     </tr>
   `).join('')
 }
 
-async function loadOS(periodo='hoje',btn=null){
-  if(btn){ document.querySelectorAll('#page-os .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active') }
-  const d=await api(`/api/os-tipos/?periodo=${periodo}`)
-  const cats=d.categorias||[]
-  const total=cats.reduce((s,c)=>s+(c.total||0),0)
-  const catMap=Object.fromEntries(cats.map(c=>[c.categoria,c]))
-  const kpis=[{n:'Serviço',k:'servico',c:'var(--cyan)'},{n:'Suporte',k:'suporte',c:'var(--amber)'},{n:'Infra',k:'infra',c:'var(--purple)'},{n:'Retirada',k:'retirada',c:'var(--orange)'}]
-  document.getElementById('os-kpis').innerHTML=kpis.map(k=>{
-    const cat=catMap[k.k]||{}; const v=cat.total||0; const pct=total>0?(v/total*100).toFixed(1):0
-    return `<div class="kpi" style="--ac:${k.c}"><div class="kpi-lbl">${k.n}</div><div class="kpi-val">${v}</div><div class="kpi-sub">${pct}% do total</div></div>`
-  }).join('')
-  const maxC=Math.max(...cats.map(c=>c.total||0),1)
-  const cores={servico:'var(--cyan)',suporte:'var(--amber)',infra:'var(--purple)',retirada:'var(--orange)',outros:'var(--muted)'}
-  document.getElementById('os-cats').innerHTML=cats.length?cats.map(c=>`
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-        <span style="font-size:12px;font-weight:600;text-transform:capitalize">${c.categoria}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${cores[c.categoria]||'var(--muted)'}">
-          ${c.finalizadas||0}/${c.total||0}
-        </span>
+function loadRankingOntem(btn){
+  const ontem=new Date(Date.now()-86400000).toISOString().split('T')[0]
+  loadRanking(ontem,btn)
+}
+
+async function loadProdAssunto(){
+  const d=await apiFetch(`${SAIS}/produtividade/por-assunto`)
+  const el=document.getElementById('prod-assunto-content')
+  if(!d.por_assunto?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📊</div>Sem dados</div>`;return}
+  el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Assunto</th><th>Categoria</th><th class="r">Total</th><th class="r">Finalizadas</th><th class="r">Tempo Médio</th></tr></thead>
+    <tbody>${d.por_assunto.map(r=>`
+      <tr>
+        <td><strong>${r.assunto||'—'}</strong></td>
+        <td><span class="badge" style="background:rgba(0,0,0,.2);color:${catCor(r.categoria)}">${r.categoria||'—'}</span></td>
+        <td class="r">${r.total}</td>
+        <td class="r" style="color:var(--green)">${r.finalizadas||0}</td>
+        <td class="r">${r.minutos_medio?r.minutos_medio+'min':'—'}</td>
+      </tr>
+    `).join('')}</tbody>
+  </table></div></div>`
+}
+
+// ═══════════════════════════════════════════════════
+// AUDITORIA
+// ═══════════════════════════════════════════════════
+async function loadAuditoria(){
+  const [resumo,ocorrs]=await Promise.all([
+    apiFetch(`${SAIS}/auditoria/resumo`),
+    apiFetch(`${SAIS}/auditoria/ocorrencias?limit=30`),
+  ])
+  const t=resumo.totais||{}
+  document.getElementById('audit-kpis').innerHTML=`
+    <div class="kpi" style="--ac:var(--red)"><div class="kpi-lbl">Críticas</div><div class="kpi-val">${t.criticas||0}</div></div>
+    <div class="kpi" style="--ac:var(--amber)"><div class="kpi-lbl">Altas</div><div class="kpi-val">${t.altas||0}</div></div>
+    <div class="kpi" style="--ac:var(--cyan)"><div class="kpi-lbl">Médias</div><div class="kpi-val">${t.medias||0}</div></div>
+    <div class="kpi" style="--ac:var(--green)"><div class="kpi-lbl">Resolvidas</div><div class="kpi-val">${t.resolvidas||0}</div></div>
+  `
+  renderOcorrencias(ocorrs.ocorrencias||[])
+}
+
+async function loadAuditoriaTipo(tipo){
+  const d=await apiFetch(`${SAIS}/auditoria/ocorrencias?tipo=${tipo}&limit=30`)
+  document.getElementById('audit-kpis').innerHTML=''
+  renderOcorrencias(d.ocorrencias||[])
+}
+
+function renderOcorrencias(lista){
+  const el=document.getElementById('audit-content')
+  if(!lista.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma ocorrência encontrada</div>`;return}
+  el.innerHTML=lista.map(a=>`
+    <div class="critico-card ${criticidadeCls(a.criticidade)}" onclick="abrirModalAuditoria(${a.id})">
+      <div class="critico-icon">${a.criticidade==='critica'?'🚨':a.criticidade==='alta'?'⚠️':'🔍'}</div>
+      <div class="critico-info">
+        <div class="critico-titulo">${a.subtipo} — ${a.tecnico_nome||'—'} ${a.os_id?'· OS #'+a.os_id:''}</div>
+        <div class="critico-sub">${a.descricao||''}</div>
       </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round((c.total||0)/maxC*100)}%;background:${cores[c.categoria]||'var(--muted)'}"></div></div>
+      <span class="badge ${criticidadeCls(a.criticidade)}">${a.criticidade}</span>
     </div>
-  `).join(''):'<div class="loading">Sem OS no período</div>'
-  document.getElementById('os-tec-table').innerHTML=(d.por_tecnico||[]).map(t=>`
-    <tr><td><strong>${t.nome}</strong></td><td class="r">${t.servicos||0}</td><td class="r">${t.suportes||0}</td><td class="r">${t.infra||0}</td><td class="r">${t.retiradas||0}</td><td class="r" style="color:var(--cyan);font-weight:700">${t.total||0}</td></tr>
   `).join('')
 }
 
-async function loadMetas(){
-  const [metas,dash]=await Promise.all([api('/api/metas/'),api('/api/dashboard/')])
-  const meta_dia=dash.meta_dia||META_DIA; const fins=dash.resumo?.finalizadas||0
-  const pct=Math.min(Math.round(fins/meta_dia*100),100)
-  document.getElementById('metas-content').innerHTML=`
-    <div class="kpi-grid c3" style="margin-bottom:18px">
-      ${dash.tecnicos.slice(0,6).map(t=>{
-        const f=t.finalizadas||0; const m=t.meta_dia||8; const p=Math.min(Math.round(f/m*100),100)
-        const cor=p>=80?'var(--green)':p>=50?'var(--amber)':'var(--red)'
-        return `<div class="kpi" style="--ac:${cor}">
-          <div class="kpi-lbl">${t.nome.split(' ')[0]}</div>
-          <div class="kpi-val">${f}<span style="font-size:13px;color:var(--muted)">/${m}</span></div>
-          <div class="kpi-sub">Meta diária · ${p}%</div>
-          <div class="bar-bg" style="margin-top:8px"><div class="bar-fill" style="width:${p}%;background:${cor}"></div></div>
-        </div>`
-      }).join('')}
-    </div>
-    <div class="card">
-      <div class="card-head">🎯 Meta Equipe Hoje</div>
-      <div style="display:flex;align-items:center;gap:20px;margin-bottom:12px">
-        <div style="font-size:32px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}<span style="font-size:16px;color:var(--muted)">/${meta_dia}</span></div>
-        <div>
-          <div style="font-size:18px;font-weight:800;color:${pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'}">${pct}% ${pctIc(pct)}</div>
-          <div style="font-size:11px;color:var(--muted)">Faltam ${Math.max(0,meta_dia-fins)} OS</div>
+// ═══════════════════════════════════════════════════
+// TÉCNICOS
+// ═══════════════════════════════════════════════════
+async function loadTecnicos(){
+  const [ranking,tecs]=await Promise.all([
+    apiFetch(`${SAIS}/produtividade/ranking`),
+    apiFetch('/api/tecnicos/'),
+  ])
+  const rankMap={}
+  ;(ranking.ranking||[]).forEach(t=>{rankMap[t.tecnico_id]=t})
+  document.getElementById('tec-cards').innerHTML=(tecs||[]).map(t=>{
+    const r=rankMap[t.id]||{}
+    const pct=r.pct_meta||0
+    const cor=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'
+    return `
+      <div class="card" style="cursor:pointer" onclick="abrirModalTecnico(${t.id},'${esc(t.nome)}')">
+        <div style="font-size:13px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.nome}</div>
+        <div style="font-size:9px;color:var(--muted);margin-bottom:10px">ID IXC: ${t.ixc_funcionario_id} · Meta: ${t.meta_dia} OS/dia</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          <div style="background:var(--s2);border-radius:6px;padding:7px;text-align:center">
+            <div style="font-size:14px;font-weight:800;font-family:'DM Mono',monospace;color:var(--green)">${r.total_os||0}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:1px">OS</div>
+          </div>
+          <div style="background:var(--s2);border-radius:6px;padding:7px;text-align:center">
+            <div style="font-size:14px;font-weight:800;font-family:'DM Mono',monospace;color:${cor}">${pct}%</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:1px">Meta</div>
+          </div>
+          <div style="background:var(--s2);border-radius:6px;padding:7px;text-align:center">
+            <div style="font-size:14px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${r.score||0}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:1px">Score</div>
+          </div>
         </div>
       </div>
-      <div class="meta-track">
-        <div class="meta-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div>
-        <div class="meta-marker" style="left:50%" data-l="50%"></div>
-      </div>
-    </div>
-  `
-}
-
-async function loadTecnicos(){
-  const [tecs,dash]=await Promise.all([api('/api/tecnicos/'),api('/api/dashboard/')])
-  const tecMap=Object.fromEntries(dash.tecnicos.map(t=>[t.id,t]))
-  document.getElementById('tec-cards').innerHTML=tecs.map(t=>{
-    const d=tecMap[t.id]||{}; const fins=d.finalizadas||0; const score=d.score||0; const efic=d.eficiencia||0
-    return `<div class="tec-card">
-      <div class="tec-name">${t.nome}</div>
-      <div class="tec-meta">ID IXC: ${t.ixc_funcionario_id} · Meta: ${t.meta_dia} OS/dia</div>
-      <div class="tec-stats">
-        <div class="tec-stat"><div class="tec-stat-val" style="color:var(--green)">${fins}</div><div class="tec-stat-lbl">OS Fin.</div></div>
-        <div class="tec-stat"><div class="tec-stat-val" style="color:var(--amber)">${efic}%</div><div class="tec-stat-lbl">Efic.</div></div>
-        <div class="tec-stat"><div class="tec-stat-val" style="color:${sc(score)}">${score}</div><div class="tec-stat-lbl">Score</div></div>
-      </div>
-    </div>`
+    `
   }).join('')
 }
 
-async function loadTelegram(){
-  const d=await api('/api/dashboard/')
-  const r=d.resumo; const fins=r.finalizadas||0; const meta=d.meta_dia||META_DIA
-  const pct=Math.round(fins/meta*100); const agora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
-  const hoje=new Date().toLocaleDateString('pt-BR')
-  document.getElementById('tg-hora').innerHTML=`
-    <div class="tc">📡 HubProdutividade · Cliquedf</div><div class="tm">🕐 ${agora} · ${hoje}</div>
-    <div class="tm">━━━━━━━━━━━━━━━━━</div>
-    <div>🎯 Meta dia: <span class="tc">${fins}/${meta}</span> (${pctIc(pct)} ${pct}%)</div>
-    <div>✅ Finalizadas: <span class="tg">${fins}</span></div>
-    <div>🔄 Em aberto: <span class="ta">${r.execucao||0}</span></div>
-    <div>📊 Total OS: <span class="tc">${r.total||0}</span></div>
-    <div class="tm">━━━━━━━━━━━━━━━━━</div><div><b>Por técnico:</b></div>
-    ${d.tecnicos.slice(0,5).map(t=>{const f=t.finalizadas||0;const m=t.meta_dia||8;const p=Math.round(f/m*100);return `<div>${pctIc(p)} ${t.nome.split(' ')[0]}: <span class="tc">${f}</span>/${m} OS</div>`}).join('')}
-  `
-  const medals=['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟']
-  document.getElementById('tg-rank').innerHTML=`
-    <div class="tc">🏆 Ranking Final · Cliquedf</div><div class="tm">📅 ${hoje}</div>
-    <div class="tm">━━━━━━━━━━━━━━━━━</div>
-    ${d.tecnicos.map((t,i)=>{const cls=i===0?'tg':i===1?'ta':i===2?'tc':'tm';return `<div class="${cls}">${medals[i]||'·'} ${t.nome.split(' ')[0]}: <b>${t.finalizadas||0} OS</b> · Score ${t.score||0}</div>`}).join('')}
-    <div class="tm">━━━━━━━━━━━━━━━━━</div>
-    <div>📊 Total equipe: <span class="tg">${fins} OS</span></div>
-    <div>🎯 Meta atingida: <span class="${pct>=80?'tg':pct>=50?'ta':'tr'}">${pct}%</span></div>
-  `
+// ═══════════════════════════════════════════════════
+// AUTOMAÇÕES LOGS
+// ═══════════════════════════════════════════════════
+async function loadAutoLogs(){
+  // Usa tabela sais_automacoes_log diretamente via endpoint genérico
+  const el=document.getElementById('auto-logs-content')
+  try{
+    const d=await apiFetch('/api/sais/auditoria/ocorrencias?limit=1') // teste
+    el.innerHTML=`<div class="empty"><div class="empty-icon">🤖</div>Endpoint de logs em desenvolvimento — verifique /var/log/sais_auditoria.log no servidor</div>`
+  }catch(e){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar logs</div>`
+  }
 }
 
+// ═══════════════════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════════════════
 async function loadUsuarios(){
-  const d=await api('/api/admin/usuarios/')
-  document.getElementById('usr-table').innerHTML=d.map(u=>`
+  const d=await apiFetch('/api/admin/usuarios/')
+  document.getElementById('usr-table').innerHTML=(d||[]).map(u=>`
     <tr>
       <td style="font-family:'DM Mono',monospace;color:var(--cyan)">${u.login}</td>
       <td><strong>${u.nome}</strong></td>
-      <td class="r">${nivelBadge(u.nivel)}</td>
+      <td class="r"><span class="badge cyan">${nivelLabel(u.nivel)}</span></td>
       <td class="r"><span class="badge ${u.ativo?'green':'red'}">${u.ativo?'Ativo':'Inativo'}</span></td>
     </tr>
   `).join('')
 }
 
 async function loadPermissoes(){
-  const d=await api('/api/admin/permissoes/')
-  const modulos=[...new Set(d.map(r=>r.modulo))]
-  document.getElementById('perm-table').innerHTML=modulos.map(mod=>{
-    const niveis=[1,2,3,4].map(n=>{const row=d.find(r=>r.modulo===mod&&r.nivel===n);const ok=row?.permitido;return `<td class="r"><span class="badge ${ok?'green':'muted'}">${ok?'✓':'—'}</span></td>`}).join('')
-    return `<tr><td><strong>${mod}</strong></td><td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${mod}</td>${niveis}</tr>`
+  const d=await apiFetch('/api/admin/permissoes/')
+  const mods=[...new Set((d||[]).map(r=>r.modulo))]
+  document.getElementById('perm-table').innerHTML=mods.map(mod=>{
+    const niveis=[1,2,3,4].map(n=>{
+      const row=(d||[]).find(r=>r.modulo===mod&&r.nivel===n)
+      return `<td class="r"><span class="badge ${row?.permitido?'green':'muted'}">${row?.permitido?'✓':'—'}</span></td>`
+    }).join('')
+    return `<tr><td><strong>${mod}</strong></td>${niveis}</tr>`
   }).join('')
 }
 
-// ── INIT ──────────────────────────────────────────
-setupStatusBtns()
-setHoje()
+// ═══════════════════════════════════════════════════
+// MODAL OS
+// ═══════════════════════════════════════════════════
+async function abrirModalOS(osId){
+  document.getElementById('modal-os-title').textContent=`OS #${osId}`
+  document.getElementById('modal-os-sub').textContent='Carregando...'
+  // Reset tabs
+  switchTab('os','resumo',document.querySelector('#modal-os .modal-tab'))
+  document.getElementById('os-tab-resumo').innerHTML=`<div class="loading"><div class="spinner"></div>Carregando...</div>`
+  abrirModal('modal-os')
+
+  try{
+    const d=await apiFetch(`${SAIS}/visao-geral/os/${osId}`)
+    const os=d.os||{}
+    const sla=d.sla||{}
+    const audits=d.auditorias||[]
+
+    document.getElementById('modal-os-sub').textContent=
+      `${os.tecnico_nome||'—'} · ${os.nome_assunto||os.categoria||'—'} · ${statusLabel(os.status)}`
+
+    // Tab Resumo
+    document.getElementById('os-tab-resumo').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Informações</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${infoRow('Técnico', os.tecnico_nome||'—')}
+            ${infoRow('Assunto', os.nome_assunto||'—')}
+            ${infoRow('Categoria', os.categoria||'—')}
+            ${infoRow('Status', `<span class="badge ${statusCls(os.status)}">${statusLabel(os.status)}</span>`)}
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Datas</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${infoRow('Abertura', fmtData(os.data_abertura))}
+            ${infoRow('Agenda', fmtData(os.data_agenda)||'—')}
+            ${infoRow('Fechamento', fmtData(os.data_fechamento)||'—')}
+          </div>
+        </div>
+      </div>
+    `
+
+    // Tab SLA
+    const slaColor=sla.status_sla==='no_prazo'?'var(--green)':sla.status_sla==='em_risco'?'var(--amber)':'var(--red)'
+    const slaPct=Math.min(sla.percentual_consumido||0,100)
+    document.getElementById('os-tab-sla').innerHTML=`
+      <div class="modal-stat" style="flex-direction:column;text-align:left;padding:0;border:none;margin-bottom:14px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+          ${statBox('Previsto', (sla.horas_previstas||0)+'h', 'var(--cyan)')}
+          ${statBox('Realizado', sla.horas_realizadas!=null?sla.horas_realizadas+'h':'—', slaColor)}
+          ${statBox('Status', sla.status_sla||'—', slaColor)}
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Consumo do SLA: ${slaPct}%</div>
+        <div class="sla-bar"><div class="sla-bar-fill" style="width:${slaPct}%;background:${slaColor}"></div></div>
+        ${sla.abaixo_minimo?`<div style="margin-top:8px;font-size:11px;color:var(--amber)">⚠️ Tempo abaixo do mínimo esperado</div>`:''}
+        ${sla.acima_maximo?`<div style="margin-top:8px;font-size:11px;color:var(--red)">🚨 Tempo acima do máximo esperado</div>`:''}
+      </div>
+    `
+
+    // Tab Auditoria
+    document.getElementById('os-tab-auditoria').innerHTML=audits.length
+      ?audits.map(a=>`
+        <div class="critico-card ${criticidadeCls(a.criticidade)}" style="margin-bottom:8px">
+          <div class="critico-icon">${a.criticidade==='critica'?'🚨':'⚠️'}</div>
+          <div class="critico-info">
+            <div class="critico-titulo">${a.subtipo}</div>
+            <div class="critico-sub">${a.descricao||''}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:3px">Detectado: ${fmtData(a.criado_em)}</div>
+          </div>
+          <span class="badge ${criticidadeCls(a.criticidade)}">${a.criticidade}</span>
+        </div>
+      `).join('')
+      :`<div class="empty"><div class="empty-icon">✅</div>Nenhuma ocorrência de auditoria</div>`
+
+    // Tab Histórico
+    document.getElementById('os-tab-historico').innerHTML=`
+      <div style="font-size:11px;color:var(--muted);padding:8px 0">
+        <div>${infoRow('OS ID', os.ixc_os_id)}</div>
+        <div>${infoRow('Assunto ID', os.ixc_assunto_id)}</div>
+        <div>${infoRow('Técnico ID', os.tecnico_id)}</div>
+        <div>${infoRow('Sincronizado', fmtData(os.sincronizado_em))}</div>
+      </div>
+    `
+  }catch(e){
+    document.getElementById('os-tab-resumo').innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar OS</div>`
+  }
+}
+
+function infoRow(label,value){
+  return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03)">
+    <span style="color:var(--muted)">${label}</span>
+    <span style="font-weight:600">${value}</span>
+  </div>`
+}
+function statBox(label,value,cor){
+  return `<div style="background:var(--s2);border-radius:8px;padding:12px;text-align:center">
+    <div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:${cor}">${value}</div>
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px">${label}</div>
+  </div>`
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL TÉCNICO
+// ═══════════════════════════════════════════════════
+async function abrirModalTecnico(tecId,tecNome){
+  document.getElementById('modal-tec-title').textContent=tecNome||'Técnico'
+  document.getElementById('modal-tec-sub').textContent='Carregando...'
+  document.getElementById('modal-tec-stats').innerHTML=''
+  switchTab('tec','hoje',document.querySelector('#modal-tec .modal-tab'))
+  document.getElementById('tec-tab-hoje').innerHTML=`<div class="loading"><div class="spinner"></div>Carregando...</div>`
+  abrirModal('modal-tec')
+
+  try{
+    const d=await apiFetch(`${SAIS}/visao-geral/tecnico/${tecId}`)
+    const t=d.tecnico||{}
+    const hoje=d.hoje||{}
+    const score=d.score||{}
+
+    document.getElementById('modal-tec-sub').textContent=
+      `ID IXC: ${t.ixc_funcionario_id||'—'} · Meta: ${t.meta_dia||8} OS/dia`
+
+    // Stats header
+    document.getElementById('modal-tec-stats').innerHTML=`
+      <div class="modal-stat"><div class="modal-stat-val">${hoje.total||0}</div><div class="modal-stat-lbl">Total OS</div></div>
+      <div class="modal-stat"><div class="modal-stat-val" style="color:var(--green)">${hoje.finalizadas||0}</div><div class="modal-stat-lbl">Finalizadas</div></div>
+      <div class="modal-stat"><div class="modal-stat-val" style="color:var(--amber)">${hoje.em_campo||0}</div><div class="modal-stat-lbl">Em Campo</div></div>
+      <div class="modal-stat"><div class="modal-stat-val" style="color:var(--cyan)">${score.score_final||0}</div><div class="modal-stat-lbl">Score</div></div>
+      <div class="modal-stat"><div class="modal-stat-val" style="color:${score.pct_meta>=80?'var(--green)':score.pct_meta>=50?'var(--amber)':'var(--red)'}">${score.pct_meta||0}%</div><div class="modal-stat-lbl">Meta</div></div>
+    `
+
+    // Tab Hoje
+    document.getElementById('tec-tab-hoje').innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        ${statBox('Finalizadas', hoje.finalizadas||0, 'var(--green)')}
+        ${statBox('Em Campo', hoje.em_campo||0, 'var(--amber)')}
+        ${statBox('Agendadas', hoje.agendadas||0, 'var(--cyan)')}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        ${Object.entries(score.por_categoria||{}).map(([cat,total])=>`
+          <div style="background:var(--s2);border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:16px;font-weight:800;color:${catCor(cat)}">${total}</div>
+            <div style="font-size:9px;color:var(--muted);text-transform:capitalize">${cat}</div>
+          </div>
+        `).join('')}
+      </div>
+    `
+
+    // Tab Agenda
+    document.getElementById('tec-tab-agenda').innerHTML=(d.agenda||[]).length
+      ?d.agenda.map(o=>`
+        <div class="agenda-os-item" onclick="abrirModalOS(${o.ixc_os_id})">
+          <span class="agenda-hora">${fmtHora(o.data_agenda)}</span>
+          <span class="agenda-os-id">#${o.ixc_os_id}</span>
+          <span class="agenda-os-nome">${o.assunto||'—'}</span>
+        </div>
+      `).join('')
+      :`<div class="empty"><div class="empty-icon">📅</div>Nenhuma OS agendada</div>`
+
+    // Tab Produtividade
+    const hist=d.historico_7d||[]
+    document.getElementById('tec-tab-produtividade').innerHTML=`
+      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Histórico 7 dias</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+        ${hist.map(h=>`
+          <div style="background:var(--s2);border-radius:6px;padding:8px 4px;text-align:center">
+            <div style="font-size:14px;font-weight:800;color:var(--cyan)">${h.total_os}</div>
+            <div style="font-size:8px;color:var(--muted)">${h.data.slice(5)}</div>
+            <div style="font-size:9px;color:${h.eficiencia>=80?'var(--green)':'var(--amber)'}">${h.eficiencia}%</div>
+          </div>
+        `).join('')}
+      </div>
+    `
+
+    // Tab Auditoria
+    document.getElementById('tec-tab-auditoria').innerHTML=(d.auditorias||[]).length
+      ?d.auditorias.map(a=>`
+        <div class="critico-card ${criticidadeCls(a.criticidade)}" style="margin-bottom:7px">
+          <div class="critico-icon">🔍</div>
+          <div class="critico-info">
+            <div class="critico-titulo">${a.subtipo} ${a.os_id?'· OS #'+a.os_id:''}</div>
+            <div class="critico-sub">${a.descricao||''}</div>
+          </div>
+          <span class="badge ${criticidadeCls(a.criticidade)}">${a.criticidade}</span>
+        </div>
+      `).join('')
+      :`<div class="empty"><div class="empty-icon">✅</div>Sem ocorrências de auditoria</div>`
+
+    // Tab OS Recentes
+    document.getElementById('tec-tab-os-recentes').innerHTML=(d.os_recentes||[]).length
+      ?d.os_recentes.map(o=>`
+        <div class="os-row" onclick="abrirModalOS(${o.ixc_os_id})">
+          <div class="os-id">#${o.ixc_os_id}</div>
+          <div class="os-info">
+            <div class="os-assunto">${o.assunto||'—'}</div>
+            <div class="os-meta"><span>${fmtData(o.data_fechamento||o.data_agenda||o.data_abertura)}</span></div>
+          </div>
+          <span class="os-status-chip ${statusCls(o.status)}">${statusLabel(o.status)}</span>
+        </div>
+      `).join('')
+      :`<div class="empty"><div class="empty-icon">📋</div>Nenhuma OS recente</div>`
+
+  }catch(e){
+    document.getElementById('tec-tab-hoje').innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar técnico</div>`
+  }
+}
+
+// Modal auditoria simples
+function abrirModalAuditoria(id){
+  // Abre modal de OS se tiver os_id, senão alerta
+  alert(`Auditoria #${id} — detalhamento completo em breve`)
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL UTILS
+// ═══════════════════════════════════════════════════
+function abrirModal(id){document.getElementById(id).classList.add('active')}
+function fecharModal(id){document.getElementById(id).classList.remove('active')}
+function overlayClick(e,id){if(e.target===e.currentTarget)fecharModal(id)}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return
+  const abertos=[...document.querySelectorAll('.modal-overlay.active')]
+  if(abertos.length) fecharModal(abertos[abertos.length-1].id)
+})
+
+function switchTab(modalId, tabId, el){
+  // Desativar todas as tabs e conteúdos
+  const modal=document.getElementById('modal-'+modalId)
+  modal.querySelectorAll('.modal-tab').forEach(t=>t.classList.remove('active'))
+  modal.querySelectorAll('.modal-tab-content').forEach(t=>t.classList.remove('active'))
+  // Ativar a tab clicada
+  if(el) el.classList.add('active')
+  const content=document.getElementById(`${modalId}-tab-${tabId}`)
+  if(content) content.classList.add('active')
+}
+
+// ═══════════════════════════════════════════════════
+// MODO TV
+// ═══════════════════════════════════════════════════
+let tvInterval=null
+
+async function abrirTV(){
+  document.getElementById('tv-overlay').classList.add('active')
+  iniciarRelogioTV()
+  await loadTV()
+  tvInterval=setInterval(loadTV,30000)
+  // Buscar popups pendentes
+  setInterval(loadTVPopups,10000)
+}
+
+function fecharTV(){
+  document.getElementById('tv-overlay').classList.remove('active')
+  if(tvInterval) clearInterval(tvInterval)
+}
+
+function iniciarRelogioTV(){
+  const tick=()=>{
+    const now=new Date()
+    document.getElementById('tv-clock').textContent=now.toLocaleTimeString('pt-BR')
+    document.getElementById('tv-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})
+  }
+  tick()
+  setInterval(tick,1000)
+}
+
+async function loadTV(){
+  try{
+    const d=await apiFetch(`${SAIS}/tv/estado`)
+    const k=d.kpis||{}
+
+    // KPIs
+    document.getElementById('tv-kpis').innerHTML=`
+      <div class="tv-kpi" style="--ac:var(--cyan)">
+        <div class="tv-kpi-val">${k.total||0}</div><div class="tv-kpi-lbl">Total OS</div>
+      </div>
+      <div class="tv-kpi" style="--ac:var(--green)">
+        <div class="tv-kpi-val">${k.finalizadas||0}</div><div class="tv-kpi-lbl">Finalizadas</div>
+      </div>
+      <div class="tv-kpi" style="--ac:var(--orange)">
+        <div class="tv-kpi-val">${k.pct_meta||0}%</div><div class="tv-kpi-lbl">Meta ${k.meta||150}</div>
+      </div>
+    `
+
+    // Ranking
+    document.getElementById('tv-ranking').innerHTML=(d.top5||[]).map((t,i)=>`
+      <div class="tv-ranking-item">
+        <div class="tv-rank-pos rpos ${rposCls(i)}">${i+1}</div>
+        <div class="tv-rank-nome">${t.nome}</div>
+        <div class="tv-rank-os">${t.total_os}</div>
+        <span class="badge ${t.pct_meta>=80?'green':t.pct_meta>=50?'amber':'red'}">${t.pct_meta}%</span>
+      </div>
+    `).join('')||`<div style="color:var(--muted);font-size:11px;padding:8px">Nenhum dado</div>`
+
+    // Recentes
+    document.getElementById('tv-recentes').innerHTML=(d.recentes||[]).map(o=>`
+      <div class="tv-recent-item">
+        <span class="tv-recent-id">#${o.ixc_os_id}</span>
+        <strong>${o.tecnico||'—'}</strong> · ${o.assunto?.slice(0,30)||'—'}
+        <div style="font-size:10px;color:var(--muted)">${fmtHora(o.data_fechamento)}</div>
+      </div>
+    `).join('')||`<div style="color:var(--muted);font-size:11px;padding:8px">Nenhuma OS finalizada</div>`
+
+    // Alertas
+    document.getElementById('tv-alertas').innerHTML=(d.alertas||[]).map(a=>`
+      <div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px">
+        <span style="color:${a.criticidade==='critico'?'var(--red)':'var(--amber)'}">${a.titulo}</span>
+      </div>
+    `).join('')||`<div style="color:var(--green);font-size:11px;padding:8px">✅ Sem alertas críticos</div>`
+
+  }catch(e){console.error('tv:',e)}
+}
+
+async function loadTVPopups(){
+  const d=await apiFetch(`${SAIS}/tv/popups-pendentes`)
+  ;(d.popups||[]).forEach(p=>{
+    mostrarPopupTV(p)
+    fetch(`${SAIS}/tv/popups/${p.id}/exibido`,{method:'POST'})
+  })
+}
+
+const POPUP_CFG={
+  os_finalizada:{cor:'green',icone:'✅',dur:6000},
+  sla_estourado:{cor:'red',icone:'🚨',dur:10000},
+  sla_em_risco:{cor:'amber',icone:'⚠️',dur:8000},
+  meta_atingida:{cor:'green',icone:'🏆',dur:8000},
+  meta_em_risco:{cor:'amber',icone:'📉',dur:7000},
+  tecnico_ocioso:{cor:'amber',icone:'💤',dur:7000},
+  auditoria_grave:{cor:'red',icone:'🔍',dur:10000},
+  os_atrasada:{cor:'red',icone:'⏰',dur:8000},
+}
+
+function mostrarPopupTV(dados){
+  const cfg=POPUP_CFG[dados.tipo]||{cor:'amber',icone:'•',dur:6000}
+  const el=document.createElement('div')
+  el.className=`tv-popup ${cfg.cor}`
+  el.innerHTML=`
+    <div class="tv-popup-header">
+      <span class="tv-popup-icon">${cfg.icone}</span>
+      <span class="tv-popup-titulo">${dados.titulo||dados.tipo}</span>
+    </div>
+    <div class="tv-popup-sub">${dados.subtitulo||dados.mensagem||''}</div>
+    <div class="tv-popup-bar"><div class="tv-popup-bar-fill ${cfg.cor}" style="width:100%;transition-duration:${cfg.dur}ms"></div></div>
+  `
+  document.getElementById('tv-popup-container').prepend(el)
+  setTimeout(()=>el.style.transition='opacity .5s', 100)
+  setTimeout(()=>el.style.opacity='0', cfg.dur-500)
+  setTimeout(()=>el.remove(), cfg.dur)
+  // Animar barra
+  setTimeout(()=>{
+    const bar=el.querySelector('.tv-popup-bar-fill')
+    if(bar){bar.style.width='0%'}
+  }, 200)
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
 loadDashboard()
 </script>
 </body>
