@@ -68,14 +68,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .status-pill{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:11px;font-weight:700;font-family:'DM Mono',monospace}
 
 /* ALERTS */
-.alerts{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
-.alert-chip{padding:4px 11px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;border:1px solid}
+.alerts{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;min-height:30px}
+.alert-chip{padding:4px 11px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em;border:1px solid;display:flex;align-items:center;gap:5px}
 .alert-chip.red{background:rgba(255,77,106,.07);border-color:rgba(255,77,106,.22);color:var(--red)}
 .alert-chip.amber{background:rgba(255,184,63,.07);border-color:rgba(255,184,63,.22);color:var(--amber)}
 .alert-chip.green{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.22);color:var(--green)}
 
 /* KPI GRID */
-.kpi-grid{display:grid;gap:10px;margin-bottom:18px}
+.kpi-grid{display:grid;gap:10px;margin-bottom:16px}
 .kpi-grid.c5{grid-template-columns:repeat(5,1fr)}
 .kpi-grid.c4{grid-template-columns:repeat(4,1fr)}
 .kpi-grid.c3{grid-template-columns:repeat(3,1fr)}
@@ -90,7 +90,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .kpi-trend.dn{background:rgba(255,77,106,.12);color:var(--red)}
 
 /* CARD GRID */
-.card-grid{display:grid;gap:14px;margin-bottom:18px}
+.card-grid{display:grid;gap:14px;margin-bottom:16px}
 .card-grid.c2{grid-template-columns:1fr 1fr}
 .card-grid.c3{grid-template-columns:1fr 1fr 1fr}
 .card{background:var(--s1);border:1px solid var(--border);border-radius:11px;padding:18px}
@@ -160,7 +160,7 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
 
 /* LOADING */
 .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:12px;font-family:'DM Mono',monospace}
-.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;margin-right:10px}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite;margin-right:10px;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* STAGGER */
@@ -170,7 +170,93 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
 .kpi:nth-child(4){animation:fadeUp .3s .12s ease both}
 .kpi:nth-child(5){animation:fadeUp .3s .15s ease both}
 
-@media(max-width:1200px){.kpi-grid.c5{grid-template-columns:repeat(3,1fr)}.tec-grid{grid-template-columns:repeat(2,1fr)}}
+/* ══════════════════════════════════════════
+   DASHBOARD V2 — FILTROS + MODAIS
+   ══════════════════════════════════════════ */
+
+/* Filtros bar */
+.filtros-container{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.filtro-group{display:flex;flex-direction:column;gap:4px}
+.filtro-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.filtro-input{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;min-width:128px;transition:all .2s}
+.filtro-input:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 2px rgba(0,212,255,.1)}
+.filtro-input::-webkit-calendar-picker-indicator{filter:invert(.4);cursor:pointer}
+.btn-hoje{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--cyan);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;transition:all .2s;white-space:nowrap}
+.btn-hoje:hover{background:rgba(0,212,255,.15)}
+.filtro-sep{width:1px;background:var(--border);align-self:stretch;margin:0 2px}
+.filtros-status{display:flex;gap:5px;flex-wrap:wrap}
+.btn-status{background:var(--bg);border:1.5px solid var(--border);color:var(--muted);padding:6px 11px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;font-family:'Bricolage Grotesque',sans-serif;transition:all .2s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-status .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
+.btn-status.active-finalizada{background:rgba(0,229,160,.1);border-color:var(--green);color:var(--green)}
+.btn-status.active-agendada{background:rgba(0,212,255,.1);border-color:var(--cyan);color:var(--cyan)}
+.btn-status.active-aguardando{background:rgba(255,184,63,.1);border-color:var(--amber);color:var(--amber)}
+.btn-status.active-execucao{background:rgba(167,139,250,.1);border-color:var(--purple);color:var(--purple)}
+.btn-aplicar{background:linear-gradient(135deg,var(--cyan),#0070e0);border:none;color:#fff;padding:7px 18px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;transition:all .2s;margin-left:auto;white-space:nowrap}
+.btn-aplicar:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,212,255,.3)}
+
+/* Categorias clicáveis */
+.cat-item{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;margin-bottom:5px;border-radius:7px;transition:all .2s;cursor:pointer;border:1px solid transparent}
+.cat-item:hover{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06);transform:translateX(2px)}
+.cat-item:hover .cat-arrow{opacity:1;transform:translateX(0)}
+.cat-nome{font-size:12px;font-weight:600}
+.cat-right{display:flex;align-items:center;gap:8px}
+.cat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:700}
+.cat-arrow{font-size:13px;color:var(--muted);opacity:0;transform:translateX(-4px);transition:all .2s}
+.cat-bar{height:3px;background:var(--border);border-radius:3px;margin-bottom:7px;overflow:hidden}
+.cat-bar-fill{height:3px;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1);width:0}
+
+/* Top técnicos v2 */
+.tec-row{display:flex;align-items:center;padding:8px 10px;border-radius:7px;transition:all .2s;cursor:pointer;border:1px solid transparent;margin-bottom:3px}
+.tec-row:hover{background:rgba(255,255,255,.03);border-color:rgba(255,255,255,.06)}
+.tec-pos2{width:22px;height:22px;border-radius:5px;display:grid;place-items:center;font-size:9px;font-weight:800;font-family:'DM Mono',monospace;margin-right:8px;flex-shrink:0}
+.tec-pos2.p1{background:rgba(255,184,63,.15);color:var(--amber)}
+.tec-pos2.p2{background:rgba(0,212,255,.1);color:var(--cyan)}
+.tec-pos2.p3{background:rgba(0,229,160,.1);color:var(--green)}
+.tec-pos2.pn{background:var(--border);color:var(--muted)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;z-index:9000;padding:20px}
+.modal-overlay.active{display:flex;animation:fadeIn .2s ease}
+#modal-tec{z-index:9500}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:14px;width:100%;max-width:640px;max-height:82vh;overflow:hidden;display:flex;flex-direction:column;animation:slideUp .25s cubic-bezier(.4,0,.2,1);box-shadow:0 24px 60px rgba(0,0,0,.6)}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.modal-header-left{display:flex;flex-direction:column;gap:3px;min-width:0}
+.modal-title{font-size:14px;font-weight:800}
+.modal-breadcrumb{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.modal-breadcrumb b{font-weight:600}
+.modal-breadcrumb span{color:var(--muted)}
+.modal-close{background:var(--s2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;display:grid;place-items:center;cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-stats{display:flex;border-bottom:1px solid var(--border)}
+.modal-stat{flex:1;padding:10px 16px;text-align:center;border-right:1px solid var(--border)}
+.modal-stat:last-child{border-right:none}
+.modal-stat-val{font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan);line-height:1}
+.modal-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+.modal-body{padding:14px 18px;overflow-y:auto;flex:1}
+.modal-body::-webkit-scrollbar{width:4px}
+.modal-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.modal-tec-item{display:flex;align-items:center;padding:10px 12px;border-radius:8px;transition:all .2s;cursor:pointer;background:var(--s2);border:1px solid var(--border);margin-bottom:7px}
+.modal-tec-item:hover{border-color:rgba(0,212,255,.3);transform:translateX(2px)}
+.os-item{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:7px;transition:all .2s}
+.os-item:hover{border-color:rgba(0,212,255,.22);transform:translateX(2px)}
+.os-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.os-id{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--cyan)}
+.os-status-chip{font-size:9px;padding:2px 8px;border-radius:4px;font-weight:700;text-transform:uppercase;font-family:'DM Mono',monospace}
+.os-status-chip.finalizada{background:rgba(0,229,160,.12);color:var(--green)}
+.os-status-chip.agendada{background:rgba(0,212,255,.12);color:var(--cyan)}
+.os-status-chip.aguardando{background:rgba(255,184,63,.12);color:var(--amber)}
+.os-status-chip.execucao,.os-status-chip.aberta{background:rgba(167,139,250,.12);color:var(--purple)}
+.os-info{font-size:10px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.empty-state{text-align:center;padding:32px 20px;color:var(--muted);font-size:12px}
+.empty-state-icon{font-size:28px;margin-bottom:8px}
+
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:1200px){
+  .kpi-grid.c5{grid-template-columns:repeat(3,1fr)}
+  .tec-grid{grid-template-columns:repeat(2,1fr)}
+}
 </style>
 </head>
 <body>
@@ -185,17 +271,14 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
         <div class="sb-ver">Cliquedf · v1.0</div>
       </div>
     </div>
-
     <div class="sb-sec">Produtividade</div>
     <div class="sb-item active" onclick="nav('dashboard')"><span class="ic">🚀</span> Visão Geral</div>
     <div class="sb-item" onclick="nav('ranking')"><span class="ic">🏆</span> Ranking Técnicos</div>
     <div class="sb-item" onclick="nav('os')"><span class="ic">🔧</span> OS por Tipo</div>
     <div class="sb-item" onclick="nav('metas')"><span class="ic">🎯</span> Metas</div>
-
     <div class="sb-sec">Gestão</div>
     <div class="sb-item" onclick="nav('tecnicos')"><span class="ic">👷</span> Técnicos</div>
     <div class="sb-item" onclick="nav('telegram')"><span class="ic">📨</span> Telegram</div>
-
     <div class="sb-sec">Admin</div>
     <div class="sb-item" onclick="nav('usuarios')"><span class="ic">👥</span> Usuários</div>
     <div class="sb-item" onclick="nav('permissoes')"><span class="ic">🔐</span> Permissões</div>
@@ -226,48 +309,72 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
 
   <div class="content">
 
-    <!-- ── DASHBOARD ── -->
+    <!-- ══════════════════════════════════════
+         DASHBOARD V2
+         ══════════════════════════════════════ -->
     <div class="page active" id="page-dashboard">
       <div class="pg-hd">
         <div>
           <div class="pg-title">Visão <span>Operacional</span></div>
-          <div class="pg-sub" id="db-sub">Carregando dados do IXC...</div>
+          <div class="pg-sub" id="db-sub">Carregando dados...</div>
         </div>
         <div class="status-pill" id="db-status">⏳ Carregando</div>
       </div>
+
+      <!-- FILTROS -->
+      <div class="filtros-container">
+        <div class="filtro-group">
+          <label class="filtro-label">Data Início</label>
+          <input type="date" id="filtro-inicio" class="filtro-input"/>
+        </div>
+        <div class="filtro-group">
+          <label class="filtro-label">Data Fim</label>
+          <input type="date" id="filtro-fim" class="filtro-input"/>
+        </div>
+        <button class="btn-hoje" onclick="setHoje()">📅 Hoje</button>
+        <div class="filtro-sep"></div>
+        <div class="filtro-group">
+          <label class="filtro-label">Status</label>
+          <div class="filtros-status" id="status-btns">
+            <button class="btn-status active-finalizada" data-status="finalizada"><span class="dot"></span>Finalizada</button>
+            <button class="btn-status" data-status="agendada"><span class="dot"></span>Agendada</button>
+            <button class="btn-status" data-status="aguardando"><span class="dot"></span>Aguardando</button>
+            <button class="btn-status" data-status="execucao"><span class="dot"></span>Execução</button>
+          </div>
+        </div>
+        <button class="btn-aplicar" onclick="aplicarFiltros()">🔍 Aplicar Filtros</button>
+      </div>
+
+      <!-- ALERTAS -->
       <div class="alerts" id="db-alerts"></div>
+
+      <!-- KPIs -->
       <div class="kpi-grid c5" id="db-kpis">
         <div class="loading"><div class="spinner"></div>Buscando OS...</div>
       </div>
+
+      <!-- CARDS -->
       <div class="card-grid c2">
         <div class="card">
           <div class="card-head">📊 OS por Categoria</div>
           <div id="db-cats"></div>
         </div>
         <div class="card">
-          <div class="card-head">🏆 Top Técnicos Hoje</div>
-          <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Técnico</th><th class="r">OS</th><th class="r">Efic.</th><th class="r">Score</th></tr></thead>
-              <tbody id="db-ranking"></tbody>
-            </table>
-          </div>
+          <div class="card-head">🏆 Top Técnicos</div>
+          <div id="db-top-tecs"><div class="loading"><div class="spinner"></div></div></div>
         </div>
       </div>
+
+      <!-- META DO DIA -->
       <div class="card">
         <div class="card-head">🎯 Meta do Dia</div>
         <div id="db-meta"></div>
       </div>
     </div>
 
-    <!-- ── RANKING ── -->
+    <!-- ══ RANKING ══ -->
     <div class="page" id="page-ranking">
-      <div class="pg-hd">
-        <div>
-          <div class="pg-title">Ranking <span>Técnicos</span></div>
-          <div class="pg-sub">Classificação por score, eficiência e OS finalizadas</div>
-        </div>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Ranking <span>Técnicos</span></div><div class="pg-sub">Classificação por score, eficiência e OS finalizadas</div></div></div>
       <div class="tabs">
         <button class="tab active" onclick="loadRanking('hoje',this)">Hoje</button>
         <button class="tab" onclick="loadRanking('semana',this)">7 dias</button>
@@ -277,27 +384,16 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
         <div class="card-head">📋 Classificação Completa</div>
         <div class="tbl-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>#</th><th>Técnico</th>
-                <th class="r">Serviço</th><th class="r">Suporte</th><th class="r">Infra</th><th class="r">Retirada</th>
-                <th class="r">Total</th><th class="r">Efic.</th><th class="r">Score</th>
-              </tr>
-            </thead>
+            <thead><tr><th>#</th><th>Técnico</th><th class="r">Serviço</th><th class="r">Suporte</th><th class="r">Infra</th><th class="r">Retirada</th><th class="r">Total</th><th class="r">Efic.</th><th class="r">Score</th></tr></thead>
             <tbody id="rk-table"></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ── OS TIPOS ── -->
+    <!-- ══ OS TIPOS ══ -->
     <div class="page" id="page-os">
-      <div class="pg-hd">
-        <div>
-          <div class="pg-title">OS por <span>Tipo</span></div>
-          <div class="pg-sub">Distribuição de ordens por categoria de serviço</div>
-        </div>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">OS por <span>Tipo</span></div><div class="pg-sub">Distribuição de ordens por categoria de serviço</div></div></div>
       <div class="tabs">
         <button class="tab active" onclick="loadOS('hoje',this)">Hoje</button>
         <button class="tab" onclick="loadOS('semana',this)">7 dias</button>
@@ -305,136 +401,146 @@ tbody tr:hover td{background:rgba(255,255,255,.012)}
       </div>
       <div class="kpi-grid c4" id="os-kpis"></div>
       <div class="card-grid c2">
-        <div class="card">
-          <div class="card-head">📊 Por Categoria</div>
-          <div id="os-cats"></div>
-        </div>
+        <div class="card"><div class="card-head">📊 Por Categoria</div><div id="os-cats"></div></div>
         <div class="card">
           <div class="card-head">👷 Técnico × Tipo</div>
           <div class="tbl-wrap">
-            <table>
-              <thead><tr><th>Técnico</th><th class="r">Serv.</th><th class="r">Sup.</th><th class="r">Infra</th><th class="r">Ret.</th><th class="r">Total</th></tr></thead>
-              <tbody id="os-tec-table"></tbody>
-            </table>
+            <table><thead><tr><th>Técnico</th><th class="r">Serv.</th><th class="r">Sup.</th><th class="r">Infra</th><th class="r">Ret.</th><th class="r">Total</th></tr></thead><tbody id="os-tec-table"></tbody></table>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── METAS ── -->
+    <!-- ══ METAS ══ -->
     <div class="page" id="page-metas">
-      <div class="pg-hd">
-        <div>
-          <div class="pg-title">Gestão de <span>Metas</span></div>
-          <div class="pg-sub">Metas da equipe e individuais</div>
-        </div>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Metas</span></div><div class="pg-sub">Metas da equipe e individuais</div></div></div>
       <div id="metas-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
-    <!-- ── TÉCNICOS ── -->
+    <!-- ══ TÉCNICOS ══ -->
     <div class="page" id="page-tecnicos">
-      <div class="pg-hd">
-        <div>
-          <div class="pg-title">Gestão de <span>Técnicos</span></div>
-          <div class="pg-sub">11 técnicos ativos · Mapeados no IXC Soft</div>
-        </div>
-      </div>
-      <div class="tec-grid" id="tec-cards">
-        <div class="loading"><div class="spinner"></div>Carregando...</div>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Técnicos</span></div><div class="pg-sub">11 técnicos ativos · Mapeados no IXC Soft</div></div></div>
+      <div class="tec-grid" id="tec-cards"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
-    <!-- ── TELEGRAM ── -->
+    <!-- ══ TELEGRAM ══ -->
     <div class="page" id="page-telegram">
-      <div class="pg-hd">
-        <div>
-          <div class="pg-title">Relatório <span>Telegram</span></div>
-          <div class="pg-sub">Preview dos relatórios automáticos</div>
-        </div>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Relatório <span>Telegram</span></div><div class="pg-sub">Preview dos relatórios automáticos</div></div></div>
       <div class="card-grid c2">
-        <div class="card">
-          <div class="card-head">📨 Relatório Horário</div>
-          <div class="tg-box" id="tg-hora"></div>
-        </div>
-        <div class="card">
-          <div class="card-head">🏆 Ranking Final 18h</div>
-          <div class="tg-box" id="tg-rank"></div>
-        </div>
+        <div class="card"><div class="card-head">📨 Relatório Horário</div><div class="tg-box" id="tg-hora"></div></div>
+        <div class="card"><div class="card-head">🏆 Ranking Final 18h</div><div class="tg-box" id="tg-rank"></div></div>
       </div>
     </div>
 
-    <!-- ── USUÁRIOS ── -->
+    <!-- ══ USUÁRIOS ══ -->
     <div class="page" id="page-usuarios">
-      <div class="pg-hd">
-        <div>
-          <div class="pg-title">Gestão de <span>Usuários</span></div>
-          <div class="pg-sub">Controle de acesso por nível</div>
-        </div>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Usuários</span></div><div class="pg-sub">Controle de acesso por nível</div></div></div>
       <div class="card">
         <div class="card-head">👥 Usuários Cadastrados</div>
-        <table>
-          <thead><tr><th>Login</th><th>Nome</th><th class="r">Nível</th><th class="r">Status</th></tr></thead>
-          <tbody id="usr-table"></tbody>
-        </table>
+        <table><thead><tr><th>Login</th><th>Nome</th><th class="r">Nível</th><th class="r">Status</th></tr></thead><tbody id="usr-table"></tbody></table>
       </div>
     </div>
 
-    <!-- ── PERMISSÕES ── -->
+    <!-- ══ PERMISSÕES ══ -->
     <div class="page" id="page-permissoes">
-      <div class="pg-hd">
-        <div>
-          <div class="pg-title">Gestão de <span>Permissões</span></div>
-          <div class="pg-sub">Acesso por módulo e nível</div>
-        </div>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Permissões</span></div><div class="pg-sub">Acesso por módulo e nível</div></div></div>
       <div class="card">
         <div class="card-head">🔐 Permissões por Módulo</div>
-        <table>
-          <thead><tr><th>Módulo</th><th>Código</th><th class="r">Op.</th><th class="r">Sup.</th><th class="r">Ger.</th><th class="r">Dir.</th></tr></thead>
-          <tbody id="perm-table"></tbody>
-        </table>
+        <table><thead><tr><th>Módulo</th><th>Código</th><th class="r">Op.</th><th class="r">Sup.</th><th class="r">Ger.</th><th class="r">Dir.</th></tr></thead><tbody id="perm-table"></tbody></table>
       </div>
     </div>
 
   </div><!-- /content -->
 </div><!-- /main -->
 
+<!-- ══ MODAL 1: TÉCNICOS DA CATEGORIA ══ -->
+<div class="modal-overlay" id="modal-cat" onclick="overlayClick(event,'modal-cat')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-title" id="modal-cat-title">Técnicos</div>
+        <div class="modal-breadcrumb" id="modal-cat-bread"></div>
+      </div>
+      <button class="modal-close" onclick="fecharModal('modal-cat')">×</button>
+    </div>
+    <div class="modal-stats" id="modal-cat-stats"></div>
+    <div class="modal-body" id="modal-cat-body"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+</div>
+
+<!-- ══ MODAL 2: OS DO TÉCNICO ══ -->
+<div class="modal-overlay" id="modal-tec" onclick="overlayClick(event,'modal-tec')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-title" id="modal-tec-title">OS do Técnico</div>
+        <div class="modal-breadcrumb" id="modal-tec-bread"></div>
+      </div>
+      <button class="modal-close" onclick="fecharModal('modal-tec')">×</button>
+    </div>
+    <div class="modal-stats" id="modal-tec-stats"></div>
+    <div class="modal-body" id="modal-tec-body"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+</div>
+
 <script>
-const API = '';
+// ═══════════════════════════════════════════════════
+// CONFIG GLOBAL
+// ═══════════════════════════════════════════════════
+const API     = '';
+const API_V2  = '/api/dashboard/v2';
 const META_DIA = 150;
 
-// ── Helpers ──────────────────────────────────
+const CATS_V2 = [
+  { key:'servico',  label:'Serviço',  cor:'var(--cyan)',   resumoKey:'servicos',  icone:'🔧' },
+  { key:'suporte',  label:'Suporte',  cor:'var(--amber)',  resumoKey:'suportes',  icone:'🎧' },
+  { key:'infra',    label:'Infra',    cor:'var(--purple)', resumoKey:'infra',     icone:'🏗️' },
+  { key:'retirada', label:'Retirada', cor:'var(--orange)', resumoKey:'retiradas', icone:'📦' },
+];
+
+let filtrosV2 = { data_inicio: null, data_fim: null, status: ['finalizada'] };
+let ctxCategoria = null;
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
 function sc(s){ return s>=20?'var(--green)':s>=10?'var(--amber)':'var(--red)' }
 function scBg(s){ return s>=20?'rgba(0,229,160,.1)':s>=10?'rgba(255,184,63,.1)':'rgba(255,77,106,.1)' }
 function pctIc(p){ return p>=100?'🏆':p>=80?'✅':p>=50?'🟡':'🔴' }
-function rposClass(i){ return ['p1','p2','p3','pn','pn','pn','pn','pn','pn','pn','pn'][i]||'pn' }
+function rposClass(i){ return ['p1','p2','p3'][i]||'pn' }
 function nivelLabel(n){ return {1:'Operador',2:'Supervisor',3:'Gerente',4:'Diretoria',99:'Dev'}[n]||n }
 function nivelBadge(n){
   const m={1:'cyan',2:'green',3:'amber',4:'orange',99:'red'}
   return `<span class="badge ${m[n]||'cyan'}">${nivelLabel(n)}</span>`
 }
-async function api(path){
-  const r = await fetch(API+path)
-  return r.json()
+async function api(path){ return fetch(API+path).then(r=>r.json()) }
+function esc(s){ return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;') }
+function fmtDate(d){
+  if(!d) return '—'
+  try{ return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) }
+  catch{ return d }
 }
+function labelStatus(s){ return {finalizada:'Finalizada',agendada:'Agendada',aguardando:'Aguardando',execucao:'Em Campo',aberta:'Em Campo'}[s]||s||'—' }
+function labelCat(k){ return {servico:'Serviço',suporte:'Suporte',infra:'Infra',retirada:'Retirada'}[k]||k||'—' }
 
-// ── Date chip ────────────────────────────────
+// ═══════════════════════════════════════════════════
+// DATE CHIP
+// ═══════════════════════════════════════════════════
 document.getElementById('date-chip').textContent =
   new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})
 
-// ── Navigation ───────────────────────────────
+// ═══════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════
 const PAGES = {
-  dashboard: {title:'Visão Geral',       path:'/produtividade/',          load:loadDashboard},
-  ranking:   {title:'Ranking Técnicos',  path:'/produtividade/ranking',   load:()=>loadRanking('hoje')},
-  os:        {title:'OS por Tipo',       path:'/produtividade/os-tipo',   load:()=>loadOS('hoje')},
-  metas:     {title:'Metas',             path:'/produtividade/metas',     load:loadMetas},
-  tecnicos:  {title:'Técnicos',          path:'/produtividade/tecnicos',  load:loadTecnicos},
-  telegram:  {title:'Telegram',          path:'/produtividade/telegram',  load:loadTelegram},
-  usuarios:  {title:'Usuários',          path:'/admin/usuarios',          load:loadUsuarios},
-  permissoes:{title:'Permissões',        path:'/admin/permissoes',        load:loadPermissoes},
+  dashboard: {title:'Visão Geral',      path:'/produtividade/',         load:loadDashboard},
+  ranking:   {title:'Ranking Técnicos', path:'/produtividade/ranking',  load:()=>loadRanking('hoje')},
+  os:        {title:'OS por Tipo',      path:'/produtividade/os-tipo',  load:()=>loadOS('hoje')},
+  metas:     {title:'Metas',            path:'/produtividade/metas',    load:loadMetas},
+  tecnicos:  {title:'Técnicos',         path:'/produtividade/tecnicos', load:loadTecnicos},
+  telegram:  {title:'Telegram',         path:'/produtividade/telegram', load:loadTelegram},
+  usuarios:  {title:'Usuários',         path:'/admin/usuarios',         load:loadUsuarios},
+  permissoes:{title:'Permissões',       path:'/admin/permissoes',       load:loadPermissoes},
 }
 let currentPage = 'dashboard'
 
@@ -454,130 +560,319 @@ function nav(id){
 
 async function syncAgora(){
   const btn = document.getElementById('btn-sync')
-  btn.textContent = '↻ Sincronizando...'
-  btn.disabled = true
-  await fetch('/api/sync', {method:'POST'}).catch(()=>{})
+  btn.textContent='↻ Sincronizando...'; btn.disabled=true
+  await fetch('/api/sync',{method:'POST'}).catch(()=>{})
   setTimeout(()=>{
-    btn.textContent = '↻ Sync IXC'
-    btn.disabled = false
+    btn.textContent='↻ Sync IXC'; btn.disabled=false
     if(PAGES[currentPage].load) PAGES[currentPage].load()
-  }, 1500)
+  },1500)
 }
 
-// ── DASHBOARD ────────────────────────────────
+// ═══════════════════════════════════════════════════
+// FILTROS V2
+// ═══════════════════════════════════════════════════
+function setHoje(){
+  const hoje = new Date().toISOString().split('T')[0]
+  document.getElementById('filtro-inicio').value = hoje
+  document.getElementById('filtro-fim').value    = hoje
+}
+
+function setupStatusBtns(){
+  document.querySelectorAll('#status-btns .btn-status').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const cls=`active-${btn.dataset.status}`
+      btn.classList.toggle(cls)
+    })
+  })
+}
+
+function getStatusAtivos(){
+  return [...document.querySelectorAll('#status-btns .btn-status')]
+    .filter(b=>[...b.classList].some(c=>c.startsWith('active-')))
+    .map(b=>b.dataset.status)
+}
+
+function aplicarFiltros(){
+  filtrosV2.data_inicio = document.getElementById('filtro-inicio').value||null
+  filtrosV2.data_fim    = document.getElementById('filtro-fim').value||null
+  filtrosV2.status      = getStatusAtivos()
+  loadDashboard()
+}
+
+function buildParams(extra={}){
+  const p = new URLSearchParams()
+  if(filtrosV2.data_inicio) p.set('data_inicio',filtrosV2.data_inicio)
+  if(filtrosV2.data_fim)    p.set('data_fim',   filtrosV2.data_fim)
+  if(filtrosV2.status.length) p.set('status',filtrosV2.status.join(','))
+  Object.entries(extra).forEach(([k,v])=>{ if(v!=null) p.set(k,v) })
+  return p
+}
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD V2
+// ═══════════════════════════════════════════════════
 async function loadDashboard(){
-  const d = await api('/api/dashboard/')
-  const r = d.resumo
-  const fins   = r.finalizadas || 0
-  const total  = r.total || 0
-  const meta   = d.meta_dia || META_DIA
-  const efic   = total>0 ? (fins/total*100).toFixed(1) : 0
-  const pctMeta= Math.round(fins/meta*100)
-  const rt     = total>0 ? ((r.outros||0)/total*100).toFixed(1) : 0
-
-  // Status
-  let status = '🟢 Operação Estável'
-  if(pctMeta < 50) status = '🔴 Atenção — Meta em Risco'
-  else if(pctMeta < 80) status = '🟡 Abaixo da Meta'
-  document.getElementById('db-status').textContent = status
-  document.getElementById('db-sub').textContent =
-    `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')} · ${total} OS hoje`
-
-  // Alertas
-  const al = []
-  if(pctMeta < 50) al.push({t:`Meta em risco (${pctMeta}%)`,c:'red'})
-  if(r.execucao > 20) al.push({t:`${r.execucao} OS em aberto`,c:'amber'})
-  if(fins === total && total > 0) al.push({t:'100% finalizadas!',c:'green'})
-  document.getElementById('db-alerts').innerHTML =
-    al.map(a=>`<span class="alert-chip ${a.c}">⚠️ ${a.t}</span>`).join('')
-
-  // KPIs
-  document.getElementById('db-kpis').innerHTML = `
-    <div class="kpi" style="--ac:var(--cyan)">
-      <div class="kpi-lbl">Total OS</div>
-      <div class="kpi-val">${total}</div>
-      <div class="kpi-sub">hoje</div>
-    </div>
-    <div class="kpi" style="--ac:var(--green)">
-      <div class="kpi-lbl">Finalizadas</div>
-      <div class="kpi-val">${fins}</div>
-      <div class="kpi-sub">${pctMeta}% da meta</div>
-      <div class="kpi-trend ${pctMeta>=80?'up':'dn'}">${pctMeta}%</div>
-    </div>
-    <div class="kpi" style="--ac:var(--amber)">
-      <div class="kpi-lbl">Em Aberto</div>
-      <div class="kpi-val">${r.execucao||0}</div>
-      <div class="kpi-sub">em campo</div>
-    </div>
-    <div class="kpi" style="--ac:var(--purple)">
-      <div class="kpi-lbl">Eficiência</div>
-      <div class="kpi-val">${efic}%</div>
-      <div class="kpi-sub">fin/total</div>
-    </div>
-    <div class="kpi" style="--ac:var(--orange)">
-      <div class="kpi-lbl">Meta Dia</div>
-      <div class="kpi-val">${meta}</div>
-      <div class="kpi-sub">faltam ${Math.max(0,meta-fins)}</div>
-    </div>
-  `
-
-  // Categorias
-  const cats = [
-    {n:'Serviço',  v:r.servicos||0,  c:'var(--cyan)'},
-    {n:'Suporte',  v:r.suportes||0,  c:'var(--amber)'},
-    {n:'Infra',    v:r.infra||0,     c:'var(--purple)'},
-    {n:'Retirada', v:r.retiradas||0, c:'var(--orange)'},
-    {n:'Outros',   v:r.outros||0,    c:'var(--muted)'},
-  ]
-  const maxC = Math.max(...cats.map(c=>c.v), 1)
-  document.getElementById('db-cats').innerHTML = cats.map(c=>`
-    <div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px">
-        <span style="font-size:12px;font-weight:600">${c.n}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${c.c}">${c.v}</span>
-      </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(c.v/maxC*100)}%;background:${c.c}"></div></div>
-    </div>
-  `).join('')
-
-  // Top ranking
-  document.getElementById('db-ranking').innerHTML = d.tecnicos.slice(0,6).map((t,i)=>`
-    <tr>
-      <td><span class="rpos ${rposClass(i)}">${i+1}</span><strong>${t.nome}</strong></td>
-      <td class="r">${t.finalizadas||0}</td>
-      <td class="r"><span class="badge ${(t.eficiencia||0)>=80?'green':(t.eficiencia||0)>=50?'amber':'red'}">${t.eficiencia||0}%</span></td>
-      <td class="r"><span class="badge" style="background:${scBg(t.score)};color:${sc(t.score)}">${t.score||0}</span></td>
-    </tr>
-  `).join('')
-
-  // Meta progress
-  const pct = Math.min(pctMeta, 100)
-  document.getElementById('db-meta').innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;text-align:center">
-      <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Finalizadas</div></div>
-      <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber)">${Math.max(0,meta-fins)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Restantes</div></div>
-      <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--green)">${pct}%</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Atingimento</div></div>
-      <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${meta}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta</div></div>
-    </div>
-    <div class="meta-track">
-      <div class="meta-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div>
-      <div class="meta-marker" style="left:50%" data-l="50%"></div>
-    </div>
-  `
+  await Promise.all([loadAlertas(), loadResumo()])
 }
 
-// ── RANKING ──────────────────────────────────
-async function loadRanking(periodo='hoje', btn=null){
+async function loadAlertas(){
+  try{
+    const d = await fetch(`${API_V2}/alertas?${buildParams()}`).then(r=>r.json())
+    const icons = {erro:'⚠️',aviso:'🔔',sucesso:'✅'}
+    document.getElementById('db-alerts').innerHTML =
+      (d.alertas||[]).map(a=>`<div class="alert-chip ${a.cor}">${icons[a.tipo]||'•'} ${a.mensagem}</div>`).join('')
+  }catch(e){}
+}
+
+async function loadResumo(){
+  try{
+    const d = await fetch(`${API_V2}/resumo?${buildParams()}`).then(r=>r.json())
+    const r   = d.resumo||{}
+    const fins = r.finalizadas||0
+    const total= r.total||0
+    const meta = d.meta_dia||META_DIA
+    const pct  = d.meta_percentual||0
+    const efic = d.eficiencia||0
+
+    // Status pill
+    let statusTxt='🟢 Operação Estável'
+    if(pct<50) statusTxt='🔴 Atenção — Meta em Risco'
+    else if(pct<80) statusTxt='🟡 Abaixo da Meta'
+    document.getElementById('db-status').textContent = statusTxt
+    document.getElementById('db-sub').textContent =
+      `Última sincronização: ${new Date().toLocaleTimeString('pt-BR')} · ${total} OS no período`
+
+    // KPIs
+    document.getElementById('db-kpis').innerHTML = `
+      <div class="kpi" style="--ac:var(--cyan)">
+        <div class="kpi-lbl">Total OS</div>
+        <div class="kpi-val">${total}</div>
+        <div class="kpi-sub">no período</div>
+      </div>
+      <div class="kpi" style="--ac:var(--green)">
+        <div class="kpi-lbl">Finalizadas</div>
+        <div class="kpi-val">${fins}</div>
+        <div class="kpi-sub">${pct}% da meta</div>
+        <div class="kpi-trend ${pct>=80?'up':'dn'}">${pct}%</div>
+      </div>
+      <div class="kpi" style="--ac:var(--amber)">
+        <div class="kpi-lbl">Em Execução</div>
+        <div class="kpi-val">${r.execucao||0}</div>
+        <div class="kpi-sub">em campo</div>
+      </div>
+      <div class="kpi" style="--ac:var(--purple)">
+        <div class="kpi-lbl">Eficiência</div>
+        <div class="kpi-val">${efic}%</div>
+        <div class="kpi-sub">fin/total</div>
+      </div>
+      <div class="kpi" style="--ac:var(--orange)">
+        <div class="kpi-lbl">Meta Dia</div>
+        <div class="kpi-val">${meta}</div>
+        <div class="kpi-sub">${Math.max(0,meta-fins)>0?`faltam ${Math.max(0,meta-fins)}`:'✓ atingida'}</div>
+      </div>
+    `
+
+    // Categorias clicáveis
+    const vals = CATS_V2.map(c=>r[c.resumoKey]||0)
+    const maxC = Math.max(...vals,1)
+    document.getElementById('db-cats').innerHTML = CATS_V2.map((c,i)=>{
+      const val=vals[i]; const pctBar=Math.round(val/maxC*100)
+      return `
+        <div class="cat-item" onclick="abrirModalCat('${c.key}','${c.label}','${c.cor}')">
+          <div class="cat-nome">${c.icone} ${c.label}</div>
+          <div class="cat-right">
+            <div class="cat-val" style="color:${c.cor}">${val}</div>
+            <div class="cat-arrow">›</div>
+          </div>
+        </div>
+        <div class="cat-bar"><div class="cat-bar-fill" style="background:${c.cor}" data-w="${pctBar}"></div></div>
+      `
+    }).join('')
+    requestAnimationFrame(()=>{
+      document.querySelectorAll('.cat-bar-fill[data-w]').forEach(el=>{ el.style.width=el.dataset.w+'%' })
+    })
+
+    // Meta bar
+    const pctMeta = Math.min(pct,100)
+    document.getElementById('db-meta').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;text-align:center">
+        <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Finalizadas</div></div>
+        <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber)">${Math.max(0,meta-fins)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Restantes</div></div>
+        <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--green)">${pctMeta}%</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Atingimento</div></div>
+        <div><div style="font-size:20px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${meta}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta</div></div>
+      </div>
+      <div class="meta-track">
+        <div class="meta-fill" style="width:${pctMeta}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div>
+        <div class="meta-marker" style="left:50%" data-l="50%"></div>
+      </div>
+    `
+
+    // Top técnicos
+    loadTopTecnicos()
+
+  }catch(e){
+    document.getElementById('db-kpis').innerHTML=`<div style="color:var(--red);font-size:12px;padding:16px;grid-column:1/-1">⚠️ Erro ao carregar dados</div>`
+  }
+}
+
+async function loadTopTecnicos(){
+  const container = document.getElementById('db-top-tecs')
+  container.innerHTML=`<div class="loading"><div class="spinner"></div></div>`
+  try{
+    const p = buildParams()
+    const respostas = await Promise.all(
+      CATS_V2.map(c=>fetch(`${API_V2}/categoria/${c.key}/tecnicos?${p}`).then(r=>r.json()))
+    )
+    const mapa={}
+    respostas.forEach(d=>{
+      (d.tecnicos||[]).forEach(t=>{
+        if(!mapa[t.id]) mapa[t.id]={id:t.id,nome:t.nome,total:0,finalizadas:0}
+        mapa[t.id].total      +=t.total_os
+        mapa[t.id].finalizadas+=t.finalizadas
+      })
+    })
+    const lista=Object.values(mapa).sort((a,b)=>b.finalizadas-a.finalizadas).slice(0,8)
+    if(!lista.length){
+      container.innerHTML=`<div class="empty-state"><div class="empty-state-icon">👥</div>Nenhum técnico no período</div>`
+      return
+    }
+    container.innerHTML = lista.map((t,i)=>{
+      const pct=t.total>0?Math.round(t.finalizadas/t.total*100):0
+      const cls=pct>=80?'green':pct>=50?'amber':'red'
+      const pos=i<3?`p${i+1}`:'pn'
+      return `
+        <div class="tec-row" onclick="abrirModalTecnico(${t.id},'${esc(t.nome)}',null,'Top Técnicos')">
+          <div class="tec-pos2 ${pos}">${i+1}</div>
+          <div style="flex:1;font-size:12px;font-weight:600">${t.nome}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan);font-weight:700;margin-right:8px">${t.finalizadas} <span style="color:var(--muted);font-size:10px">OS</span></div>
+          <div class="badge ${cls}">${pct}%</div>
+        </div>
+      `
+    }).join('')
+  }catch(e){
+    container.innerHTML=`<div class="empty-state"><div class="empty-state-icon">⚠️</div>Erro ao carregar</div>`
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL 1: TÉCNICOS DA CATEGORIA
+// ═══════════════════════════════════════════════════
+async function abrirModalCat(catKey,catLabel,catCor){
+  ctxCategoria={key:catKey,label:catLabel,cor:catCor}
+  document.getElementById('modal-cat-title').textContent=`${catLabel} — Técnicos`
+  document.getElementById('modal-cat-bread').innerHTML=
+    `<b>Visão Geral</b> <span>›</span> <b style="color:${catCor}">${catLabel}</b>`
+  document.getElementById('modal-cat-stats').innerHTML=''
+  document.getElementById('modal-cat-body').innerHTML=`<div class="loading"><div class="spinner"></div>Carregando...</div>`
+  abrirModal('modal-cat')
+  try{
+    const d=await fetch(`${API_V2}/categoria/${catKey}/tecnicos?${buildParams()}`).then(r=>r.json())
+    const tecnicos=d.tecnicos||[]
+    document.getElementById('modal-cat-stats').innerHTML=`
+      <div class="modal-stat"><div class="modal-stat-val" style="color:${catCor}">${d.total_os||0}</div><div class="modal-stat-lbl">Total OS</div></div>
+      <div class="modal-stat"><div class="modal-stat-val">${d.total_tecnicos||0}</div><div class="modal-stat-lbl">Técnicos</div></div>
+    `
+    if(!tecnicos.length){
+      document.getElementById('modal-cat-body').innerHTML=`<div class="empty-state"><div class="empty-state-icon">👷</div>Nenhum técnico nesta categoria no período</div>`
+      return
+    }
+    document.getElementById('modal-cat-body').innerHTML=tecnicos.map((t,i)=>{
+      const pct=t.percentual_finalizacao||0
+      const cls=pct>=80?'green':pct>=50?'amber':'red'
+      const pos=i<3?`p${i+1}`:'pn'
+      return `
+        <div class="modal-tec-item" onclick="abrirModalTecnico(${t.id},'${esc(t.nome)}','${catKey}','${esc(catLabel)}')">
+          <div class="tec-pos2 ${pos}">${i+1}</div>
+          <div style="flex:1;font-size:13px;font-weight:600">${t.nome}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--cyan);font-weight:700;margin-right:8px">${t.total_os} OS</div>
+          <div class="badge ${cls}">${pct}%</div>
+        </div>
+      `
+    }).join('')
+  }catch(e){
+    document.getElementById('modal-cat-body').innerHTML=`<div class="empty-state"><div class="empty-state-icon">⚠️</div>Erro ao carregar dados</div>`
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL 2: OS DO TÉCNICO
+// ═══════════════════════════════════════════════════
+async function abrirModalTecnico(tecId,tecNome,catKey,catLabel){
+  const cor=ctxCategoria?.cor||'var(--cyan)'
+  const bread = catKey && ctxCategoria
+    ? `<b>Visão Geral</b> <span>›</span> <b style="color:${cor}">${catLabel}</b> <span>›</span> <b style="color:var(--text)">${tecNome}</b>`
+    : `<b>${catLabel||'Top Técnicos'}</b> <span>›</span> <b style="color:var(--text)">${tecNome}</b>`
+
+  document.getElementById('modal-tec-title').textContent=`OS — ${tecNome}`
+  document.getElementById('modal-tec-bread').innerHTML=bread
+  document.getElementById('modal-tec-stats').innerHTML=''
+  document.getElementById('modal-tec-body').innerHTML=`<div class="loading"><div class="spinner"></div>Carregando...</div>`
+  abrirModal('modal-tec')
+
+  try{
+    const extra=catKey?{categoria:catKey}:{}
+    const d=await fetch(`${API_V2}/tecnico/${tecId}/os?${buildParams(extra)}`).then(r=>r.json())
+    const lista=d.os_list||[]
+    const fins=lista.filter(o=>o.status==='finalizada').length
+    const pct=lista.length>0?Math.round(fins/lista.length*100):0
+    const pctCor=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'
+
+    document.getElementById('modal-tec-stats').innerHTML=`
+      <div class="modal-stat"><div class="modal-stat-val">${lista.length}</div><div class="modal-stat-lbl">Total OS</div></div>
+      <div class="modal-stat"><div class="modal-stat-val" style="color:var(--green)">${fins}</div><div class="modal-stat-lbl">Finalizadas</div></div>
+      <div class="modal-stat"><div class="modal-stat-val" style="color:${pctCor}">${pct}%</div><div class="modal-stat-lbl">Eficiência</div></div>
+    `
+    if(!lista.length){
+      document.getElementById('modal-tec-body').innerHTML=`<div class="empty-state"><div class="empty-state-icon">📋</div>Nenhuma OS encontrada para ${tecNome}</div>`
+      return
+    }
+    document.getElementById('modal-tec-body').innerHTML=lista.map(os=>`
+      <div class="os-item">
+        <div class="os-header">
+          <div class="os-id">OS #${os.os_id}</div>
+          <div class="os-status-chip ${os.status||'execucao'}">${labelStatus(os.status)}</div>
+        </div>
+        <div class="os-info">
+          <span>📂 ${labelCat(os.categoria)}</span>
+          <span>📅 ${fmtDate(os.data_fechamento||os.data_abertura)}</span>
+          ${os.assunto_id?`<span>🔖 Assunto ${os.assunto_id}</span>`:''}
+        </div>
+      </div>
+    `).join('')
+  }catch(e){
+    document.getElementById('modal-tec-body').innerHTML=`<div class="empty-state"><div class="empty-state-icon">⚠️</div>Erro ao carregar OS</div>`
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// MODAL UTILS
+// ═══════════════════════════════════════════════════
+function abrirModal(id){
+  document.getElementById(id).classList.add('active')
+}
+function fecharModal(id){
+  document.getElementById(id).classList.remove('active')
+}
+function overlayClick(e,id){
+  if(e.target===e.currentTarget) fecharModal(id)
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return
+  const abertos=[...document.querySelectorAll('.modal-overlay.active')]
+  if(abertos.length) fecharModal(abertos[abertos.length-1].id)
+})
+
+// ═══════════════════════════════════════════════════
+// OUTRAS PÁGINAS (inalteradas)
+// ═══════════════════════════════════════════════════
+async function loadRanking(periodo='hoje',btn=null){
   if(btn){ document.querySelectorAll('#page-ranking .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active') }
-  const d = await api(`/api/ranking/?periodo=${periodo}`)
-  document.getElementById('rk-table').innerHTML = d.ranking.map((t,i)=>`
+  const d=await api(`/api/ranking/?periodo=${periodo}`)
+  document.getElementById('rk-table').innerHTML=d.ranking.map((t,i)=>`
     <tr>
       <td><span class="rpos ${rposClass(i)}">${i+1}</span></td>
       <td><strong>${t.nome}</strong></td>
-      <td class="r">${t.servicos||0}</td>
-      <td class="r">${t.suportes||0}</td>
-      <td class="r">${t.infra||0}</td>
-      <td class="r">${t.retiradas||0}</td>
+      <td class="r">${t.servicos||0}</td><td class="r">${t.suportes||0}</td><td class="r">${t.infra||0}</td><td class="r">${t.retiradas||0}</td>
       <td class="r" style="color:var(--cyan);font-weight:700">${t.finalizadas||0}</td>
       <td class="r"><span class="badge ${(t.eficiencia||0)>=80?'green':(t.eficiencia||0)>=50?'amber':'red'}">${t.eficiencia||0}%</span></td>
       <td class="r"><span class="badge" style="background:${scBg(t.score)};color:${sc(t.score)}">${t.score||0}</span></td>
@@ -585,36 +880,20 @@ async function loadRanking(periodo='hoje', btn=null){
   `).join('')
 }
 
-// ── OS TIPOS ─────────────────────────────────
-async function loadOS(periodo='hoje', btn=null){
+async function loadOS(periodo='hoje',btn=null){
   if(btn){ document.querySelectorAll('#page-os .tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active') }
-  const d = await api(`/api/os-tipos/?periodo=${periodo}`)
-  const cats = d.categorias || []
-  const total = cats.reduce((s,c)=>s+(c.total||0),0)
-
-  // KPIs
-  const catMap = Object.fromEntries(cats.map(c=>[c.categoria, c]))
-  const kpis = [
-    {n:'Serviço',  k:'servico',  c:'var(--cyan)'},
-    {n:'Suporte',  k:'suporte',  c:'var(--amber)'},
-    {n:'Infra',    k:'infra',    c:'var(--purple)'},
-    {n:'Retirada', k:'retirada', c:'var(--orange)'},
-  ]
-  document.getElementById('os-kpis').innerHTML = kpis.map(k=>{
-    const cat = catMap[k.k] || {}
-    const v = cat.total || 0
-    const pct = total>0 ? (v/total*100).toFixed(1) : 0
-    return `<div class="kpi" style="--ac:${k.c}">
-      <div class="kpi-lbl">${k.n}</div>
-      <div class="kpi-val">${v}</div>
-      <div class="kpi-sub">${pct}% do total</div>
-    </div>`
+  const d=await api(`/api/os-tipos/?periodo=${periodo}`)
+  const cats=d.categorias||[]
+  const total=cats.reduce((s,c)=>s+(c.total||0),0)
+  const catMap=Object.fromEntries(cats.map(c=>[c.categoria,c]))
+  const kpis=[{n:'Serviço',k:'servico',c:'var(--cyan)'},{n:'Suporte',k:'suporte',c:'var(--amber)'},{n:'Infra',k:'infra',c:'var(--purple)'},{n:'Retirada',k:'retirada',c:'var(--orange)'}]
+  document.getElementById('os-kpis').innerHTML=kpis.map(k=>{
+    const cat=catMap[k.k]||{}; const v=cat.total||0; const pct=total>0?(v/total*100).toFixed(1):0
+    return `<div class="kpi" style="--ac:${k.c}"><div class="kpi-lbl">${k.n}</div><div class="kpi-val">${v}</div><div class="kpi-sub">${pct}% do total</div></div>`
   }).join('')
-
-  // Barras
-  const maxC = Math.max(...cats.map(c=>c.total||0), 1)
-  const cores = {servico:'var(--cyan)',suporte:'var(--amber)',infra:'var(--purple)',retirada:'var(--orange)',outros:'var(--muted)'}
-  document.getElementById('os-cats').innerHTML = cats.length ? cats.map(c=>`
+  const maxC=Math.max(...cats.map(c=>c.total||0),1)
+  const cores={servico:'var(--cyan)',suporte:'var(--amber)',infra:'var(--purple)',retirada:'var(--orange)',outros:'var(--muted)'}
+  document.getElementById('os-cats').innerHTML=cats.length?cats.map(c=>`
     <div style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;margin-bottom:3px">
         <span style="font-size:12px;font-weight:600;text-transform:capitalize">${c.categoria}</span>
@@ -624,38 +903,21 @@ async function loadOS(periodo='hoje', btn=null){
       </div>
       <div class="bar-bg"><div class="bar-fill" style="width:${Math.round((c.total||0)/maxC*100)}%;background:${cores[c.categoria]||'var(--muted)'}"></div></div>
     </div>
-  `).join('') : '<div class="loading">Sem OS no período</div>'
-
-  // Técnico × tipo
-  document.getElementById('os-tec-table').innerHTML = (d.por_tecnico||[]).map(t=>`
-    <tr>
-      <td><strong>${t.nome}</strong></td>
-      <td class="r">${t.servicos||0}</td>
-      <td class="r">${t.suportes||0}</td>
-      <td class="r">${t.infra||0}</td>
-      <td class="r">${t.retiradas||0}</td>
-      <td class="r" style="color:var(--cyan);font-weight:700">${t.total||0}</td>
-    </tr>
+  `).join(''):'<div class="loading">Sem OS no período</div>'
+  document.getElementById('os-tec-table').innerHTML=(d.por_tecnico||[]).map(t=>`
+    <tr><td><strong>${t.nome}</strong></td><td class="r">${t.servicos||0}</td><td class="r">${t.suportes||0}</td><td class="r">${t.infra||0}</td><td class="r">${t.retiradas||0}</td><td class="r" style="color:var(--cyan);font-weight:700">${t.total||0}</td></tr>
   `).join('')
 }
 
-// ── METAS ────────────────────────────────────
 async function loadMetas(){
-  const [metas, dash] = await Promise.all([
-    api('/api/metas/'),
-    api('/api/dashboard/')
-  ])
-  const meta_dia = dash.meta_dia || META_DIA
-  const fins = dash.resumo?.finalizadas || 0
-  const pct = Math.min(Math.round(fins/meta_dia*100),100)
-
-  document.getElementById('metas-content').innerHTML = `
+  const [metas,dash]=await Promise.all([api('/api/metas/'),api('/api/dashboard/')])
+  const meta_dia=dash.meta_dia||META_DIA; const fins=dash.resumo?.finalizadas||0
+  const pct=Math.min(Math.round(fins/meta_dia*100),100)
+  document.getElementById('metas-content').innerHTML=`
     <div class="kpi-grid c3" style="margin-bottom:18px">
       ${dash.tecnicos.slice(0,6).map(t=>{
-        const f = t.finalizadas||0
-        const m = t.meta_dia||8
-        const p = Math.min(Math.round(f/m*100),100)
-        const cor = p>=80?'var(--green)':p>=50?'var(--amber)':'var(--red)'
+        const f=t.finalizadas||0; const m=t.meta_dia||8; const p=Math.min(Math.round(f/m*100),100)
+        const cor=p>=80?'var(--green)':p>=50?'var(--amber)':'var(--red)'
         return `<div class="kpi" style="--ac:${cor}">
           <div class="kpi-lbl">${t.nome.split(' ')[0]}</div>
           <div class="kpi-val">${f}<span style="font-size:13px;color:var(--muted)">/${m}</span></div>
@@ -681,83 +943,52 @@ async function loadMetas(){
   `
 }
 
-// ── TÉCNICOS ─────────────────────────────────
 async function loadTecnicos(){
-  const [tecs, dash] = await Promise.all([api('/api/tecnicos/'), api('/api/dashboard/')])
-  const tecMap = Object.fromEntries(dash.tecnicos.map(t=>[t.id,t]))
-  document.getElementById('tec-cards').innerHTML = tecs.map(t=>{
-    const d = tecMap[t.id] || {}
-    const fins = d.finalizadas||0
-    const total = d.total||0
-    const score = d.score||0
-    const efic = d.eficiencia||0
+  const [tecs,dash]=await Promise.all([api('/api/tecnicos/'),api('/api/dashboard/')])
+  const tecMap=Object.fromEntries(dash.tecnicos.map(t=>[t.id,t]))
+  document.getElementById('tec-cards').innerHTML=tecs.map(t=>{
+    const d=tecMap[t.id]||{}; const fins=d.finalizadas||0; const score=d.score||0; const efic=d.eficiencia||0
     return `<div class="tec-card">
       <div class="tec-name">${t.nome}</div>
       <div class="tec-meta">ID IXC: ${t.ixc_funcionario_id} · Meta: ${t.meta_dia} OS/dia</div>
       <div class="tec-stats">
-        <div class="tec-stat">
-          <div class="tec-stat-val" style="color:var(--green)">${fins}</div>
-          <div class="tec-stat-lbl">OS Fin.</div>
-        </div>
-        <div class="tec-stat">
-          <div class="tec-stat-val" style="color:var(--amber)">${efic}%</div>
-          <div class="tec-stat-lbl">Efic.</div>
-        </div>
-        <div class="tec-stat">
-          <div class="tec-stat-val" style="color:${sc(score)}">${score}</div>
-          <div class="tec-stat-lbl">Score</div>
-        </div>
+        <div class="tec-stat"><div class="tec-stat-val" style="color:var(--green)">${fins}</div><div class="tec-stat-lbl">OS Fin.</div></div>
+        <div class="tec-stat"><div class="tec-stat-val" style="color:var(--amber)">${efic}%</div><div class="tec-stat-lbl">Efic.</div></div>
+        <div class="tec-stat"><div class="tec-stat-val" style="color:${sc(score)}">${score}</div><div class="tec-stat-lbl">Score</div></div>
       </div>
     </div>`
   }).join('')
 }
 
-// ── TELEGRAM ─────────────────────────────────
 async function loadTelegram(){
-  const d = await api('/api/dashboard/')
-  const r = d.resumo
-  const fins = r.finalizadas||0
-  const meta = d.meta_dia||META_DIA
-  const pct = Math.round(fins/meta*100)
-  const agora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
-  const hoje = new Date().toLocaleDateString('pt-BR')
-
-  document.getElementById('tg-hora').innerHTML = `
-    <div class="tc">📡 HubProdutividade · Cliquedf</div>
-    <div class="tm">🕐 ${agora} · ${hoje}</div>
+  const d=await api('/api/dashboard/')
+  const r=d.resumo; const fins=r.finalizadas||0; const meta=d.meta_dia||META_DIA
+  const pct=Math.round(fins/meta*100); const agora=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  const hoje=new Date().toLocaleDateString('pt-BR')
+  document.getElementById('tg-hora').innerHTML=`
+    <div class="tc">📡 HubProdutividade · Cliquedf</div><div class="tm">🕐 ${agora} · ${hoje}</div>
     <div class="tm">━━━━━━━━━━━━━━━━━</div>
     <div>🎯 Meta dia: <span class="tc">${fins}/${meta}</span> (${pctIc(pct)} ${pct}%)</div>
     <div>✅ Finalizadas: <span class="tg">${fins}</span></div>
     <div>🔄 Em aberto: <span class="ta">${r.execucao||0}</span></div>
     <div>📊 Total OS: <span class="tc">${r.total||0}</span></div>
-    <div class="tm">━━━━━━━━━━━━━━━━━</div>
-    <div><b>Por técnico:</b></div>
-    ${d.tecnicos.slice(0,5).map(t=>{
-      const f=t.finalizadas||0; const m=t.meta_dia||8
-      const p=Math.round(f/m*100)
-      return `<div>${pctIc(p)} ${t.nome.split(' ')[0]}: <span class="tc">${f}</span>/${m} OS</div>`
-    }).join('')}
+    <div class="tm">━━━━━━━━━━━━━━━━━</div><div><b>Por técnico:</b></div>
+    ${d.tecnicos.slice(0,5).map(t=>{const f=t.finalizadas||0;const m=t.meta_dia||8;const p=Math.round(f/m*100);return `<div>${pctIc(p)} ${t.nome.split(' ')[0]}: <span class="tc">${f}</span>/${m} OS</div>`}).join('')}
   `
-
-  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟']
-  document.getElementById('tg-rank').innerHTML = `
-    <div class="tc">🏆 Ranking Final · Cliquedf</div>
-    <div class="tm">📅 ${hoje}</div>
+  const medals=['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟']
+  document.getElementById('tg-rank').innerHTML=`
+    <div class="tc">🏆 Ranking Final · Cliquedf</div><div class="tm">📅 ${hoje}</div>
     <div class="tm">━━━━━━━━━━━━━━━━━</div>
-    ${d.tecnicos.map((t,i)=>{
-      const cls = i===0?'tg':i===1?'ta':i===2?'tc':'tm'
-      return `<div class="${cls}">${medals[i]||'·'} ${t.nome.split(' ')[0]}: <b>${t.finalizadas||0} OS</b> · Score ${t.score||0}</div>`
-    }).join('')}
+    ${d.tecnicos.map((t,i)=>{const cls=i===0?'tg':i===1?'ta':i===2?'tc':'tm';return `<div class="${cls}">${medals[i]||'·'} ${t.nome.split(' ')[0]}: <b>${t.finalizadas||0} OS</b> · Score ${t.score||0}</div>`}).join('')}
     <div class="tm">━━━━━━━━━━━━━━━━━</div>
     <div>📊 Total equipe: <span class="tg">${fins} OS</span></div>
     <div>🎯 Meta atingida: <span class="${pct>=80?'tg':pct>=50?'ta':'tr'}">${pct}%</span></div>
   `
 }
 
-// ── USUÁRIOS ─────────────────────────────────
 async function loadUsuarios(){
-  const d = await api('/api/admin/usuarios/')
-  document.getElementById('usr-table').innerHTML = d.map(u=>`
+  const d=await api('/api/admin/usuarios/')
+  document.getElementById('usr-table').innerHTML=d.map(u=>`
     <tr>
       <td style="font-family:'DM Mono',monospace;color:var(--cyan)">${u.login}</td>
       <td><strong>${u.nome}</strong></td>
@@ -767,21 +998,18 @@ async function loadUsuarios(){
   `).join('')
 }
 
-// ── PERMISSÕES ───────────────────────────────
 async function loadPermissoes(){
-  const d = await api('/api/admin/permissoes/')
-  const modulos = [...new Set(d.map(r=>r.modulo))]
-  document.getElementById('perm-table').innerHTML = modulos.map(mod=>{
-    const niveis = [1,2,3,4].map(n=>{
-      const row = d.find(r=>r.modulo===mod && r.nivel===n)
-      const ok = row?.permitido
-      return `<td class="r"><span class="badge ${ok?'green':'muted'}">${ok?'✓':'—'}</span></td>`
-    }).join('')
+  const d=await api('/api/admin/permissoes/')
+  const modulos=[...new Set(d.map(r=>r.modulo))]
+  document.getElementById('perm-table').innerHTML=modulos.map(mod=>{
+    const niveis=[1,2,3,4].map(n=>{const row=d.find(r=>r.modulo===mod&&r.nivel===n);const ok=row?.permitido;return `<td class="r"><span class="badge ${ok?'green':'muted'}">${ok?'✓':'—'}</span></td>`}).join('')
     return `<tr><td><strong>${mod}</strong></td><td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)">${mod}</td>${niveis}</tr>`
   }).join('')
 }
 
-// ── INIT ─────────────────────────────────────
+// ── INIT ──────────────────────────────────────────
+setupStatusBtns()
+setHoje()
 loadDashboard()
 </script>
 </body>
