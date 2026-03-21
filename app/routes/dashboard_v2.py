@@ -201,15 +201,18 @@ async def get_os_do_tecnico(
     # Buscar OS
     rows = db.execute(f"""
         SELECT
-            ixc_os_id,
-            ixc_assunto_id,
-            categoria,
-            status,
-            data_abertura,
-            data_fechamento
-        FROM prod_os_cache
+            o.ixc_os_id,
+            o.ixc_assunto_id,
+            COALESCE(a.assunto, 'Assunto ' || o.ixc_assunto_id) AS nome_assunto,
+            o.categoria,
+            o.status,
+            o.data_abertura,
+            o.data_fechamento,
+            o.data_agenda
+        FROM prod_os_cache o
+        LEFT JOIN prod_assuntos a ON a.id = o.ixc_assunto_id
         WHERE {filtro_where}
-        ORDER BY data_fechamento DESC
+        ORDER BY COALESCE(o.data_fechamento, o.data_agenda, o.data_abertura) DESC
     """).fetchall()
     
     db.close()
@@ -217,12 +220,14 @@ async def get_os_do_tecnico(
     os_list = []
     for r in rows:
         os_list.append({
-            "os_id": r["ixc_os_id"],
-            "assunto_id": r["ixc_assunto_id"],
-            "categoria": r["categoria"],
-            "status": r["status"],
-            "data_abertura": r["data_abertura"],
-            "data_fechamento": r["data_fechamento"]
+            "os_id":           r["ixc_os_id"],
+            "assunto_id":      r["ixc_assunto_id"],
+            "assunto":         r["nome_assunto"],
+            "categoria":       r["categoria"],
+            "status":          r["status"],
+            "data_abertura":   r["data_abertura"],
+            "data_fechamento": r["data_fechamento"],
+            "data_agenda":     r["data_agenda"] if "data_agenda" in r.keys() else None
         })
     
     return {

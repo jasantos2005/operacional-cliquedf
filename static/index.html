@@ -835,7 +835,7 @@ async function abrirModalTecnico(tecId,tecNome,catKey,catLabel){
         <div class="os-info">
           <span>📂 ${labelCat(os.categoria)}</span>
           <span>📅 ${fmtDate(os.data_fechamento||os.data_abertura)}</span>
-          ${os.assunto_id?`<span>🔖 Assunto ${os.assunto_id}</span>`:''}
+          ${os.assunto?`<span>🔖 ${os.assunto}</span>`:''}
         </div>
       </div>
     `).join('')
