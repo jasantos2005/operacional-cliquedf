@@ -156,6 +156,9 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
     db = get_db()
     data = data or hoje_brt()
 
+    # Garantir que data é string
+    data = str(data) if data else hoje_brt()
+
     tecnico = db.execute(
         "SELECT * FROM prod_tecnicos WHERE id=?", (tecnico_id,)
     ).fetchone()
@@ -176,7 +179,7 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
     """, (tecnico_id, data)).fetchone())
 
     # Score do dia
-    from app.engines.score_engine import calcular_score_tecnico
+    from app.engines.score_engine import calcular_pontos_tecnico as calcular_score_tecnico
     score = calcular_score_tecnico(tecnico_id, data)
 
     # OS recentes (últimas 10)
