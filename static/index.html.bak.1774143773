@@ -168,26 +168,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 .os-meta{font-size:10px;color:var(--muted);display:flex;gap:10px;margin-top:2px}
 .os-status-chip{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;text-transform:uppercase;font-family:'DM Mono',monospace;flex-shrink:0;margin-left:8px}
 .os-status-chip.finalizada{background:rgba(0,229,160,.12);color:var(--green)}
-.det-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.ag-alert{padding:12px 16px;border-radius:8px;font-size:12px;font-weight:700;margin-top:12px}
-.ag-alert.critico{background:rgba(255,77,106,.15);color:var(--red)}
-.ag-alert.aviso{background:rgba(255,184,63,.15);color:var(--amber)}
-.ag-alert.info{background:rgba(0,212,255,.1);color:var(--cyan)}
-.det-kpi{background:var(--s2);border-radius:8px;padding:12px}
-.det-kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.det-kpi-val{font-size:20px;font-weight:800;font-family:'DM Mono',monospace}
-.checklist-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
-.checklist-row:last-child{border:none}
-.chk-ok{color:var(--green)}
-.chk-fail{color:var(--red)}
-.chk-warn{color:var(--amber)}
-.lista-os-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:background .15s;border-radius:6px}
-.lista-os-row:hover{background:rgba(255,255,255,.03)}
-.lista-os-row:last-child{border:none}
-.lista-os-id{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);min-width:70px}
-.lista-os-info{flex:1}
-.lista-os-tec{font-size:11px;color:var(--muted)}
-.lista-os-pts{font-family:'DM Mono',monospace;font-size:14px;font-weight:700;min-width:50px;text-align:right}
 .os-status-chip.agendada{background:rgba(0,212,255,.12);color:var(--cyan)}
 .os-status-chip.aguardando{background:rgba(255,184,63,.12);color:var(--amber)}
 .os-status-chip.execucao,.os-status-chip.aberta{background:rgba(167,139,250,.12);color:var(--purple)}
@@ -558,7 +538,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     <!-- ══ RANKING ══════════════════════════════ -->
     <div class="page" id="page-ranking">
       <div class="pg-hd">
-        <div><div class="pg-title">Ranking <span>Técnicos</span></div><div class="pg-sub">Pontuação por regras · meta: 80 pts/dia</div></div>
+        <div><div class="pg-title">Ranking <span>Técnicos</span></div><div class="pg-sub">Score: serviço×3 + suporte×2 + infra×2 + retirada×1</div></div>
         <div class="period-tabs">
           <button class="period-tab active" onclick="loadRanking(null,this)">Hoje</button>
           <button class="period-tab" onclick="loadRankingOntem(this)">Ontem</button>
@@ -567,7 +547,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       <div class="card">
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>#</th><th>Técnico</th><th class="r">OS</th><th class="r">Pontos</th><th class="r">Aproveit.</th><th class="r">Qualidade</th><th class="r">Meta</th><th class="r">Perfeitas</th></tr></thead>
+            <thead><tr><th>#</th><th>Técnico</th><th class="r">Serv.</th><th class="r">Sup.</th><th class="r">Infra</th><th class="r">Ret.</th><th class="r">Total</th><th class="r">Efic.</th><th class="r">Meta</th><th class="r">Score</th></tr></thead>
             <tbody id="ranking-table"></tbody>
           </table>
         </div>
@@ -615,64 +595,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 </div><!-- /main -->
 
 <!-- ══ MODAL OS ══════════════════════════════════════ -->
-<!-- ══ MODAL OS AGENDADA ════════════════════════════ -->
-<div class="modal-overlay" id="modal-os-ag" onclick="overlayClick(event,'modal-os-ag')">
-  <div class="modal" style="max-width:720px">
-    <div class="modal-hd">
-      <div>
-        <div class="modal-title" id="modal-os-ag-title">OS #—</div>
-        <div class="modal-sub" id="modal-os-ag-sub"></div>
-      </div>
-      <button class="modal-close" onclick="fecharModal('modal-os-ag')">×</button>
-    </div>
-    <div class="modal-tabs">
-      <div class="modal-tab active" onclick="switchTab('os-ag','resumo',this)">Resumo</div>
-      <div class="modal-tab" onclick="switchTab('os-ag','sla',this)">SLA</div>
-      <div class="modal-tab" onclick="switchTab('os-ag','historico',this)">Histórico Cliente</div>
-    </div>
-    <div id="os-ag-tab-resumo"    class="modal-tab-content active"></div>
-    <div id="os-ag-tab-sla"       class="modal-tab-content"></div>
-    <div id="os-ag-tab-historico" class="modal-tab-content"></div>
-  </div>
-</div>
-
-<!-- ══ MODAL LISTA OS FINALIZADAS ══════════════════ -->
-<div class="modal-overlay" id="modal-lista-os" onclick="overlayClick(event,'modal-lista-os')">
-  <div class="modal" style="max-width:680px">
-    <div class="modal-hd">
-      <div>
-        <div class="modal-title" id="modal-lista-os-title">OS Finalizadas</div>
-        <div class="modal-sub" id="modal-lista-os-sub"></div>
-      </div>
-      <button class="modal-close" onclick="fecharModal('modal-lista-os')">×</button>
-    </div>
-    <div style="padding:16px 20px;overflow-y:auto;max-height:70vh" id="modal-lista-os-body">
-      <div class="loading"><div class="spinner"></div>Carregando...</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ MODAL DETALHE OS FINALIZADA ══════════════════ -->
-<div class="modal-overlay" id="modal-os-det" onclick="overlayClick(event,'modal-os-det')">
-  <div class="modal" style="max-width:720px">
-    <div class="modal-hd">
-      <div>
-        <div class="modal-title" id="modal-os-det-title">OS #—</div>
-        <div class="modal-sub" id="modal-os-det-sub"></div>
-      </div>
-      <button class="modal-close" onclick="fecharModal('modal-os-det')">×</button>
-    </div>
-    <div class="modal-tabs">
-      <div class="modal-tab active" onclick="switchTab('os-det','resumo',this)">Resumo</div>
-      <div class="modal-tab" onclick="switchTab('os-det','validacao',this)">Validação</div>
-      <div class="modal-tab" onclick="switchTab('os-det','pontuacao',this)">Pontuação</div>
-    </div>
-    <div id="os-det-tab-resumo"   class="modal-tab-content active"></div>
-    <div id="os-det-tab-validacao" class="modal-tab-content"></div>
-    <div id="os-det-tab-pontuacao" class="modal-tab-content"></div>
-  </div>
-</div>
-
 <div class="modal-overlay" id="modal-os" onclick="overlayClick(event,'modal-os')">
   <div class="modal wide">
     <div class="modal-header">
@@ -686,13 +608,11 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       <div class="modal-tab active" onclick="switchTab('os','resumo',this)">Resumo</div>
       <div class="modal-tab" onclick="switchTab('os','sla',this)">SLA</div>
       <div class="modal-tab" onclick="switchTab('os','auditoria',this)">Auditoria</div>
-      <div class="modal-tab" onclick="switchTab('os','pontuacao',this)">Pontuação</div>
       <div class="modal-tab" onclick="switchTab('os','historico',this)">Histórico</div>
     </div>
-    <div id="os-tab-resumo"    class="modal-tab-content active"></div>
-    <div id="os-tab-sla"       class="modal-tab-content"></div>
+    <div id="os-tab-resumo"   class="modal-tab-content active"></div>
+    <div id="os-tab-sla"      class="modal-tab-content"></div>
     <div id="os-tab-auditoria" class="modal-tab-content"></div>
-    <div id="os-tab-pontuacao" class="modal-tab-content"></div>
     <div id="os-tab-historico" class="modal-tab-content"></div>
   </div>
 </div>
@@ -1125,7 +1045,7 @@ async function loadAgendaDia(offsetDias=0, btn=null){
       </div>
       <div class="agenda-os">
         ${t.os.map(o=>`
-          <div class="agenda-os-item" onclick="abrirModalOSAg(${o.ixc_os_id})">
+          <div class="agenda-os-item" onclick="abrirModalOS(${o.ixc_os_id})">
             <span class="agenda-hora">${fmtHora(o.data_agenda)}</span>
             <span class="agenda-os-id">#${o.ixc_os_id}</span>
             <span class="agenda-os-nome">${o.assunto||'—'}</span>
@@ -1161,7 +1081,7 @@ async function loadReagendamentos(){
   const el=document.getElementById('reagendamentos-list')
   if(!d.reagendamentos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS reagendada pendente</div>`;return}
   el.innerHTML=d.reagendamentos.map(o=>`
-    <div class="os-row" onclick="abrirModalOSAg(${o.ixc_os_id})">
+    <div class="os-row" onclick="abrirModalOS(${o.ixc_os_id})">
       <div class="os-id">#${o.ixc_os_id}</div>
       <div class="os-info">
         <div class="os-assunto">${o.assunto||'—'}</div>
@@ -1177,18 +1097,20 @@ async function loadReagendamentos(){
 // ═══════════════════════════════════════════════════
 async function loadRanking(data,btn=null){
   if(btn){document.querySelectorAll('#page-ranking .period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
-  const url=data?`${SAIS}/pontuacao/ranking?data=${data}`:`${SAIS}/pontuacao/ranking`
+  const url=data?`${SAIS}/produtividade/ranking?data=${data}`:`${SAIS}/produtividade/ranking`
   const d=await apiFetch(url)
   document.getElementById('ranking-table').innerHTML=(d.ranking||[]).map((t,i)=>`
     <tr onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}')">
       <td><span class="rpos ${rposCls(i)}">${i+1}</span></td>
       <td><strong>${t.nome}</strong></td>
+      <td class="r">${t.por_categoria?.servico||0}</td>
+      <td class="r">${t.por_categoria?.suporte||0}</td>
+      <td class="r">${t.por_categoria?.infra||0}</td>
+      <td class="r">${t.por_categoria?.retirada||0}</td>
       <td class="r" style="color:var(--cyan);font-weight:700">${t.total_os}</td>
-      <td class="r"><span class="badge cyan" style="font-family:'DM Mono',monospace;font-size:13px">${t.total_pontos}</span></td>
-      <td class="r"><span class="badge ${t.aproveitamento>=80?'green':t.aproveitamento>=50?'amber':'red'}">${t.aproveitamento}%</span></td>
-      <td class="r"><span class="badge ${t.pct_qualidade>=80?'green':t.pct_qualidade>=50?'amber':'red'}">${t.pct_qualidade}%</span></td>
-      <td class="r"><span class="badge ${t.pct_meta>=100?'green':t.pct_meta>=60?'amber':'red'}">${t.pct_meta}%</span></td>
-      <td class="r" style="color:var(--muted);font-size:10px">${t.os_perfeitas}/${t.total_os}</td>
+      <td class="r"><span class="badge ${t.eficiencia>=80?'green':t.eficiencia>=50?'amber':'red'}">${t.eficiencia}%</span></td>
+      <td class="r"><span class="badge ${t.pct_meta>=80?'green':t.pct_meta>=50?'amber':'red'}">${t.pct_meta}%</span></td>
+      <td class="r"><span class="badge cyan">${t.score}</span></td>
     </tr>
   `).join('')
 }
@@ -1336,304 +1258,6 @@ async function loadPermissoes(){
 // ═══════════════════════════════════════════════════
 // MODAL OS
 // ═══════════════════════════════════════════════════
-// MODAL OS AGENDADA
-// ═══════════════════════════════════════════════════
-async function abrirModalOSAg(osId){
-  document.getElementById('modal-os-ag-title').textContent = `OS #${osId}`
-  document.getElementById('modal-os-ag-sub').textContent = 'Carregando...'
-  document.getElementById('os-ag-tab-resumo').innerHTML =
-    '<div class="loading"><div class="spinner"></div>Carregando...</div>'
-  switchTab('os-ag','resumo', document.querySelector('#modal-os-ag .modal-tab'))
-  abrirModal('modal-os-ag')
-
-  try{
-    const d = await apiFetch(`${SAIS}/agenda/os/${osId}`)
-
-    document.getElementById('modal-os-ag-title').textContent = `OS #${osId}`
-    document.getElementById('modal-os-ag-sub').textContent =
-      `Cliente: ${d.cliente_nome} · ${d.nome_assunto} · ${statusLabel(d.status)}`
-
-    const sla    = d.sla || {}
-    const hist   = d.historico_cliente || {}
-    const alerta = d.alerta
-
-    const slaCor = sla.status==='no_prazo' ? 'var(--green)'
-                 : sla.status==='em_risco'  ? 'var(--amber)' : 'var(--red)'
-
-    const abertCor = (d.tempo_abertura_h||0) > (sla.horas_previstas||4)
-                   ? 'var(--red)' : 'var(--amber)'
-
-    const execCor = d.exec_em_h != null
-                  ? (d.exec_em_h < 0 ? 'var(--red)' : d.exec_em_h < 2 ? 'var(--amber)' : 'var(--cyan)')
-                  : 'var(--muted)'
-
-    const alertaHtml = alerta ? `
-      <div class="ag-alert ${alerta.nivel}">
-        ${alerta.nivel==='critico'?'🚨':alerta.nivel==='aviso'?'⚠️':'💬'} ${alerta.msg}
-      </div>` : ''
-
-    // ── Tab Resumo ──────────────────────────────────
-    document.getElementById('os-ag-tab-resumo').innerHTML = `
-      <div class="det-kpis">
-        <div class="det-kpi">
-          <div class="det-kpi-lbl">Status</div>
-          <div class="det-kpi-val" style="color:var(--cyan);font-size:14px">Agendada</div>
-        </div>
-        <div class="det-kpi">
-          <div class="det-kpi-lbl">Tempo desde abertura</div>
-          <div class="det-kpi-val" style="color:${abertCor}">${d.tempo_abertura_h!=null?d.tempo_abertura_h+'h':'—'}</div>
-        </div>
-        <div class="det-kpi">
-          <div class="det-kpi-lbl">Execução em</div>
-          <div class="det-kpi-val" style="color:${execCor}">${d.exec_label||'—'}</div>
-        </div>
-        <div class="det-kpi">
-          <div class="det-kpi-lbl">Técnico</div>
-          <div class="det-kpi-val" style="font-size:13px">${esc(d.tecnico_nome)}</div>
-        </div>
-      </div>
-
-      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Informações</div>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">
-        ${infoRow('Assunto', d.nome_assunto)}
-        ${infoRow('Cliente', d.cliente_nome)}
-        ${infoRow('Abertura', fmtData(d.data_abertura))}
-        ${infoRow('Agendado para', fmtData(d.data_agenda))}
-      </div>
-      ${alertaHtml}
-    `
-
-    // ── Tab SLA ─────────────────────────────────────
-    const slaPct = Math.min(sla.pct||0, 150)
-    const slaLabel = sla.status==='no_prazo' ? '✅ No prazo'
-                   : sla.status==='em_risco'  ? '⚠️ Em risco' : '🚨 Estourado'
-    document.getElementById('os-ag-tab-sla').innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px">
-        ${infoRow('Tempo limite', (sla.horas_previstas||4)+'h')}
-        ${infoRow('Consumido', `<span style="color:${slaCor};font-weight:700">${sla.pct!=null?sla.pct+'%':'—'}</span>`)}
-        ${infoRow('Status', `<span style="color:${slaCor};font-weight:700">${slaLabel}</span>`)}
-        ${infoRow('Tempo decorrido', d.tempo_abertura_h!=null?d.tempo_abertura_h+'h':'—')}
-      </div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Consumo do SLA: ${sla.pct||0}%</div>
-      <div class="sla-bar"><div class="sla-bar-fill" style="width:${Math.min(sla.pct||0,100)}%;background:${slaCor}"></div></div>
-      ${alertaHtml}
-    `
-
-    // ── Tab Histórico Cliente ────────────────────────
-    const padraoCor = hist.padrao==='Recorrente' ? 'var(--red)'
-                    : hist.padrao==='Ocasional'   ? 'var(--amber)' : 'var(--green)'
-    document.getElementById('os-ag-tab-historico').innerHTML = `
-      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">
-        Histórico do Cliente (mesmo assunto)
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px">
-        ${infoRow('Cliente', d.cliente_nome)}
-        ${infoRow('Últimos 30 dias', `<span style="color:${hist.ultimos_30>=3?'var(--red)':hist.ultimos_30>=1?'var(--amber)':'var(--green)'}">${hist.ultimos_30} ocorrência${hist.ultimos_30!==1?'s':''}</span>`)}
-        ${infoRow('Últimos 60 dias', `<span style="color:${hist.ultimos_60>=5?'var(--red)':hist.ultimos_60>=2?'var(--amber)':'var(--green)'}">${hist.ultimos_60} ocorrência${hist.ultimos_60!==1?'s':''}</span>`)}
-        ${infoRow('Padrão detectado', `<span style="color:${padraoCor};font-weight:700">${hist.padrao}</span>`)}
-      </div>
-      ${alertaHtml}
-      ${hist.ultimos_30===0 ? '<div style="color:var(--green);font-size:12px;padding:4px 0">✅ Sem histórico de reincidência</div>' : ''}
-    `
-  }catch(e){
-    document.getElementById('os-ag-tab-resumo').innerHTML =
-      '<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar OS</div>'
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// MODAL LISTA OS FINALIZADAS
-// ═══════════════════════════════════════════════════
-async function abrirModalListaOS(status='finalizada', data=null){
-  document.getElementById('modal-lista-os-title').textContent =
-    status==='finalizada' ? 'OS Finalizadas' : 'Lista de OS'
-  document.getElementById('modal-lista-os-sub').textContent = 'Carregando...'
-  document.getElementById('modal-lista-os-body').innerHTML =
-    '<div class="loading"><div class="spinner"></div>Carregando...</div>'
-  abrirModal('modal-lista-os')
-
-  try{
-    const url = data
-      ? `${SAIS}/visao-geral/os-finalizadas?data=${data}`
-      : `${SAIS}/visao-geral/os-finalizadas`
-    const d = await apiFetch(url)
-    const lista = d.os || []
-
-    document.getElementById('modal-lista-os-sub').textContent =
-      `${lista.length} OS finalizadas hoje`
-
-    if(!lista.length){
-      document.getElementById('modal-lista-os-body').innerHTML =
-        '<div class="empty"><div class="empty-icon">📋</div>Nenhuma OS finalizada hoje</div>'
-      return
-    }
-
-    // Guardar dados para o modal de detalhe
-    window._osFinalizadasCache = {}
-    lista.forEach(o => { window._osFinalizadasCache[o.os_id] = o })
-
-    document.getElementById('modal-lista-os-body').innerHTML = lista.map(o => {
-      const pts     = o.pontuacao?.pontos_final ?? '—'
-      const ptsMax  = o.pontuacao?.pontos_base  ?? 0
-      const pctMeta = o.pontuacao?.calculado ? o.pontuacao.aproveitamento : null
-      const ptsCor  = !o.pontuacao?.calculado ? 'var(--muted)'
-                    : pctMeta >= 80 ? 'var(--green)'
-                    : pctMeta >= 50 ? 'var(--amber)' : 'var(--red)'
-      const slaSt   = o.sla?.status
-      const slaCor  = slaSt==='no_prazo' ? 'var(--green)'
-                    : slaSt==='em_risco' ? 'var(--amber)' : 'var(--red)'
-      const pends   = o.pendencias?.length || 0
-
-      return `<div class="lista-os-row" onclick="abrirModalOSDet(${o.os_id})">
-        <div class="lista-os-id">#${o.os_id}</div>
-        <div class="lista-os-info">
-          <div style="font-size:13px;font-weight:600">${esc(o.nome_assunto)}</div>
-          <div class="lista-os-tec">${esc(o.tecnico_nome)} · ${o.tempo_min ? o.tempo_min+'min' : '—'}</div>
-        </div>
-        ${o.sla?.pct!=null ? `<span class="badge" style="color:${slaCor};background:rgba(0,0,0,.2)">SLA ${o.sla.pct}%</span>` : ''}
-        ${pends > 0 ? `<span class="badge red">${pends} pend.</span>` : '<span class="badge green">✓</span>'}
-        <div class="lista-os-pts" style="color:${ptsCor}">${o.pontuacao?.calculado ? pts+'pts' : '—'}</div>
-      </div>`
-    }).join('')
-  }catch(e){
-    document.getElementById('modal-lista-os-body').innerHTML =
-      '<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar</div>'
-  }
-}
-
-// ═══════════════════════════════════════════════════
-// MODAL DETALHE OS FINALIZADA
-// ═══════════════════════════════════════════════════
-function abrirModalOSDet(osId){
-  const os = (window._osFinalizadasCache || {})[osId]
-  if(!os) return
-
-  document.getElementById('modal-os-det-title').textContent = `OS #${osId}`
-  document.getElementById('modal-os-det-sub').textContent =
-    `${os.tecnico_nome} · ${os.nome_assunto}`
-
-  switchTab('os-det','resumo', document.querySelector('#modal-os-det .modal-tab.active') || document.querySelector('#modal-os-det .modal-tab'))
-  abrirModal('modal-os-det')
-
-  const pont   = os.pontuacao || {}
-  const ev     = os.evidencias || {}
-  const sla    = os.sla || {}
-  const pends  = os.pendencias || []
-  const pct    = pont.aproveitamento || 0
-  const pctCor = !pont.calculado ? 'var(--muted)'
-               : pct>=80 ? 'var(--green)' : pct>=50 ? 'var(--amber)' : 'var(--red)'
-  const slaCor = sla.status==='no_prazo' ? 'var(--green)'
-               : sla.status==='em_risco'  ? 'var(--amber)' : 'var(--red)'
-
-  // ── Tab Resumo ──────────────────────────────────
-  document.getElementById('os-det-tab-resumo').innerHTML = `
-    <div class="det-kpis">
-      <div class="det-kpi">
-        <div class="det-kpi-lbl">Status SLA</div>
-        <div class="det-kpi-val" style="color:${slaCor};font-size:14px">
-          ${sla.status==='no_prazo'?'✅ No prazo':sla.status==='em_risco'?'⚠️ Em risco':'🚨 Estourado'}
-        </div>
-      </div>
-      <div class="det-kpi">
-        <div class="det-kpi-lbl">SLA consumido</div>
-        <div class="det-kpi-val" style="color:${slaCor}">${sla.pct!=null?sla.pct+'%':'—'}</div>
-      </div>
-      <div class="det-kpi">
-        <div class="det-kpi-lbl">Pontos</div>
-        <div class="det-kpi-val" style="color:${pctCor}">${pont.calculado?pont.pontos_final:'—'}</div>
-      </div>
-      <div class="det-kpi">
-        <div class="det-kpi-lbl">Técnico</div>
-        <div class="det-kpi-val" style="font-size:13px">${esc(os.tecnico_nome)}</div>
-      </div>
-    </div>
-
-    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Informações</div>
-    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">
-      ${infoRow('Assunto', os.nome_assunto)}
-      ${infoRow('Categoria', os.categoria)}
-      ${infoRow('Tempo execução', os.tempo_min ? os.tempo_min+'min' : '—')}
-      ${infoRow('SLA previsto', (sla.horas_previstas||4)+'h')}
-      ${infoRow('Fechamento', fmtData(os.data_fechamento))}
-    </div>
-
-    ${pends.length ? `
-      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Pendências</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${pends.map(p=>`<span class="badge red">${p}</span>`).join('')}
-      </div>
-    ` : `<div style="color:var(--green);font-size:12px;padding:4px 0">✅ OS sem pendências</div>`}
-  `
-
-  // ── Tab Validação (Checklist) ───────────────────
-  function chkRow(label, ok, warn=false){
-    const cls  = ok ? 'chk-ok' : warn ? 'chk-warn' : 'chk-fail'
-    const icon = ok ? '✔ OK'   : warn ? '⚠ Parcial' : '✖ Faltando'
-    return `<div class="checklist-row">
-      <span>${label}</span>
-      <span class="${cls}">${icon}</span>
-    </div>`
-  }
-
-  const temFoto   = (ev.total_fotos || 0) > 0
-  const temProd   = ev.tem_produto
-  const temCom    = ev.tem_comodato
-  const temApp    = ev.tem_app
-  const temDesc   = (ev.len_descricao || 0) >= 10
-  const aprovada  = ev.aprovada
-
-  document.getElementById('os-det-tab-validacao').innerHTML = `
-    <div class="card" style="padding:0;margin-bottom:12px">
-      <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Auditoria de Campo</div>
-      <div style="padding:0 14px">
-        ${chkRow('Fotos registradas', temFoto)}
-        ${chkRow('Técnico usou app (deslocamento)', temApp)}
-        ${chkRow('Descrição preenchida', temDesc)}
-      </div>
-    </div>
-    <div class="card" style="padding:0">
-      <div style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Checklist de Validação</div>
-      <div style="padding:0 14px">
-        ${chkRow('Fotos obrigatórias', temFoto)}
-        ${chkRow('Produtos vinculados', temProd)}
-        ${chkRow('Comodato lançado', temCom, !temCom && temProd)}
-        ${chkRow('Aprovada pelo supervisor', aprovada)}
-      </div>
-    </div>
-    ${ev.metros_fibra > 0 ? `
-      <div style="margin-top:10px;padding:10px 14px;background:var(--s2);border-radius:8px;font-size:12px">
-        🔌 <strong>${ev.metros_fibra}m</strong> de fibra passada
-      </div>` : ''}
-  `
-
-  // ── Tab Pontuação ───────────────────────────────
-  if(pont.calculado){
-    document.getElementById('os-det-tab-pontuacao').innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-        ${statBox('Base', pont.pontos_base, 'var(--muted)')}
-        ${statBox('Final', pont.pontos_final, pctCor)}
-        ${statBox('Aproveit.', pct+'%', pctCor)}
-      </div>
-      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Penalidades & Bônus</div>
-      <div style="display:flex;flex-direction:column;gap:4px">
-        ${pont.pen_foto    < 0 ? infoRow('📷 Sem foto',             `<span style="color:var(--red)">${pont.pen_foto} pts</span>`) : ''}
-        ${pont.pen_app     < 0 ? infoRow('📱 Sem app',              `<span style="color:var(--red)">${pont.pen_app} pts</span>`) : ''}
-        ${pont.pen_produto < 0 ? infoRow('📦 Sem produto/comodato', `<span style="color:var(--red)">${pont.pen_produto} pts</span>`) : ''}
-        ${pont.pen_descricao<0 ? infoRow('📝 Descrição curta',      `<span style="color:var(--red)">${pont.pen_descricao} pts</span>`) : ''}
-        ${pont.bonus_tempo > 0 ? infoRow('⏱️ Bônus tempo',          `<span style="color:var(--green)">+${pont.bonus_tempo} pts</span>`) : ''}
-        ${pont.bonus_tempo < 0 ? infoRow('⏱️ Pen. tempo',           `<span style="color:var(--red)">${pont.bonus_tempo} pts</span>`) : ''}
-        ${pont.bonus_fibra > 0 ? infoRow('🔌 Bônus fibra',          `<span style="color:var(--green)">+${pont.bonus_fibra} pts</span>`) : ''}
-        ${pont.pen_foto>=0&&pont.pen_app>=0&&pont.pen_produto>=0&&pont.pen_descricao>=0&&!pont.bonus_tempo&&!pont.bonus_fibra
-          ? '<div style="color:var(--green);font-size:11px;padding:4px 0">✅ Nenhuma penalidade</div>' : ''}
-      </div>
-    `
-  } else {
-    document.getElementById('os-det-tab-pontuacao').innerHTML =
-      '<div class="empty"><div class="empty-icon">⏳</div>Pontuação não calculada ainda</div>'
-  }
-}
-
-// ═══════════════════════════════════════════════════
 async function abrirModalOS(osId){
   document.getElementById('modal-os-title').textContent=`OS #${osId}`
   document.getElementById('modal-os-sub').textContent='Carregando...'
@@ -1643,10 +1267,7 @@ async function abrirModalOS(osId){
   abrirModal('modal-os')
 
   try{
-    const [d, pont]=await Promise.all([
-      apiFetch(`${SAIS}/visao-geral/os/${osId}`),
-      apiFetch(`${SAIS}/pontuacao/os/${osId}`)
-    ])
+    const d=await apiFetch(`${SAIS}/visao-geral/os/${osId}`)
     const os=d.os||{}
     const sla=d.sla||{}
     const audits=d.auditorias||[]
@@ -1708,61 +1329,6 @@ async function abrirModalOS(osId){
         </div>
       `).join('')
       :`<div class="empty"><div class="empty-icon">✅</div>Nenhuma ocorrência de auditoria</div>`
-
-    // Tab Pontuação
-    if(pont.calculado){
-      const det=pont.detalhes||{}
-      const ev=pont.evidencias||{}
-      const pends=pont.pendencias||[]
-      const pct=pont.pontos_base>0?Math.round(pont.pontos_final/pont.pontos_base*100):0
-      const pctCor=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'
-      document.getElementById('os-tab-pontuacao').innerHTML=`
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-          ${statBox('Pontos Base', pont.pontos_base, 'var(--muted)')}
-          ${statBox('Pontos Finais', pont.pontos_final, pctCor)}
-          ${statBox('Aproveitamento', pct+'%', pctCor)}
-        </div>
-
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Penalidades & Bônus</div>
-        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">
-          ${det.pen_foto<0?`${infoRow('📷 Sem foto', '<span style="color:var(--red)">'+det.pen_foto+' pts</span>')}`:''}
-          ${det.pen_app<0?`${infoRow('📱 Sem app/deslocamento', '<span style="color:var(--red)">'+det.pen_app+' pts</span>')}`:''}
-          ${det.pen_produto<0?`${infoRow('📦 Sem produto/comodato', '<span style="color:var(--red)">'+det.pen_produto+' pts</span>')}`:''}
-          ${det.pen_descricao<0?`${infoRow('📝 Descrição curta', '<span style="color:var(--red)">'+det.pen_descricao+' pts</span>')}`:''}
-          ${det.bonus_tempo>0?`${infoRow('⏱️ Bônus tempo', '<span style="color:var(--green)">+'+det.bonus_tempo+' pts</span>')}`:''}
-          ${det.bonus_tempo<0?`${infoRow('⏱️ Pen. tempo', '<span style="color:var(--red)">'+det.bonus_tempo+' pts</span>')}`:''}
-          ${det.bonus_fibra>0?`${infoRow('🔌 Bônus fibra', '<span style="color:var(--green)">+'+det.bonus_fibra+' pts</span>')}`:''}
-          ${det.pen_foto===0&&det.pen_app===0&&det.pen_produto===0&&det.pen_descricao===0&&det.bonus_tempo===0&&det.bonus_fibra===0?'<div style="color:var(--green);font-size:11px;padding:4px 0">✅ Nenhuma penalidade</div>':''}
-        </div>
-
-        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Evidências</div>
-        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">
-          ${infoRow('Fotos', ev.total_fotos)}
-          ${infoRow('Usou App', ev.tem_app?'<span class="badge green">Sim</span>':'<span class="badge red">Não</span>')}
-          ${infoRow('Produto registrado', ev.tem_produto?'<span class="badge green">Sim</span>':'<span class="badge red">Não</span>')}
-          ${ev.metros_fibra>0?infoRow('Fibra passada', ev.metros_fibra+'m'):''}
-          ${ev.minutos_exec>0?infoRow('Tempo execução', Math.round(ev.minutos_exec)+'min'):''}
-          ${infoRow('Tam. descrição', ev.len_descricao+' chars')}
-          ${infoRow('Aprovada', pont.aprovada?'<span class="badge green">Sim</span>':'<span class="badge amber">Pendente</span>')}
-        </div>
-
-        ${pends.length?`
-          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Pendências</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">
-            ${pends.map(p=>`<span class="badge red">${p}</span>`).join('')}
-          </div>
-        `:''}
-
-        <div style="font-size:9px;color:var(--muted);margin-top:12px">Calculado em: ${fmtData(pont.calculado_em)}</div>
-      `
-    } else {
-      document.getElementById('os-tab-pontuacao').innerHTML=`
-        <div class="empty">
-          <div class="empty-icon">⏳</div>
-          ${pont.mensagem||'Pontuação não calculada. Aguarde o próximo ciclo (15 min).'}
-        </div>
-      `
-    }
 
     // Tab Histórico
     document.getElementById('os-tab-historico').innerHTML=`
@@ -1841,7 +1407,7 @@ async function abrirModalTecnico(tecId,tecNome){
     // Tab Agenda
     document.getElementById('tec-tab-agenda').innerHTML=(d.agenda||[]).length
       ?d.agenda.map(o=>`
-        <div class="agenda-os-item" onclick="abrirModalOSAg(${o.ixc_os_id})">
+        <div class="agenda-os-item" onclick="abrirModalOS(${o.ixc_os_id})">
           <span class="agenda-hora">${fmtHora(o.data_agenda)}</span>
           <span class="agenda-os-id">#${o.ixc_os_id}</span>
           <span class="agenda-os-nome">${o.assunto||'—'}</span>

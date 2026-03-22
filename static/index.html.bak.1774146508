@@ -169,10 +169,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 .os-status-chip{font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;text-transform:uppercase;font-family:'DM Mono',monospace;flex-shrink:0;margin-left:8px}
 .os-status-chip.finalizada{background:rgba(0,229,160,.12);color:var(--green)}
 .det-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.ag-alert{padding:12px 16px;border-radius:8px;font-size:12px;font-weight:700;margin-top:12px}
-.ag-alert.critico{background:rgba(255,77,106,.15);color:var(--red)}
-.ag-alert.aviso{background:rgba(255,184,63,.15);color:var(--amber)}
-.ag-alert.info{background:rgba(0,212,255,.1);color:var(--cyan)}
 .det-kpi{background:var(--s2);border-radius:8px;padding:12px}
 .det-kpi-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 .det-kpi-val{font-size:20px;font-weight:800;font-family:'DM Mono',monospace}
@@ -615,27 +611,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 </div><!-- /main -->
 
 <!-- ══ MODAL OS ══════════════════════════════════════ -->
-<!-- ══ MODAL OS AGENDADA ════════════════════════════ -->
-<div class="modal-overlay" id="modal-os-ag" onclick="overlayClick(event,'modal-os-ag')">
-  <div class="modal" style="max-width:720px">
-    <div class="modal-hd">
-      <div>
-        <div class="modal-title" id="modal-os-ag-title">OS #—</div>
-        <div class="modal-sub" id="modal-os-ag-sub"></div>
-      </div>
-      <button class="modal-close" onclick="fecharModal('modal-os-ag')">×</button>
-    </div>
-    <div class="modal-tabs">
-      <div class="modal-tab active" onclick="switchTab('os-ag','resumo',this)">Resumo</div>
-      <div class="modal-tab" onclick="switchTab('os-ag','sla',this)">SLA</div>
-      <div class="modal-tab" onclick="switchTab('os-ag','historico',this)">Histórico Cliente</div>
-    </div>
-    <div id="os-ag-tab-resumo"    class="modal-tab-content active"></div>
-    <div id="os-ag-tab-sla"       class="modal-tab-content"></div>
-    <div id="os-ag-tab-historico" class="modal-tab-content"></div>
-  </div>
-</div>
-
 <!-- ══ MODAL LISTA OS FINALIZADAS ══════════════════ -->
 <div class="modal-overlay" id="modal-lista-os" onclick="overlayClick(event,'modal-lista-os')">
   <div class="modal" style="max-width:680px">
@@ -1125,7 +1100,7 @@ async function loadAgendaDia(offsetDias=0, btn=null){
       </div>
       <div class="agenda-os">
         ${t.os.map(o=>`
-          <div class="agenda-os-item" onclick="abrirModalOSAg(${o.ixc_os_id})">
+          <div class="agenda-os-item" onclick="abrirModalOS(${o.ixc_os_id})">
             <span class="agenda-hora">${fmtHora(o.data_agenda)}</span>
             <span class="agenda-os-id">#${o.ixc_os_id}</span>
             <span class="agenda-os-nome">${o.assunto||'—'}</span>
@@ -1161,7 +1136,7 @@ async function loadReagendamentos(){
   const el=document.getElementById('reagendamentos-list')
   if(!d.reagendamentos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS reagendada pendente</div>`;return}
   el.innerHTML=d.reagendamentos.map(o=>`
-    <div class="os-row" onclick="abrirModalOSAg(${o.ixc_os_id})">
+    <div class="os-row" onclick="abrirModalOS(${o.ixc_os_id})">
       <div class="os-id">#${o.ixc_os_id}</div>
       <div class="os-info">
         <div class="os-assunto">${o.assunto||'—'}</div>
@@ -1335,112 +1310,6 @@ async function loadPermissoes(){
 
 // ═══════════════════════════════════════════════════
 // MODAL OS
-// ═══════════════════════════════════════════════════
-// MODAL OS AGENDADA
-// ═══════════════════════════════════════════════════
-async function abrirModalOSAg(osId){
-  document.getElementById('modal-os-ag-title').textContent = `OS #${osId}`
-  document.getElementById('modal-os-ag-sub').textContent = 'Carregando...'
-  document.getElementById('os-ag-tab-resumo').innerHTML =
-    '<div class="loading"><div class="spinner"></div>Carregando...</div>'
-  switchTab('os-ag','resumo', document.querySelector('#modal-os-ag .modal-tab'))
-  abrirModal('modal-os-ag')
-
-  try{
-    const d = await apiFetch(`${SAIS}/agenda/os/${osId}`)
-
-    document.getElementById('modal-os-ag-title').textContent = `OS #${osId}`
-    document.getElementById('modal-os-ag-sub').textContent =
-      `Cliente: ${d.cliente_nome} · ${d.nome_assunto} · ${statusLabel(d.status)}`
-
-    const sla    = d.sla || {}
-    const hist   = d.historico_cliente || {}
-    const alerta = d.alerta
-
-    const slaCor = sla.status==='no_prazo' ? 'var(--green)'
-                 : sla.status==='em_risco'  ? 'var(--amber)' : 'var(--red)'
-
-    const abertCor = (d.tempo_abertura_h||0) > (sla.horas_previstas||4)
-                   ? 'var(--red)' : 'var(--amber)'
-
-    const execCor = d.exec_em_h != null
-                  ? (d.exec_em_h < 0 ? 'var(--red)' : d.exec_em_h < 2 ? 'var(--amber)' : 'var(--cyan)')
-                  : 'var(--muted)'
-
-    const alertaHtml = alerta ? `
-      <div class="ag-alert ${alerta.nivel}">
-        ${alerta.nivel==='critico'?'🚨':alerta.nivel==='aviso'?'⚠️':'💬'} ${alerta.msg}
-      </div>` : ''
-
-    // ── Tab Resumo ──────────────────────────────────
-    document.getElementById('os-ag-tab-resumo').innerHTML = `
-      <div class="det-kpis">
-        <div class="det-kpi">
-          <div class="det-kpi-lbl">Status</div>
-          <div class="det-kpi-val" style="color:var(--cyan);font-size:14px">Agendada</div>
-        </div>
-        <div class="det-kpi">
-          <div class="det-kpi-lbl">Tempo desde abertura</div>
-          <div class="det-kpi-val" style="color:${abertCor}">${d.tempo_abertura_h!=null?d.tempo_abertura_h+'h':'—'}</div>
-        </div>
-        <div class="det-kpi">
-          <div class="det-kpi-lbl">Execução em</div>
-          <div class="det-kpi-val" style="color:${execCor}">${d.exec_label||'—'}</div>
-        </div>
-        <div class="det-kpi">
-          <div class="det-kpi-lbl">Técnico</div>
-          <div class="det-kpi-val" style="font-size:13px">${esc(d.tecnico_nome)}</div>
-        </div>
-      </div>
-
-      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Informações</div>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:14px">
-        ${infoRow('Assunto', d.nome_assunto)}
-        ${infoRow('Cliente', d.cliente_nome)}
-        ${infoRow('Abertura', fmtData(d.data_abertura))}
-        ${infoRow('Agendado para', fmtData(d.data_agenda))}
-      </div>
-      ${alertaHtml}
-    `
-
-    // ── Tab SLA ─────────────────────────────────────
-    const slaPct = Math.min(sla.pct||0, 150)
-    const slaLabel = sla.status==='no_prazo' ? '✅ No prazo'
-                   : sla.status==='em_risco'  ? '⚠️ Em risco' : '🚨 Estourado'
-    document.getElementById('os-ag-tab-sla').innerHTML = `
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px">
-        ${infoRow('Tempo limite', (sla.horas_previstas||4)+'h')}
-        ${infoRow('Consumido', `<span style="color:${slaCor};font-weight:700">${sla.pct!=null?sla.pct+'%':'—'}</span>`)}
-        ${infoRow('Status', `<span style="color:${slaCor};font-weight:700">${slaLabel}</span>`)}
-        ${infoRow('Tempo decorrido', d.tempo_abertura_h!=null?d.tempo_abertura_h+'h':'—')}
-      </div>
-      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Consumo do SLA: ${sla.pct||0}%</div>
-      <div class="sla-bar"><div class="sla-bar-fill" style="width:${Math.min(sla.pct||0,100)}%;background:${slaCor}"></div></div>
-      ${alertaHtml}
-    `
-
-    // ── Tab Histórico Cliente ────────────────────────
-    const padraoCor = hist.padrao==='Recorrente' ? 'var(--red)'
-                    : hist.padrao==='Ocasional'   ? 'var(--amber)' : 'var(--green)'
-    document.getElementById('os-ag-tab-historico').innerHTML = `
-      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">
-        Histórico do Cliente (mesmo assunto)
-      </div>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px">
-        ${infoRow('Cliente', d.cliente_nome)}
-        ${infoRow('Últimos 30 dias', `<span style="color:${hist.ultimos_30>=3?'var(--red)':hist.ultimos_30>=1?'var(--amber)':'var(--green)'}">${hist.ultimos_30} ocorrência${hist.ultimos_30!==1?'s':''}</span>`)}
-        ${infoRow('Últimos 60 dias', `<span style="color:${hist.ultimos_60>=5?'var(--red)':hist.ultimos_60>=2?'var(--amber)':'var(--green)'}">${hist.ultimos_60} ocorrência${hist.ultimos_60!==1?'s':''}</span>`)}
-        ${infoRow('Padrão detectado', `<span style="color:${padraoCor};font-weight:700">${hist.padrao}</span>`)}
-      </div>
-      ${alertaHtml}
-      ${hist.ultimos_30===0 ? '<div style="color:var(--green);font-size:12px;padding:4px 0">✅ Sem histórico de reincidência</div>' : ''}
-    `
-  }catch(e){
-    document.getElementById('os-ag-tab-resumo').innerHTML =
-      '<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar OS</div>'
-  }
-}
-
 // ═══════════════════════════════════════════════════
 // MODAL LISTA OS FINALIZADAS
 // ═══════════════════════════════════════════════════
@@ -1841,7 +1710,7 @@ async function abrirModalTecnico(tecId,tecNome){
     // Tab Agenda
     document.getElementById('tec-tab-agenda').innerHTML=(d.agenda||[]).length
       ?d.agenda.map(o=>`
-        <div class="agenda-os-item" onclick="abrirModalOSAg(${o.ixc_os_id})">
+        <div class="agenda-os-item" onclick="abrirModalOS(${o.ixc_os_id})">
           <span class="agenda-hora">${fmtHora(o.data_agenda)}</span>
           <span class="agenda-os-id">#${o.ixc_os_id}</span>
           <span class="agenda-os-nome">${o.assunto||'—'}</span>
