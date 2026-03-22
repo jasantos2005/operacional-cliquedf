@@ -78,9 +78,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .tf-btn{background:var(--s2);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;transition:all .15s;color:var(--muted);white-space:nowrap}
 .tf-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .tf-btn.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.1);font-weight:700}
-.tf-clear{background:rgba(255,77,106,.12);border:1px solid rgba(255,77,106,.3);color:var(--red);padding:4px 8px;border-radius:6px;font-size:10px;cursor:pointer;white-space:nowrap}
-.tf-aplicar{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.3);color:var(--cyan);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;white-space:nowrap;font-weight:700}
-.tf-aplicar:hover{background:rgba(0,212,255,.2)}
+.tf-clear{background:rgba(255,77,106,.12);border:1px solid rgba(255,77,106,.3);color:var(--red);padding:4px 8px;border-radius:6px;font-size:10px;cursor:pointer}
 .btn-filtros{background:var(--s2);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
 .btn-filtros:hover{border-color:var(--cyan);color:var(--cyan)}
 .btn-filtros.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.1);font-weight:700}
@@ -275,9 +273,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 .modal-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
 .modal-close{background:var(--s2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;display:grid;place-items:center;cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0}
 .modal-close:hover{border-color:var(--red);color:var(--red)}
-.modal-hd{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;flex-shrink:0}
-.modal-hd>div{flex:1;min-width:0}
-.modal-hd>.modal-close{flex-shrink:0;margin-left:12px}
 
 /* Tabs dentro do modal */
 .modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0}
@@ -523,24 +518,18 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
-    <div class="topbar-right" style="margin-left:0;width:100%;gap:5px">
+    <div class="topbar-right" style="margin-left:0;width:100%;gap:6px">
       <div class="ws-dot" id="ws-dot" title="WebSocket"></div>
-      <!-- Filtros — lado esquerdo -->
-      <input type="date" class="tf-data" id="f-data-inicio" onchange="globalFiltroChange()" title="Início" style="width:112px">
-      <input type="date" class="tf-data" id="f-data-fim"    onchange="globalFiltroChange()" title="Fim" style="width:112px">
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
+      <input type="date" class="tf-data" id="f-data-inicio" onchange="globalFiltroChange()" title="Início" style="width:120px">
+      <input type="date" class="tf-data" id="f-data-fim"    onchange="globalFiltroChange()" title="Fim" style="width:120px">
       <div class="tf-btn" id="fb-tecnico"      onclick="abrirFiltroModal('tecnico')">👷 Técnicos</div>
       <div class="tf-btn" id="fb-categoria"    onclick="abrirFiltroModal('categoria')">📂 Categoria</div>
       <div class="tf-btn" id="fb-cidade"       onclick="abrirFiltroModal('cidade')">🏙️ Cidade</div>
       <div class="tf-btn" id="fb-bairro"       onclick="abrirFiltroModal('bairro')">📍 Bairro</div>
       <div class="tf-btn" id="fb-concentrador" onclick="abrirFiltroModal('concentrador')">🔌 Concentrador</div>
       <div class="tf-btn" id="fb-assunto"      onclick="abrirFiltroModal('assunto')">📋 Serviço</div>
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
-      <div class="tf-clear" id="filtro-clear-btn" onclick="filtroLimparTodos()" style="display:none" title="Limpar filtros">✕ Limpar</div>
-      <button class="tf-aplicar" onclick="globalFiltroChange()" title="Aplicar filtros">✓ Aplicar</button>
-      <!-- Ações — lado direito -->
-      <div style="flex:1"></div>
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
+      <div class="tf-clear" id="filtro-clear-btn" onclick="filtroLimparTodos()" style="display:none">✕</div>
+      <div style="width:1px;height:16px;background:var(--border);flex-shrink:0"></div>
       <button class="btn-sync" onclick="syncAgora()">↻ Sync IXC</button>
       <button class="btn-tv" onclick="abrirTV()">📺 TV</button>
     </div>
@@ -555,7 +544,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
           <div class="pg-title">Visão <span>Operacional</span></div>
           <div class="pg-sub" id="db-sub">Carregando...</div>
         </div>
-
+        <div id="db-status-pill" style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:5px 14px">⏳</div>
       </div>
       <div class="alert-chips" id="db-alertas"></div>
 
@@ -740,7 +729,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     <div class="modal-hd">
       <div>
         <div class="modal-title" id="modal-lista-os-title">OS Finalizadas</div>
-        <div class="modal-sub" id="modal-lista-os-sub" style="display:none"></div>
+        <div class="modal-sub" id="modal-lista-os-sub"></div>
       </div>
       <button class="modal-close" onclick="fecharModal('modal-lista-os')">×</button>
     </div>
@@ -915,11 +904,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 <!-- ══ MODAL FILTROS ════════════════════════════════ -->
 <div class="filtro-modal-overlay" id="filtro-modal-overlay">
   <div class="filtro-modal-box">
-    <div class="filtro-modal-title" id="filtro-modal-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span id="filtro-modal-title-text">Filtro</span>
-      <button class="modal-close" onclick="document.getElementById('filtro-modal-overlay').classList.remove('active')" style="position:static;margin-left:8px">×</button>
-    </div>
-    <input class="filtro-search" id="filtro-modal-title" placeholder="Buscar..." oninput="filtroSearchUpdate()" style="display:none">
+    <div class="filtro-modal-title" id="filtro-modal-title">Filtro</div>
     <input class="filtro-search" id="filtro-search" placeholder="Buscar..." oninput="filtroSearchUpdate()">
     <div class="filtro-lista" id="filtro-lista"></div>
     <div class="filtro-modal-actions">
@@ -981,14 +966,6 @@ function criticidadeCls(c){return{critica:'red',alta:'red',media:'amber',baixa:'
 
 // Date chip
 // date-chip removido da topbar
-// Define data inicial = hoje
-;(function(){
-  const hoje = new Date().toISOString().split('T')[0]
-  const di = document.getElementById('f-data-inicio')
-  const df = document.getElementById('f-data-fim')
-  if(di && !di.value) di.value = hoje
-  if(df && !df.value) df.value = hoje
-})()
 
 // ═══════════════════════════════════════════════════
 // NAVEGAÇÃO
@@ -1069,19 +1046,11 @@ let _filtros = { tecnico:[], categoria:[], cidade:[], bairro:[], concentrador:[]
 let _filtroOpcoes = null
 let _filtroAtual = null
 
-async function carregarFiltroOpcoes(forcar=false){
-  const di = document.getElementById('f-data-inicio')?.value || ''
-  const df = document.getElementById('f-data-fim')?.value || ''
-  const chave = di+'_'+df
-  if(!forcar && _filtroOpcoes && _filtroOpcoes._chave === chave) return _filtroOpcoes
+async function carregarFiltroOpcoes(){
+  if(_filtroOpcoes) return _filtroOpcoes
   try{
-    const params = []
-    if(di) params.push('data_inicio='+di)
-    if(df) params.push('data_fim='+df)
-    const url = `${SAIS}/visao-geral/filtros-opcoes` + (params.length ? '?'+params.join('&') : '')
-    _filtroOpcoes = await apiFetch(url)
-    _filtroOpcoes._chave = chave
-  }catch(e){ _filtroOpcoes = {tecnicos:[],categorias:[],bairros:[],concentradores:[],assuntos:[],_chave:chave} }
+    _filtroOpcoes = await apiFetch(`${SAIS}/visao-geral/filtros-opcoes`)
+  }catch(e){ _filtroOpcoes = {tecnicos:[],categorias:[],bairros:[],concentradores:[],assuntos:[]} }
   return _filtroOpcoes
 }
 
@@ -1092,16 +1061,16 @@ async function abrirFiltroModal(tipo){
     tecnico:'👷 Técnicos', categoria:'📂 Categoria', cidade:'🏙️ Cidades',
     bairro:'📍 Bairros', concentrador:'🔌 Concentradores', assunto:'📋 Serviços'
   }
-  document.getElementById('filtro-modal-title-text').textContent = titulos[tipo] || tipo
+  document.getElementById('filtro-modal-title').textContent = titulos[tipo] || tipo
   document.getElementById('filtro-search').value = ''
 
   const listas = {
-    tecnico:      (opts.tecnicos||[]).map(t=>({id:t.id, nome:t.nome, total:t.total||0})),
-    categoria:    (opts.categorias||[]).map(c=>({id:c.id, nome:c.nome, total:c.total||0})),
-    cidade:       (opts.cidades||[]).map(c=>({id:c.nome, nome:c.nome, total:c.total||0})),
-    bairro:       (opts.bairros||[]).map(b=>({id:b.nome, nome:b.nome, total:b.total||0})),
-    concentrador: (opts.concentradores||[]).map(c=>({id:c.nome||c, nome:c.nome||c, total:0})),
-    assunto:      (opts.assuntos||[]).map(a=>({id:a.id, nome:a.nome, total:a.total||0})),
+    tecnico:      opts.tecnicos?.map(t=>({id:t.id,  nome:t.nome})) || [],
+    categoria:    opts.categorias?.map(c=>({id:c.id, nome:c.nome})) || [],
+    cidade:       (opts.cidades||[]).map(c=>({id:c,  nome:c})),
+    bairro:       (opts.bairros||[]).map(b=>({id:b,  nome:b})),
+    concentrador: (opts.concentradores||[]).map(c=>({id:c, nome:c})),
+    assunto:      opts.assuntos?.map(a=>({id:a.id,  nome:a.nome})) || [],
   }
   window._filtroListaAtual = listas[tipo] || []
   renderFiltroLista(window._filtroListaAtual)
@@ -1110,18 +1079,12 @@ async function abrirFiltroModal(tipo){
 
 function renderFiltroLista(lista){
   const sel = _filtros[_filtroAtual] || []
-  document.getElementById('filtro-lista').innerHTML = lista.map(item=>{
-    const checked = sel.includes(String(item.id)) || sel.includes(item.id)
-    const temMov  = (item.total||0) > 0
-    const badge   = temMov
-      ? `<span style="margin-left:auto;font-size:9px;background:rgba(0,212,255,.15);color:var(--cyan);border-radius:4px;padding:1px 5px">${item.total}</span>`
-      : `<span style="margin-left:auto;font-size:9px;color:var(--border)">—</span>`
-    return `<label class="filtro-item" style="opacity:${temMov?1:.5}">
-      <input type="checkbox" value="${item.id}" ${checked?'checked':''}>
-      <span style="flex:1">${esc(item.nome)}</span>
-      ${badge}
-    </label>`
-  }).join('')
+  document.getElementById('filtro-lista').innerHTML = lista.map(item=>`
+    <label class="filtro-item">
+      <input type="checkbox" value="${item.id}" ${sel.includes(String(item.id))||sel.includes(item.id)?'checked':''}>
+      ${esc(item.nome)}
+    </label>
+  `).join('')
 }
 
 function filtroSearchUpdate(){
@@ -1152,9 +1115,6 @@ function filtroLimparTodos(){
 }
 
 function globalFiltroChange(){
-  // Invalida cache de opções quando período muda
-  if(_filtroOpcoes) _filtroOpcoes._chave = null
-  atualizarBotoesFiltro()
   const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
@@ -1270,7 +1230,7 @@ async function loadDashboard(){
       renderDashboardAlertas(alertas.alertas||[])
     } else {
       const [r, alertas, t] = await Promise.all([
-        apiFetch(`${SAIS}/visao-geral/resumo${getFiltrosParams()?'?'+getFiltrosParams():''}`),
+        apiFetch(`${SAIS}/visao-geral/resumo`),
         apiFetch(`${SAIS}/visao-geral/alertas?limit=5&apenas_nao_lidos=true`),
         apiFetch(`${SAIS}/pontuacao/ranking`),
       ])
@@ -1296,13 +1256,14 @@ function renderDashboardKPIs(d){
   const pct=d.meta_percentual||0
   document.getElementById('db-sub').textContent=
     `Atualizado às ${new Date().toLocaleTimeString('pt-BR')} · ${r.total||0} OS no período`
-
+  document.getElementById('db-status-pill').textContent=
+    pct>=80?'🟢 Meta ok':pct>=50?'🟡 Atenção':'🔴 Meta em risco'
   document.getElementById('db-kpis').innerHTML=`
     <div class="kpi" style="--ac:var(--cyan)" onclick="nav('ultimas-os','visao-geral')">
       <div class="kpi-lbl">Total OS</div><div class="kpi-val">${r.total||0}</div>
       <div class="kpi-sub">hoje</div>
     </div>
-    <div class="kpi" style="--ac:var(--green)" onclick="abrirModalListaOS('finalizada', document.getElementById('f-data-inicio')?.value||null)">
+    <div class="kpi" style="--ac:var(--green)" onclick="abrirModalListaOS('finalizada')">
       <div class="kpi-lbl">Finalizadas</div><div class="kpi-val">${r.finalizadas||0}</div>
       <div class="kpi-sub">${pct}% da meta</div>
       <div class="kpi-badge ${pct>=80?'up':'dn'}">${pct}%</div>
@@ -1599,8 +1560,7 @@ function fmtData(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-
 // CENTRAL OPERACIONAL
 // ═══════════════════════════════════════════════════
 async function loadOsAtrasadas(){
-  const _fp=getFiltrosParams()
-  const d=await apiFetch(_fp?`${SAIS}/central/os-criticas?${_fp}`:`${SAIS}/central/os-criticas`)
+  const d=await apiFetch(`${SAIS}/central/os-criticas`)
   const el=document.getElementById('os-atrasadas-list')
   if(!d.os_criticas?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS atrasada</div>`;return}
   el.innerHTML=d.os_criticas.map(o=>`
@@ -1620,8 +1580,7 @@ async function loadSlaRisco(){
 }
 
 async function loadOciosos(){
-  const _fp=getFiltrosParams()
-  const d=await apiFetch(_fp?`${SAIS}/central/tecnicos-ociosos?${_fp}`:`${SAIS}/central/tecnicos-ociosos`)
+  const d=await apiFetch(`${SAIS}/central/tecnicos-ociosos`)
   const el=document.getElementById('ociosos-list')
   if(!d.tecnicos_ociosos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhum técnico ocioso</div>`;return}
   el.innerHTML=d.tecnicos_ociosos.map(t=>`
@@ -2014,7 +1973,8 @@ async function abrirModalListaOS(status='finalizada', data=null){
     const d = await apiFetch(url)
     const lista = d.os || []
 
-
+    document.getElementById('modal-lista-os-sub').textContent =
+      `${lista.length} OS finalizadas hoje`
 
     if(!lista.length){
       document.getElementById('modal-lista-os-body').innerHTML =

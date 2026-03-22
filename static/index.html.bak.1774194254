@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>HubProdutividade</title>
+<title>SAIS · HubProdutividade</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -74,32 +74,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .topbar-title{font-size:13px;font-weight:800}
 .topbar-path{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.tf-data{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:6px;font-size:10px;font-family:inherit}
+.topbar-filtros{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 16px 8px;border-top:1px solid rgba(255,255,255,.04);background:var(--bg)}
 .tf-btn{background:var(--s2);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;transition:all .15s;color:var(--muted);white-space:nowrap}
 .tf-btn:hover{border-color:var(--cyan);color:var(--cyan)}
 .tf-btn.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.1);font-weight:700}
-.tf-clear{background:rgba(255,77,106,.12);border:1px solid rgba(255,77,106,.3);color:var(--red);padding:4px 8px;border-radius:6px;font-size:10px;cursor:pointer;white-space:nowrap}
-.tf-aplicar{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.3);color:var(--cyan);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;white-space:nowrap;font-weight:700}
-.tf-aplicar:hover{background:rgba(0,212,255,.2)}
-.btn-filtros{background:var(--s2);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
-.btn-filtros:hover{border-color:var(--cyan);color:var(--cyan)}
-.btn-filtros.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.1);font-weight:700}
-.fm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;display:none;align-items:flex-start;justify-content:flex-end;padding-top:56px;padding-right:16px}
-.fm-overlay.active{display:flex}
-.fm-box{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;width:520px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5)}
-.fm-titulo{font-size:14px;font-weight:800;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
-.fm-section{margin-bottom:16px}
-.fm-section-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
-.fm-datas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.fm-data-input{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;font-family:inherit;width:100%;box-sizing:border-box}
-.fm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.fm-filtro-btn{background:var(--s2);border:1px solid var(--border);padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer;transition:all .15s;color:var(--muted);text-align:left;display:flex;justify-content:space-between;align-items:center}
-.fm-filtro-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.fm-filtro-btn.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.08);font-weight:700}
-.fm-actions{display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
-.fm-aplicar{flex:1;background:var(--cyan);color:#000;border:none;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
-.fm-limpar{background:rgba(255,77,106,.15);color:var(--red);border:1px solid rgba(255,77,106,.3);padding:9px 16px;border-radius:8px;font-size:12px;cursor:pointer}
-.fm-status{font-size:10px;color:var(--muted);text-align:center;margin-top:8px}
+.tf-data{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:6px;font-size:10px;font-family:inherit;width:110px}
+.tf-sep{width:1px;height:16px;background:var(--border);flex-shrink:0}
+.tf-clear{background:rgba(255,77,106,.12);border:1px solid rgba(255,77,106,.3);color:var(--red);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;white-space:nowrap}
+.tf-status{font-size:9px;color:var(--muted);margin-left:4px}
 .date-chip{background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted)}
 .ws-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .3s}
 .ws-dot.connected{background:var(--green);box-shadow:0 0 6px rgba(0,229,160,.4)}
@@ -275,9 +257,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 .modal-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
 .modal-close{background:var(--s2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;display:grid;place-items:center;cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0}
 .modal-close:hover{border-color:var(--red);color:var(--red)}
-.modal-hd{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;flex-shrink:0}
-.modal-hd>div{flex:1;min-width:0}
-.modal-hd>.modal-close{flex-shrink:0;margin-left:12px}
 
 /* Tabs dentro do modal */
 .modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0}
@@ -398,7 +377,8 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     <div class="sb-brand">
       <div class="sb-logo">📡</div>
       <div>
-        <div class="sb-title">HubProdutividade</div>
+        <div class="sb-title">SAIS</div>
+        <div class="sb-ver">CliqueDF · v2.0</div>
       </div>
     </div>
 
@@ -522,27 +502,32 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 
 <!-- MAIN -->
 <div class="main">
-  <div class="topbar">
-    <div class="topbar-right" style="margin-left:0;width:100%;gap:5px">
-      <div class="ws-dot" id="ws-dot" title="WebSocket"></div>
-      <!-- Filtros — lado esquerdo -->
-      <input type="date" class="tf-data" id="f-data-inicio" onchange="globalFiltroChange()" title="Início" style="width:112px">
-      <input type="date" class="tf-data" id="f-data-fim"    onchange="globalFiltroChange()" title="Fim" style="width:112px">
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
+  <div class="topbar" style="flex-direction:column;gap:0;padding:0">
+    <div style="display:flex;align-items:center;padding:0 16px;height:52px;width:100%;box-sizing:border-box">
+      <div>
+        <div class="topbar-title" id="tb-title">Dashboard do dia</div>
+        <div class="topbar-path" id="tb-path">/visao-geral/dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="ws-dot" id="ws-dot" title="WebSocket"></div>
+        <div class="date-chip" id="date-chip"></div>
+        <button class="btn-sync" onclick="syncAgora()">↻ Sync IXC</button>
+        <button class="btn-tv" onclick="abrirTV()">📺 TV</button>
+      </div>
+    </div>
+    <div class="topbar-filtros" id="topbar-filtros">
+      <input type="date" class="tf-data" id="f-data-inicio" onchange="globalFiltroChange()" title="Data início">
+      <input type="date" class="tf-data" id="f-data-fim"    onchange="globalFiltroChange()" title="Data fim">
+      <div class="tf-sep"></div>
       <div class="tf-btn" id="fb-tecnico"      onclick="abrirFiltroModal('tecnico')">👷 Técnicos</div>
       <div class="tf-btn" id="fb-categoria"    onclick="abrirFiltroModal('categoria')">📂 Categoria</div>
       <div class="tf-btn" id="fb-cidade"       onclick="abrirFiltroModal('cidade')">🏙️ Cidade</div>
       <div class="tf-btn" id="fb-bairro"       onclick="abrirFiltroModal('bairro')">📍 Bairro</div>
       <div class="tf-btn" id="fb-concentrador" onclick="abrirFiltroModal('concentrador')">🔌 Concentrador</div>
       <div class="tf-btn" id="fb-assunto"      onclick="abrirFiltroModal('assunto')">📋 Serviço</div>
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
-      <div class="tf-clear" id="filtro-clear-btn" onclick="filtroLimparTodos()" style="display:none" title="Limpar filtros">✕ Limpar</div>
-      <button class="tf-aplicar" onclick="globalFiltroChange()" title="Aplicar filtros">✓ Aplicar</button>
-      <!-- Ações — lado direito -->
-      <div style="flex:1"></div>
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
-      <button class="btn-sync" onclick="syncAgora()">↻ Sync IXC</button>
-      <button class="btn-tv" onclick="abrirTV()">📺 TV</button>
+      <div class="tf-sep"></div>
+      <div class="tf-clear" id="filtro-clear-btn" onclick="filtroLimparTodos()" style="display:none">✕ Limpar</div>
+      <span class="tf-status" id="filtro-status"></span>
     </div>
   </div>
 
@@ -555,7 +540,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
           <div class="pg-title">Visão <span>Operacional</span></div>
           <div class="pg-sub" id="db-sub">Carregando...</div>
         </div>
-
+        <div id="db-status-pill" style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:5px 14px">⏳</div>
       </div>
       <div class="alert-chips" id="db-alertas"></div>
 
@@ -740,7 +725,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     <div class="modal-hd">
       <div>
         <div class="modal-title" id="modal-lista-os-title">OS Finalizadas</div>
-        <div class="modal-sub" id="modal-lista-os-sub" style="display:none"></div>
+        <div class="modal-sub" id="modal-lista-os-sub"></div>
       </div>
       <button class="modal-close" onclick="fecharModal('modal-lista-os')">×</button>
     </div>
@@ -825,7 +810,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 <div id="tv-overlay">
   <button class="tv-btn-close" onclick="fecharTV()">✕ Fechar TV</button>
   <div class="tv-header">
-    <div class="tv-logo">📡 HubProdutividade</div>
+    <div class="tv-logo">📡 SAIS · CliqueDF</div>
     <div style="text-align:right">
       <div class="tv-clock" id="tv-clock">--:--:--</div>
       <div class="tv-date" id="tv-date"></div>
@@ -855,71 +840,10 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 <!-- TV Popup container -->
 <div id="tv-popup-container"></div>
 
-<!-- ══ MODAL FILTROS GLOBAL ═══════════════════════════ -->
-<div class="fm-overlay" id="fm-overlay" onclick="fmOverlayClick(event)">
-  <div class="fm-box">
-    <div class="fm-titulo">
-      <span>⚙ Filtros Globais</span>
-      <span onclick="fecharModalFiltros()" style="cursor:pointer;color:var(--muted);font-size:18px">×</span>
-    </div>
-
-    <!-- Datas -->
-    <div class="fm-section">
-      <div class="fm-section-lbl">Período</div>
-      <div class="fm-datas">
-        <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Data início</div>
-          <input type="date" class="fm-data-input" id="f-data-inicio" onchange="fmAtualizar()">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Data fim</div>
-          <input type="date" class="fm-data-input" id="f-data-fim" onchange="fmAtualizar()">
-        </div>
-      </div>
-    </div>
-
-    <!-- Filtros em grid -->
-    <div class="fm-section">
-      <div class="fm-section-lbl">Filtros</div>
-      <div class="fm-grid">
-        <div class="fm-filtro-btn" id="fb-tecnico"      onclick="abrirFiltroModal('tecnico')">
-          <span>👷 Técnicos</span><span id="fc-tecnico" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-categoria"    onclick="abrirFiltroModal('categoria')">
-          <span>📂 Categoria</span><span id="fc-categoria" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-cidade"       onclick="abrirFiltroModal('cidade')">
-          <span>🏙️ Cidade</span><span id="fc-cidade" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-bairro"       onclick="abrirFiltroModal('bairro')">
-          <span>📍 Bairro</span><span id="fc-bairro" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-concentrador" onclick="abrirFiltroModal('concentrador')">
-          <span>🔌 Concentrador</span><span id="fc-concentrador" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-assunto"      onclick="abrirFiltroModal('assunto')">
-          <span>📋 Serviço</span><span id="fc-assunto" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="fm-actions">
-      <button class="fm-limpar" onclick="filtroLimparTodos()">✕ Limpar tudo</button>
-      <button class="fm-aplicar" onclick="fmAplicarEFechar()">✓ Aplicar filtros</button>
-    </div>
-    <div class="fm-status" id="fm-status"></div>
-  </div>
-</div>
-
-<!-- ══ MODAL FILTROS ITEM (seleção múltipla) ═════════════════════════════ -->
 <!-- ══ MODAL FILTROS ════════════════════════════════ -->
 <div class="filtro-modal-overlay" id="filtro-modal-overlay">
   <div class="filtro-modal-box">
-    <div class="filtro-modal-title" id="filtro-modal-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span id="filtro-modal-title-text">Filtro</span>
-      <button class="modal-close" onclick="document.getElementById('filtro-modal-overlay').classList.remove('active')" style="position:static;margin-left:8px">×</button>
-    </div>
-    <input class="filtro-search" id="filtro-modal-title" placeholder="Buscar..." oninput="filtroSearchUpdate()" style="display:none">
+    <div class="filtro-modal-title" id="filtro-modal-title">Filtro</div>
     <input class="filtro-search" id="filtro-search" placeholder="Buscar..." oninput="filtroSearchUpdate()">
     <div class="filtro-lista" id="filtro-lista"></div>
     <div class="filtro-modal-actions">
@@ -980,15 +904,7 @@ function catCor(c){return{servico:'var(--cyan)',suporte:'var(--amber)',infra:'va
 function criticidadeCls(c){return{critica:'red',alta:'red',media:'amber',baixa:'muted'}[c]||'muted'}
 
 // Date chip
-// date-chip removido da topbar
-// Define data inicial = hoje
-;(function(){
-  const hoje = new Date().toISOString().split('T')[0]
-  const di = document.getElementById('f-data-inicio')
-  const df = document.getElementById('f-data-fim')
-  if(di && !di.value) di.value = hoje
-  if(df && !df.value) df.value = hoje
-})()
+document.getElementById('date-chip').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})
 
 // ═══════════════════════════════════════════════════
 // NAVEGAÇÃO
@@ -1006,7 +922,8 @@ function nav(id,grupo){
     if(i.getAttribute('onclick')===`nav('${id}','${grupo}')`) i.classList.add('active')
   })
   const cfg=PAGES_CFG[id]||{title:id,path:'/'+id}
-  // tb-title/path removidos
+  document.getElementById('tb-title').textContent=cfg.title
+  document.getElementById('tb-path').textContent=cfg.path
   currentPage=id
   if(cfg.load) cfg.load()
 }
@@ -1069,19 +986,11 @@ let _filtros = { tecnico:[], categoria:[], cidade:[], bairro:[], concentrador:[]
 let _filtroOpcoes = null
 let _filtroAtual = null
 
-async function carregarFiltroOpcoes(forcar=false){
-  const di = document.getElementById('f-data-inicio')?.value || ''
-  const df = document.getElementById('f-data-fim')?.value || ''
-  const chave = di+'_'+df
-  if(!forcar && _filtroOpcoes && _filtroOpcoes._chave === chave) return _filtroOpcoes
+async function carregarFiltroOpcoes(){
+  if(_filtroOpcoes) return _filtroOpcoes
   try{
-    const params = []
-    if(di) params.push('data_inicio='+di)
-    if(df) params.push('data_fim='+df)
-    const url = `${SAIS}/visao-geral/filtros-opcoes` + (params.length ? '?'+params.join('&') : '')
-    _filtroOpcoes = await apiFetch(url)
-    _filtroOpcoes._chave = chave
-  }catch(e){ _filtroOpcoes = {tecnicos:[],categorias:[],bairros:[],concentradores:[],assuntos:[],_chave:chave} }
+    _filtroOpcoes = await apiFetch(`${SAIS}/visao-geral/filtros-opcoes`)
+  }catch(e){ _filtroOpcoes = {tecnicos:[],categorias:[],bairros:[],concentradores:[],assuntos:[]} }
   return _filtroOpcoes
 }
 
@@ -1092,16 +1001,16 @@ async function abrirFiltroModal(tipo){
     tecnico:'👷 Técnicos', categoria:'📂 Categoria', cidade:'🏙️ Cidades',
     bairro:'📍 Bairros', concentrador:'🔌 Concentradores', assunto:'📋 Serviços'
   }
-  document.getElementById('filtro-modal-title-text').textContent = titulos[tipo] || tipo
+  document.getElementById('filtro-modal-title').textContent = titulos[tipo] || tipo
   document.getElementById('filtro-search').value = ''
 
   const listas = {
-    tecnico:      (opts.tecnicos||[]).map(t=>({id:t.id, nome:t.nome, total:t.total||0})),
-    categoria:    (opts.categorias||[]).map(c=>({id:c.id, nome:c.nome, total:c.total||0})),
-    cidade:       (opts.cidades||[]).map(c=>({id:c.nome, nome:c.nome, total:c.total||0})),
-    bairro:       (opts.bairros||[]).map(b=>({id:b.nome, nome:b.nome, total:b.total||0})),
-    concentrador: (opts.concentradores||[]).map(c=>({id:c.nome||c, nome:c.nome||c, total:0})),
-    assunto:      (opts.assuntos||[]).map(a=>({id:a.id, nome:a.nome, total:a.total||0})),
+    tecnico:      opts.tecnicos?.map(t=>({id:t.id,  nome:t.nome})) || [],
+    categoria:    opts.categorias?.map(c=>({id:c.id, nome:c.nome})) || [],
+    cidade:       (opts.cidades||[]).map(c=>({id:c,  nome:c})),
+    bairro:       (opts.bairros||[]).map(b=>({id:b,  nome:b})),
+    concentrador: (opts.concentradores||[]).map(c=>({id:c, nome:c})),
+    assunto:      opts.assuntos?.map(a=>({id:a.id,  nome:a.nome})) || [],
   }
   window._filtroListaAtual = listas[tipo] || []
   renderFiltroLista(window._filtroListaAtual)
@@ -1110,18 +1019,12 @@ async function abrirFiltroModal(tipo){
 
 function renderFiltroLista(lista){
   const sel = _filtros[_filtroAtual] || []
-  document.getElementById('filtro-lista').innerHTML = lista.map(item=>{
-    const checked = sel.includes(String(item.id)) || sel.includes(item.id)
-    const temMov  = (item.total||0) > 0
-    const badge   = temMov
-      ? `<span style="margin-left:auto;font-size:9px;background:rgba(0,212,255,.15);color:var(--cyan);border-radius:4px;padding:1px 5px">${item.total}</span>`
-      : `<span style="margin-left:auto;font-size:9px;color:var(--border)">—</span>`
-    return `<label class="filtro-item" style="opacity:${temMov?1:.5}">
-      <input type="checkbox" value="${item.id}" ${checked?'checked':''}>
-      <span style="flex:1">${esc(item.nome)}</span>
-      ${badge}
-    </label>`
-  }).join('')
+  document.getElementById('filtro-lista').innerHTML = lista.map(item=>`
+    <label class="filtro-item">
+      <input type="checkbox" value="${item.id}" ${sel.includes(String(item.id))||sel.includes(item.id)?'checked':''}>
+      ${esc(item.nome)}
+    </label>
+  `).join('')
 }
 
 function filtroSearchUpdate(){
@@ -1152,9 +1055,6 @@ function filtroLimparTodos(){
 }
 
 function globalFiltroChange(){
-  // Invalida cache de opções quando período muda
-  if(_filtroOpcoes) _filtroOpcoes._chave = null
-  atualizarBotoesFiltro()
   const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
@@ -1163,46 +1063,6 @@ function globalFiltroChange(){
 }
 
 function atualizarBotoesFiltro(){
-  const tipos = ['tecnico','categoria','cidade','bairro','concentrador','assunto']
-  const labels = {tecnico:'👷 Técnicos',categoria:'📂 Categoria',cidade:'🏙️ Cidade',bairro:'📍 Bairro',concentrador:'🔌 Concentrador',assunto:'📋 Serviço'}
-  let total = 0
-  tipos.forEach(t=>{
-    const btn = document.getElementById('fb-'+t)
-    if(!btn) return
-    const cnt = (_filtros[t]||[]).length
-    total += cnt
-    btn.classList.toggle('ativo', cnt>0)
-    btn.textContent = cnt > 0 ? `${labels[t]} (${cnt})` : labels[t]
-  })
-  const di = document.getElementById('f-data-inicio')?.value
-  const df = document.getElementById('f-data-fim')?.value
-  if(di||df) total++
-  const clearBtn = document.getElementById('filtro-clear-btn')
-  if(clearBtn) clearBtn.style.display = total > 0 ? '' : 'none'
-  // mantém compatibilidade com fmAtualizar se existir
-  if(typeof fmAtualizar === 'function') fmAtualizar()
-}
-function _OLD_atualizarBotoesFiltro_REMOVED(){
-  const tipos = ['tecnico','categoria','cidade','bairro','concentrador','assunto']
-  const labels = {tecnico:'👷 Técnicos',categoria:'📂 Categoria',cidade:'🏙️ Cidade',bairro:'📍 Bairro',concentrador:'🔌 Concentrador',assunto:'📋 Serviço'}
-  let total = 0
-  tipos.forEach(t=>{
-    const btn = document.getElementById('fb-'+t)
-    if(!btn) return
-    const cnt = (_filtros[t]||[]).length
-    total += cnt
-    btn.classList.toggle('ativo', cnt>0)
-    btn.textContent = cnt > 0 ? `${labels[t]} (${cnt})` : labels[t]
-  })
-  const di = document.getElementById('f-data-inicio')?.value
-  const df = document.getElementById('f-data-fim')?.value
-  if(di||df) total++
-  const clearBtn = document.getElementById('filtro-clear-btn')
-  if(clearBtn) clearBtn.style.display = total > 0 ? '' : 'none'
-  // mantém compatibilidade com fmAtualizar se existir
-  if(typeof fmAtualizar === 'function') fmAtualizar()
-}
-function _OLD_atualizarBotoesFiltro_REMOVED(){
   const tipos = ['tecnico','categoria','cidade','bairro','concentrador','assunto']
   let algumAtivo = false
   tipos.forEach(t=>{
@@ -1218,7 +1078,13 @@ function _OLD_atualizarBotoesFiltro_REMOVED(){
   const diInicio = document.getElementById('f-data-inicio')?.value
   const diFim    = document.getElementById('f-data-fim')?.value
   if(diInicio||diFim) algumAtivo = true
-  fmAtualizar()
+  const clearBtn = document.getElementById('filtro-clear-btn')
+  if(clearBtn) clearBtn.style.display = algumAtivo ? '' : 'none'
+  const status = document.getElementById('filtro-status')
+  if(status){
+    const total = tipos.reduce((s,t)=>s+(_filtros[t]||[]).length, 0)
+    status.textContent = total > 0 ? `${total} filtro${total>1?'s':''}` : ''
+  }
 }
 
 function getFiltrosParams(){
@@ -1238,7 +1104,7 @@ function getFiltrosParams(){
 function temFiltrosAtivos(){
   const di = document.getElementById('f-data-inicio')?.value
   const df = document.getElementById('f-data-fim')?.value
-  return !!(di || df || Object.values(_filtros).some(v=>v.length>0))
+  return di || df || Object.values(_filtros).some(v=>v.length>0)
 }
 
 // Fechar modal de filtro clicando fora
@@ -1270,7 +1136,7 @@ async function loadDashboard(){
       renderDashboardAlertas(alertas.alertas||[])
     } else {
       const [r, alertas, t] = await Promise.all([
-        apiFetch(`${SAIS}/visao-geral/resumo${getFiltrosParams()?'?'+getFiltrosParams():''}`),
+        apiFetch(`${SAIS}/visao-geral/resumo`),
         apiFetch(`${SAIS}/visao-geral/alertas?limit=5&apenas_nao_lidos=true`),
         apiFetch(`${SAIS}/pontuacao/ranking`),
       ])
@@ -1296,13 +1162,14 @@ function renderDashboardKPIs(d){
   const pct=d.meta_percentual||0
   document.getElementById('db-sub').textContent=
     `Atualizado às ${new Date().toLocaleTimeString('pt-BR')} · ${r.total||0} OS no período`
-
+  document.getElementById('db-status-pill').textContent=
+    pct>=80?'🟢 Meta ok':pct>=50?'🟡 Atenção':'🔴 Meta em risco'
   document.getElementById('db-kpis').innerHTML=`
     <div class="kpi" style="--ac:var(--cyan)" onclick="nav('ultimas-os','visao-geral')">
       <div class="kpi-lbl">Total OS</div><div class="kpi-val">${r.total||0}</div>
       <div class="kpi-sub">hoje</div>
     </div>
-    <div class="kpi" style="--ac:var(--green)" onclick="abrirModalListaOS('finalizada', document.getElementById('f-data-inicio')?.value||null)">
+    <div class="kpi" style="--ac:var(--green)" onclick="abrirModalListaOS('finalizada')">
       <div class="kpi-lbl">Finalizadas</div><div class="kpi-val">${r.finalizadas||0}</div>
       <div class="kpi-sub">${pct}% da meta</div>
       <div class="kpi-badge ${pct>=80?'up':'dn'}">${pct}%</div>
@@ -1599,8 +1466,7 @@ function fmtData(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-
 // CENTRAL OPERACIONAL
 // ═══════════════════════════════════════════════════
 async function loadOsAtrasadas(){
-  const _fp=getFiltrosParams()
-  const d=await apiFetch(_fp?`${SAIS}/central/os-criticas?${_fp}`:`${SAIS}/central/os-criticas`)
+  const d=await apiFetch(`${SAIS}/central/os-criticas`)
   const el=document.getElementById('os-atrasadas-list')
   if(!d.os_criticas?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS atrasada</div>`;return}
   el.innerHTML=d.os_criticas.map(o=>`
@@ -1620,8 +1486,7 @@ async function loadSlaRisco(){
 }
 
 async function loadOciosos(){
-  const _fp=getFiltrosParams()
-  const d=await apiFetch(_fp?`${SAIS}/central/tecnicos-ociosos?${_fp}`:`${SAIS}/central/tecnicos-ociosos`)
+  const d=await apiFetch(`${SAIS}/central/tecnicos-ociosos`)
   const el=document.getElementById('ociosos-list')
   if(!d.tecnicos_ociosos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhum técnico ocioso</div>`;return}
   el.innerHTML=d.tecnicos_ociosos.map(t=>`
@@ -2014,7 +1879,8 @@ async function abrirModalListaOS(status='finalizada', data=null){
     const d = await apiFetch(url)
     const lista = d.os || []
 
-
+    document.getElementById('modal-lista-os-sub').textContent =
+      `${lista.length} OS finalizadas hoje`
 
     if(!lista.length){
       document.getElementById('modal-lista-os-body').innerHTML =

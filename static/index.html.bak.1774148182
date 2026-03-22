@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>HubProdutividade</title>
+<title>SAIS · HubProdutividade</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -74,32 +74,6 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 .topbar-title{font-size:13px;font-weight:800}
 .topbar-path{font-size:9px;color:var(--muted);font-family:'DM Mono',monospace}
 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
-.tf-data{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:6px;font-size:10px;font-family:inherit}
-.tf-btn{background:var(--s2);border:1px solid var(--border);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;transition:all .15s;color:var(--muted);white-space:nowrap}
-.tf-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.tf-btn.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.1);font-weight:700}
-.tf-clear{background:rgba(255,77,106,.12);border:1px solid rgba(255,77,106,.3);color:var(--red);padding:4px 8px;border-radius:6px;font-size:10px;cursor:pointer;white-space:nowrap}
-.tf-aplicar{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.3);color:var(--cyan);padding:4px 10px;border-radius:6px;font-size:10px;cursor:pointer;white-space:nowrap;font-weight:700}
-.tf-aplicar:hover{background:rgba(0,212,255,.2)}
-.btn-filtros{background:var(--s2);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px}
-.btn-filtros:hover{border-color:var(--cyan);color:var(--cyan)}
-.btn-filtros.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.1);font-weight:700}
-.fm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;display:none;align-items:flex-start;justify-content:flex-end;padding-top:56px;padding-right:16px}
-.fm-overlay.active{display:flex}
-.fm-box{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:20px;width:520px;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5)}
-.fm-titulo{font-size:14px;font-weight:800;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
-.fm-section{margin-bottom:16px}
-.fm-section-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
-.fm-datas{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
-.fm-data-input{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:12px;font-family:inherit;width:100%;box-sizing:border-box}
-.fm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.fm-filtro-btn{background:var(--s2);border:1px solid var(--border);padding:8px 12px;border-radius:8px;font-size:11px;cursor:pointer;transition:all .15s;color:var(--muted);text-align:left;display:flex;justify-content:space-between;align-items:center}
-.fm-filtro-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.fm-filtro-btn.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.08);font-weight:700}
-.fm-actions{display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)}
-.fm-aplicar{flex:1;background:var(--cyan);color:#000;border:none;padding:9px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
-.fm-limpar{background:rgba(255,77,106,.15);color:var(--red);border:1px solid rgba(255,77,106,.3);padding:9px 16px;border-radius:8px;font-size:12px;cursor:pointer}
-.fm-status{font-size:10px;color:var(--muted);text-align:center;margin-top:8px}
 .date-chip{background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:9px;font-family:'DM Mono',monospace;color:var(--muted)}
 .ws-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .3s}
 .ws-dot.connected{background:var(--green);box-shadow:0 0 6px rgba(0,229,160,.4)}
@@ -196,48 +170,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 .os-status-chip.finalizada{background:rgba(0,229,160,.12);color:var(--green)}
 .det-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
 .ag-alert{padding:12px 16px;border-radius:8px;font-size:12px;font-weight:700;margin-top:12px}
-.ev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
-.filtros-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--s1);border:1px solid var(--border);border-radius:10px;align-items:center}
-.filtro-btn{background:var(--s2);border:1px solid var(--border);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;color:var(--muted);white-space:nowrap}
-.filtro-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.filtro-btn.ativo{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.1)}
-.filtro-data{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:11px;font-family:inherit}
-.filtros-bar .sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
-.filtro-clear{background:rgba(255,77,106,.15);border:1px solid var(--red);color:var(--red);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap}
-/* Modal de filtro */
-.filtro-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;display:none;align-items:center;justify-content:center}
-.filtro-modal-overlay.active{display:flex}
-.filtro-modal-box{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:16px;width:340px;max-height:480px;display:flex;flex-direction:column}
-.filtro-modal-title{font-size:13px;font-weight:700;margin-bottom:10px}
-.filtro-search{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:11px;width:100%;margin-bottom:8px;box-sizing:border-box}
-.filtro-lista{flex:1;overflow-y:auto;max-height:280px;margin-bottom:10px}
-.filtro-item{display:flex;align-items:center;gap:8px;padding:7px 4px;cursor:pointer;border-radius:4px;font-size:12px}
-.filtro-item:hover{background:rgba(255,255,255,.04)}
-.filtro-item input{accent-color:var(--cyan)}
-.filtro-modal-actions{display:flex;gap:8px;justify-content:flex-end}
-.filtro-modal-actions button{padding:6px 14px;border-radius:6px;font-size:11px;cursor:pointer;border:none}
-.fm-ok{background:var(--cyan);color:#000;font-weight:700}
-.fm-clear{background:rgba(255,77,106,.2);color:var(--red);border:1px solid var(--red)!important}
-.ev-card{background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-.ev-card:hover{transform:translateY(-2px);border-color:var(--cyan)}
-.ev-card.critico{border-left:4px solid var(--red)}
-.ev-card.alerta{border-left:4px solid var(--amber)}
-.ev-card.ok{border-left:4px solid var(--green)}
-.ev-card.execucao{border-left:4px solid var(--cyan)}
-.ev-card-titulo{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.ev-card-valor{font-size:32px;font-weight:800;font-family:'DM Mono',monospace;margin-bottom:4px}
-.ev-card-desc{font-size:11px;color:var(--muted)}
-.ev-card-pulse{position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%;animation:pulse 2s infinite}
-.ev-card-pulse.red{background:var(--red)}
-.ev-card-pulse.amber{background:var(--amber)}
-.ev-card-pulse.green{background:var(--green)}
-.ev-card-pulse.cyan{background:var(--cyan)}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
-.ev-modal-item{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;display:flex;justify-content:space-between;align-items:center}
-.ev-modal-item:last-child{border:none}
-.ev-recomendacao{margin-top:14px;padding:12px 14px;border:1px solid var(--amber);border-radius:8px;background:rgba(255,184,63,.08);font-size:12px;color:var(--amber)}
-.ev-ws-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px}
-.ev-ws-item:last-child{border:none}
 .ag-alert.critico{background:rgba(255,77,106,.15);color:var(--red)}
 .ag-alert.aviso{background:rgba(255,184,63,.15);color:var(--amber)}
 .ag-alert.info{background:rgba(0,212,255,.1);color:var(--cyan)}
@@ -275,9 +207,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 .modal-sub{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
 .modal-close{background:var(--s2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;display:grid;place-items:center;cursor:pointer;font-size:16px;transition:all .2s;flex-shrink:0}
 .modal-close:hover{border-color:var(--red);color:var(--red)}
-.modal-hd{display:flex!important;justify-content:space-between!important;align-items:flex-start!important;flex-shrink:0}
-.modal-hd>div{flex:1;min-width:0}
-.modal-hd>.modal-close{flex-shrink:0;margin-left:12px}
 
 /* Tabs dentro do modal */
 .modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 20px;flex-shrink:0}
@@ -398,7 +327,8 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     <div class="sb-brand">
       <div class="sb-logo">📡</div>
       <div>
-        <div class="sb-title">HubProdutividade</div>
+        <div class="sb-title">SAIS</div>
+        <div class="sb-ver">CliqueDF · v2.0</div>
       </div>
     </div>
 
@@ -523,24 +453,13 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
-    <div class="topbar-right" style="margin-left:0;width:100%;gap:5px">
+    <div>
+      <div class="topbar-title" id="tb-title">Dashboard do dia</div>
+      <div class="topbar-path" id="tb-path">/visao-geral/dashboard</div>
+    </div>
+    <div class="topbar-right">
       <div class="ws-dot" id="ws-dot" title="WebSocket"></div>
-      <!-- Filtros — lado esquerdo -->
-      <input type="date" class="tf-data" id="f-data-inicio" onchange="globalFiltroChange()" title="Início" style="width:112px">
-      <input type="date" class="tf-data" id="f-data-fim"    onchange="globalFiltroChange()" title="Fim" style="width:112px">
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
-      <div class="tf-btn" id="fb-tecnico"      onclick="abrirFiltroModal('tecnico')">👷 Técnicos</div>
-      <div class="tf-btn" id="fb-categoria"    onclick="abrirFiltroModal('categoria')">📂 Categoria</div>
-      <div class="tf-btn" id="fb-cidade"       onclick="abrirFiltroModal('cidade')">🏙️ Cidade</div>
-      <div class="tf-btn" id="fb-bairro"       onclick="abrirFiltroModal('bairro')">📍 Bairro</div>
-      <div class="tf-btn" id="fb-concentrador" onclick="abrirFiltroModal('concentrador')">🔌 Concentrador</div>
-      <div class="tf-btn" id="fb-assunto"      onclick="abrirFiltroModal('assunto')">📋 Serviço</div>
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
-      <div class="tf-clear" id="filtro-clear-btn" onclick="filtroLimparTodos()" style="display:none" title="Limpar filtros">✕ Limpar</div>
-      <button class="tf-aplicar" onclick="globalFiltroChange()" title="Aplicar filtros">✓ Aplicar</button>
-      <!-- Ações — lado direito -->
-      <div style="flex:1"></div>
-      <div style="width:1px;height:14px;background:var(--border);flex-shrink:0"></div>
+      <div class="date-chip" id="date-chip"></div>
       <button class="btn-sync" onclick="syncAgora()">↻ Sync IXC</button>
       <button class="btn-tv" onclick="abrirTV()">📺 TV</button>
     </div>
@@ -555,10 +474,9 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
           <div class="pg-title">Visão <span>Operacional</span></div>
           <div class="pg-sub" id="db-sub">Carregando...</div>
         </div>
-
+        <div id="db-status-pill" style="font-size:12px;font-weight:700;font-family:'DM Mono',monospace;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:5px 14px">⏳</div>
       </div>
       <div class="alert-chips" id="db-alertas"></div>
-
       <div class="kpi-grid c5" id="db-kpis"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
       <div class="card-grid c2">
         <div class="card">
@@ -578,24 +496,8 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 
     <!-- ══ EVENTOS ══════════════════════════════ -->
     <div class="page" id="page-eventos">
-      <div class="pg-hd">
-        <div><div class="pg-title">Central <span>Operacional</span></div><div class="pg-sub" id="ev-sub">Carregando...</div></div>
-        <button class="period-tab active" onclick="loadEventosDash()">↻ Atualizar</button>
-      </div>
-
-      <!-- Cards operacionais -->
-      <div class="ev-grid" id="ev-cards">
-        <div class="ev-card alerta"><div class="ev-card-titulo">Carregando</div><div class="ev-card-valor">...</div></div>
-      </div>
-
-      <!-- Eventos WebSocket recentes -->
-      <div class="card" style="margin-top:4px">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;justify-content:space-between">
-          <span>📡 Eventos WebSocket Recentes</span>
-          <span id="ev-ws-count" style="color:var(--cyan)"></span>
-        </div>
-        <div id="eventos-list"><div class="empty"><div class="empty-icon">📡</div>Aguardando eventos do WebSocket...</div></div>
-      </div>
+      <div class="pg-hd"><div><div class="pg-title">Eventos <span>Tempo Real</span></div><div class="pg-sub">Atualizando via WebSocket</div></div></div>
+      <div id="eventos-list"><div class="loading"><div class="spinner"></div>Aguardando eventos...</div></div>
     </div>
 
     <!-- ══ ÚLTIMAS OS ═══════════════════════════ -->
@@ -740,7 +642,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     <div class="modal-hd">
       <div>
         <div class="modal-title" id="modal-lista-os-title">OS Finalizadas</div>
-        <div class="modal-sub" id="modal-lista-os-sub" style="display:none"></div>
+        <div class="modal-sub" id="modal-lista-os-sub"></div>
       </div>
       <button class="modal-close" onclick="fecharModal('modal-lista-os')">×</button>
     </div>
@@ -825,7 +727,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 <div id="tv-overlay">
   <button class="tv-btn-close" onclick="fecharTV()">✕ Fechar TV</button>
   <div class="tv-header">
-    <div class="tv-logo">📡 HubProdutividade</div>
+    <div class="tv-logo">📡 SAIS · CliqueDF</div>
     <div style="text-align:right">
       <div class="tv-clock" id="tv-clock">--:--:--</div>
       <div class="tv-date" id="tv-date"></div>
@@ -854,80 +756,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 
 <!-- TV Popup container -->
 <div id="tv-popup-container"></div>
-
-<!-- ══ MODAL FILTROS GLOBAL ═══════════════════════════ -->
-<div class="fm-overlay" id="fm-overlay" onclick="fmOverlayClick(event)">
-  <div class="fm-box">
-    <div class="fm-titulo">
-      <span>⚙ Filtros Globais</span>
-      <span onclick="fecharModalFiltros()" style="cursor:pointer;color:var(--muted);font-size:18px">×</span>
-    </div>
-
-    <!-- Datas -->
-    <div class="fm-section">
-      <div class="fm-section-lbl">Período</div>
-      <div class="fm-datas">
-        <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Data início</div>
-          <input type="date" class="fm-data-input" id="f-data-inicio" onchange="fmAtualizar()">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--muted);margin-bottom:4px">Data fim</div>
-          <input type="date" class="fm-data-input" id="f-data-fim" onchange="fmAtualizar()">
-        </div>
-      </div>
-    </div>
-
-    <!-- Filtros em grid -->
-    <div class="fm-section">
-      <div class="fm-section-lbl">Filtros</div>
-      <div class="fm-grid">
-        <div class="fm-filtro-btn" id="fb-tecnico"      onclick="abrirFiltroModal('tecnico')">
-          <span>👷 Técnicos</span><span id="fc-tecnico" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-categoria"    onclick="abrirFiltroModal('categoria')">
-          <span>📂 Categoria</span><span id="fc-categoria" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-cidade"       onclick="abrirFiltroModal('cidade')">
-          <span>🏙️ Cidade</span><span id="fc-cidade" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-bairro"       onclick="abrirFiltroModal('bairro')">
-          <span>📍 Bairro</span><span id="fc-bairro" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-concentrador" onclick="abrirFiltroModal('concentrador')">
-          <span>🔌 Concentrador</span><span id="fc-concentrador" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-        <div class="fm-filtro-btn" id="fb-assunto"      onclick="abrirFiltroModal('assunto')">
-          <span>📋 Serviço</span><span id="fc-assunto" style="color:var(--cyan);font-size:10px"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="fm-actions">
-      <button class="fm-limpar" onclick="filtroLimparTodos()">✕ Limpar tudo</button>
-      <button class="fm-aplicar" onclick="fmAplicarEFechar()">✓ Aplicar filtros</button>
-    </div>
-    <div class="fm-status" id="fm-status"></div>
-  </div>
-</div>
-
-<!-- ══ MODAL FILTROS ITEM (seleção múltipla) ═════════════════════════════ -->
-<!-- ══ MODAL FILTROS ════════════════════════════════ -->
-<div class="filtro-modal-overlay" id="filtro-modal-overlay">
-  <div class="filtro-modal-box">
-    <div class="filtro-modal-title" id="filtro-modal-title" style="display:flex;justify-content:space-between;align-items:center">
-      <span id="filtro-modal-title-text">Filtro</span>
-      <button class="modal-close" onclick="document.getElementById('filtro-modal-overlay').classList.remove('active')" style="position:static;margin-left:8px">×</button>
-    </div>
-    <input class="filtro-search" id="filtro-modal-title" placeholder="Buscar..." oninput="filtroSearchUpdate()" style="display:none">
-    <input class="filtro-search" id="filtro-search" placeholder="Buscar..." oninput="filtroSearchUpdate()">
-    <div class="filtro-lista" id="filtro-lista"></div>
-    <div class="filtro-modal-actions">
-      <button class="fm-clear" onclick="filtroClear()">Limpar</button>
-      <button class="fm-ok" onclick="filtroAplicar()">Aplicar</button>
-    </div>
-  </div>
-</div>
 
 <script>
 // ═══════════════════════════════════════════════════
@@ -980,15 +808,7 @@ function catCor(c){return{servico:'var(--cyan)',suporte:'var(--amber)',infra:'va
 function criticidadeCls(c){return{critica:'red',alta:'red',media:'amber',baixa:'muted'}[c]||'muted'}
 
 // Date chip
-// date-chip removido da topbar
-// Define data inicial = hoje
-;(function(){
-  const hoje = new Date().toISOString().split('T')[0]
-  const di = document.getElementById('f-data-inicio')
-  const df = document.getElementById('f-data-fim')
-  if(di && !di.value) di.value = hoje
-  if(df && !df.value) df.value = hoje
-})()
+document.getElementById('date-chip').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})
 
 // ═══════════════════════════════════════════════════
 // NAVEGAÇÃO
@@ -1006,7 +826,8 @@ function nav(id,grupo){
     if(i.getAttribute('onclick')===`nav('${id}','${grupo}')`) i.classList.add('active')
   })
   const cfg=PAGES_CFG[id]||{title:id,path:'/'+id}
-  // tb-title/path removidos
+  document.getElementById('tb-title').textContent=cfg.title
+  document.getElementById('tb-path').textContent=cfg.path
   currentPage=id
   if(cfg.load) cfg.load()
 }
@@ -1062,232 +883,24 @@ async function syncAgora(){
 // ═══════════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════
-// SISTEMA DE FILTROS DO DASHBOARD
-// ═══════════════════════════════════════════════════
-let _filtros = { tecnico:[], categoria:[], cidade:[], bairro:[], concentrador:[], assunto:[] }
-let _filtroOpcoes = null
-let _filtroAtual = null
-
-async function carregarFiltroOpcoes(forcar=false){
-  const di = document.getElementById('f-data-inicio')?.value || ''
-  const df = document.getElementById('f-data-fim')?.value || ''
-  const chave = di+'_'+df
-  if(!forcar && _filtroOpcoes && _filtroOpcoes._chave === chave) return _filtroOpcoes
-  try{
-    const params = []
-    if(di) params.push('data_inicio='+di)
-    if(df) params.push('data_fim='+df)
-    const url = `${SAIS}/visao-geral/filtros-opcoes` + (params.length ? '?'+params.join('&') : '')
-    _filtroOpcoes = await apiFetch(url)
-    _filtroOpcoes._chave = chave
-  }catch(e){ _filtroOpcoes = {tecnicos:[],categorias:[],bairros:[],concentradores:[],assuntos:[],_chave:chave} }
-  return _filtroOpcoes
-}
-
-async function abrirFiltroModal(tipo){
-  _filtroAtual = tipo
-  const opts = await carregarFiltroOpcoes()
-  const titulos = {
-    tecnico:'👷 Técnicos', categoria:'📂 Categoria', cidade:'🏙️ Cidades',
-    bairro:'📍 Bairros', concentrador:'🔌 Concentradores', assunto:'📋 Serviços'
-  }
-  document.getElementById('filtro-modal-title-text').textContent = titulos[tipo] || tipo
-  document.getElementById('filtro-search').value = ''
-
-  const listas = {
-    tecnico:      (opts.tecnicos||[]).map(t=>({id:t.id, nome:t.nome, total:t.total||0})),
-    categoria:    (opts.categorias||[]).map(c=>({id:c.id, nome:c.nome, total:c.total||0})),
-    cidade:       (opts.cidades||[]).map(c=>({id:c.nome, nome:c.nome, total:c.total||0})),
-    bairro:       (opts.bairros||[]).map(b=>({id:b.nome, nome:b.nome, total:b.total||0})),
-    concentrador: (opts.concentradores||[]).map(c=>({id:c.nome||c, nome:c.nome||c, total:0})),
-    assunto:      (opts.assuntos||[]).map(a=>({id:a.id, nome:a.nome, total:a.total||0})),
-  }
-  window._filtroListaAtual = listas[tipo] || []
-  renderFiltroLista(window._filtroListaAtual)
-  document.getElementById('filtro-modal-overlay').classList.add('active')
-}
-
-function renderFiltroLista(lista){
-  const sel = _filtros[_filtroAtual] || []
-  document.getElementById('filtro-lista').innerHTML = lista.map(item=>{
-    const checked = sel.includes(String(item.id)) || sel.includes(item.id)
-    const temMov  = (item.total||0) > 0
-    const badge   = temMov
-      ? `<span style="margin-left:auto;font-size:9px;background:rgba(0,212,255,.15);color:var(--cyan);border-radius:4px;padding:1px 5px">${item.total}</span>`
-      : `<span style="margin-left:auto;font-size:9px;color:var(--border)">—</span>`
-    return `<label class="filtro-item" style="opacity:${temMov?1:.5}">
-      <input type="checkbox" value="${item.id}" ${checked?'checked':''}>
-      <span style="flex:1">${esc(item.nome)}</span>
-      ${badge}
-    </label>`
-  }).join('')
-}
-
-function filtroSearchUpdate(){
-  const termo = document.getElementById('filtro-search').value.toLowerCase()
-  const filtrado = (window._filtroListaAtual||[]).filter(i=>i.nome.toLowerCase().includes(termo))
-  renderFiltroLista(filtrado)
-}
-
-function filtroClear(){
-  _filtros[_filtroAtual] = []
-  renderFiltroLista(window._filtroListaAtual||[])
-}
-
-function filtroAplicar(){
-  const checks = document.querySelectorAll('#filtro-lista input:checked')
-  _filtros[_filtroAtual] = [...checks].map(c=>c.value)
-  document.getElementById('filtro-modal-overlay').classList.remove('active')
-  atualizarBotoesFiltro()
-  globalFiltroChange()
-}
-
-function filtroLimparTodos(){
-  _filtros = { tecnico:[], categoria:[], cidade:[], bairro:[], concentrador:[], assunto:[] }
-  document.getElementById('f-data-inicio').value = ''
-  document.getElementById('f-data-fim').value = ''
-  atualizarBotoesFiltro()
-  loadDashboard()
-}
-
-function globalFiltroChange(){
-  // Invalida cache de opções quando período muda
-  if(_filtroOpcoes) _filtroOpcoes._chave = null
-  atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos']
-  if(paginasReativas.includes(currentPage)){
-    const cfg = PAGES_CFG[currentPage]
-    if(cfg?.load) cfg.load()
-  }
-}
-
-function atualizarBotoesFiltro(){
-  const tipos = ['tecnico','categoria','cidade','bairro','concentrador','assunto']
-  const labels = {tecnico:'👷 Técnicos',categoria:'📂 Categoria',cidade:'🏙️ Cidade',bairro:'📍 Bairro',concentrador:'🔌 Concentrador',assunto:'📋 Serviço'}
-  let total = 0
-  tipos.forEach(t=>{
-    const btn = document.getElementById('fb-'+t)
-    if(!btn) return
-    const cnt = (_filtros[t]||[]).length
-    total += cnt
-    btn.classList.toggle('ativo', cnt>0)
-    btn.textContent = cnt > 0 ? `${labels[t]} (${cnt})` : labels[t]
-  })
-  const di = document.getElementById('f-data-inicio')?.value
-  const df = document.getElementById('f-data-fim')?.value
-  if(di||df) total++
-  const clearBtn = document.getElementById('filtro-clear-btn')
-  if(clearBtn) clearBtn.style.display = total > 0 ? '' : 'none'
-  // mantém compatibilidade com fmAtualizar se existir
-  if(typeof fmAtualizar === 'function') fmAtualizar()
-}
-function _OLD_atualizarBotoesFiltro_REMOVED(){
-  const tipos = ['tecnico','categoria','cidade','bairro','concentrador','assunto']
-  const labels = {tecnico:'👷 Técnicos',categoria:'📂 Categoria',cidade:'🏙️ Cidade',bairro:'📍 Bairro',concentrador:'🔌 Concentrador',assunto:'📋 Serviço'}
-  let total = 0
-  tipos.forEach(t=>{
-    const btn = document.getElementById('fb-'+t)
-    if(!btn) return
-    const cnt = (_filtros[t]||[]).length
-    total += cnt
-    btn.classList.toggle('ativo', cnt>0)
-    btn.textContent = cnt > 0 ? `${labels[t]} (${cnt})` : labels[t]
-  })
-  const di = document.getElementById('f-data-inicio')?.value
-  const df = document.getElementById('f-data-fim')?.value
-  if(di||df) total++
-  const clearBtn = document.getElementById('filtro-clear-btn')
-  if(clearBtn) clearBtn.style.display = total > 0 ? '' : 'none'
-  // mantém compatibilidade com fmAtualizar se existir
-  if(typeof fmAtualizar === 'function') fmAtualizar()
-}
-function _OLD_atualizarBotoesFiltro_REMOVED(){
-  const tipos = ['tecnico','categoria','cidade','bairro','concentrador','assunto']
-  let algumAtivo = false
-  tipos.forEach(t=>{
-    const btn = document.getElementById('fb-'+t)
-    if(!btn) return
-    const ativo = (_filtros[t]||[]).length > 0
-    if(ativo){ algumAtivo=true; btn.classList.add('ativo') }
-    else btn.classList.remove('ativo')
-    const cnt = (_filtros[t]||[]).length
-    const labels = {tecnico:'👷 Técnicos',categoria:'📂 Categoria',cidade:'🏙️ Cidade',bairro:'📍 Bairro',concentrador:'🔌 Concentrador',assunto:'📋 Serviço'}
-    btn.textContent = cnt > 0 ? `${labels[t]} (${cnt})` : labels[t]
-  })
-  const diInicio = document.getElementById('f-data-inicio')?.value
-  const diFim    = document.getElementById('f-data-fim')?.value
-  if(diInicio||diFim) algumAtivo = true
-  fmAtualizar()
-}
-
-function getFiltrosParams(){
-  const p = new URLSearchParams()
-  const di = document.getElementById('f-data-inicio')?.value
-  const df = document.getElementById('f-data-fim')?.value
-  if(di) p.set('data_inicio', di)
-  if(df) p.set('data_fim', df)
-  if(_filtros.tecnico.length)      p.set('tecnico_id',  _filtros.tecnico.join(','))
-  if(_filtros.categoria.length)    p.set('categoria',   _filtros.categoria.join(','))
-  if(_filtros.cidade.length)       p.set('cidade',      _filtros.cidade.join(','))
-  if(_filtros.bairro.length)       p.set('bairro',      _filtros.bairro.join(','))
-  if(_filtros.assunto.length)      p.set('assunto_id',  _filtros.assunto.join(','))
-  return p.toString()
-}
-
-function temFiltrosAtivos(){
-  const di = document.getElementById('f-data-inicio')?.value
-  const df = document.getElementById('f-data-fim')?.value
-  return !!(di || df || Object.values(_filtros).some(v=>v.length>0))
-}
-
-// Fechar modal de filtro clicando fora
-document.addEventListener('click', e=>{
-  const overlay = document.getElementById('filtro-modal-overlay')
-  if(overlay && e.target === overlay) overlay.classList.remove('active')
-})
-
-// ═══════════════════════════════════════════════════
-// DASHBOARD (com filtros)
-// ═══════════════════════════════════════════════════
 async function loadDashboard(){
   try{
-    const usarFiltros = temFiltrosAtivos()
-    const params = getFiltrosParams()
-
-    let resumo, top
-    if(usarFiltros){
-      // Usa endpoint filtrado
-      const [rf, alertas] = await Promise.all([
-        apiFetch(`${SAIS}/visao-geral/resumo-filtrado?${params}`),
-        apiFetch(`${SAIS}/visao-geral/alertas?limit=5&apenas_nao_lidos=true`),
-      ])
-      resumo = rf
-      // Adapta estrutura para ser compatível com renderDashboardKPIs
-      resumo.alertas_pendentes = 0
-      resumo.auditorias_criticas = 0
-      top = { ranking: rf.ranking || [] }
-      renderDashboardAlertas(alertas.alertas||[])
-    } else {
-      const [r, alertas, t] = await Promise.all([
-        apiFetch(`${SAIS}/visao-geral/resumo${getFiltrosParams()?'?'+getFiltrosParams():''}`),
-        apiFetch(`${SAIS}/visao-geral/alertas?limit=5&apenas_nao_lidos=true`),
-        apiFetch(`${SAIS}/pontuacao/ranking`),
-      ])
-      resumo = r
-      top = t
-      renderDashboardAlertas(alertas.alertas||[])
-      if(resumo.alertas_pendentes>0){
-        const b=document.getElementById('badge-alertas')
-        b.textContent=resumo.alertas_pendentes
-        b.style.display='inline'
-      }
-    }
-
+    const [resumo,alertas,top]=await Promise.all([
+      apiFetch(`${SAIS}/visao-geral/resumo`),
+      apiFetch(`${SAIS}/visao-geral/alertas?limit=5&apenas_nao_lidos=true`),
+      apiFetch(`${SAIS}/produtividade/ranking`),
+    ])
     renderDashboardKPIs(resumo)
+    renderDashboardAlertas(alertas.alertas||[])
     renderDashboardCats(resumo.resumo)
     renderTopTecs(top.ranking||[])
     renderMeta(resumo)
+    // Atualizar badge
+    if(resumo.alertas_pendentes>0){
+      const b=document.getElementById('badge-alertas')
+      b.textContent=resumo.alertas_pendentes
+      b.style.display='inline'
+    }
   }catch(e){console.error('dashboard:',e)}
 }
 
@@ -1296,13 +909,14 @@ function renderDashboardKPIs(d){
   const pct=d.meta_percentual||0
   document.getElementById('db-sub').textContent=
     `Atualizado às ${new Date().toLocaleTimeString('pt-BR')} · ${r.total||0} OS no período`
-
+  document.getElementById('db-status-pill').textContent=
+    pct>=80?'🟢 Meta ok':pct>=50?'🟡 Atenção':'🔴 Meta em risco'
   document.getElementById('db-kpis').innerHTML=`
     <div class="kpi" style="--ac:var(--cyan)" onclick="nav('ultimas-os','visao-geral')">
       <div class="kpi-lbl">Total OS</div><div class="kpi-val">${r.total||0}</div>
       <div class="kpi-sub">hoje</div>
     </div>
-    <div class="kpi" style="--ac:var(--green)" onclick="abrirModalListaOS('finalizada', document.getElementById('f-data-inicio')?.value||null)">
+    <div class="kpi" style="--ac:var(--green)" onclick="abrirModalListaOS('finalizada')">
       <div class="kpi-lbl">Finalizadas</div><div class="kpi-val">${r.finalizadas||0}</div>
       <div class="kpi-sub">${pct}% da meta</div>
       <div class="kpi-badge ${pct>=80?'up':'dn'}">${pct}%</div>
@@ -1397,180 +1011,14 @@ function adicionarEvento(msg){
   if(eventosBuffer.length>50) eventosBuffer.pop()
   if(currentPage==='eventos') renderEventos()
 }
-function loadEventos(){ loadEventosDash() }
-
-// ─── Dashboard Operacional ───────────────────────────────────────────────────
-let _evDashData = {}
-
-async function loadEventosDash(){
-  document.getElementById('ev-sub').textContent = 'Atualizando...'
-  try{
-    const [resumo, ociosos, criticas, pont] = await Promise.all([
-      apiFetch(`${SAIS}/visao-geral/resumo`),
-      apiFetch(`${SAIS}/central/tecnicos-ociosos`),
-      apiFetch(`${SAIS}/central/os-criticas`),
-      apiFetch(`${SAIS}/pontuacao/resumo-dia`),
-    ])
-
-    const r       = resumo.resumo || {}
-    const ocList  = ociosos.tecnicos_ociosos || []
-    const crList  = criticas.os_criticas || []
-    const slaList = crList.filter(o => (o.horas_abertas||0) > 4)
-    const execList= crList.filter(o => o.status === 'execucao')
-
-    _evDashData = { resumo: r, ocList, crList, slaList, execList, pont }
-
-    const agora = new Date().toLocaleTimeString('pt-BR')
-    document.getElementById('ev-sub').textContent =
-      `Atualizado às ${agora} · ${r.total||0} OS hoje`
-
-    const metaPct = resumo.meta_percentual || 0
-    const ptsPct  = pont.aproveitamento || 0
-
-    document.getElementById('ev-cards').innerHTML = `
-      <div class="ev-card ${crList.length>5?'critico':crList.length>0?'alerta':'ok'}"
-           onclick="evModal('criticas')">
-        <div class="ev-card-pulse ${crList.length>5?'red':crList.length>0?'amber':'green'}"></div>
-        <div class="ev-card-titulo">OS Críticas Paradas</div>
-        <div class="ev-card-valor" style="color:${crList.length>5?'var(--red)':crList.length>0?'var(--amber)':'var(--green)'}">${crList.length}</div>
-        <div class="ev-card-desc">Atrasadas acima de 4h</div>
-      </div>
-
-      <div class="ev-card ${slaList.length>0?'critico':'ok'}"
-           onclick="evModal('sla')">
-        <div class="ev-card-pulse ${slaList.length>0?'red':'green'}"></div>
-        <div class="ev-card-titulo">SLA Estourado</div>
-        <div class="ev-card-valor" style="color:${slaList.length>0?'var(--red)':'var(--green)'}">${slaList.length}</div>
-        <div class="ev-card-desc">Urgência máxima</div>
-      </div>
-
-      <div class="ev-card ${ocList.length>2?'critico':ocList.length>0?'alerta':'ok'}"
-           onclick="evModal('ociosos')">
-        <div class="ev-card-pulse ${ocList.length>2?'red':ocList.length>0?'amber':'green'}"></div>
-        <div class="ev-card-titulo">Técnicos Ociosos</div>
-        <div class="ev-card-valor" style="color:${ocList.length>0?'var(--amber)':'var(--green)'}">${ocList.length}</div>
-        <div class="ev-card-desc">Sem atividade há +1.5h</div>
-      </div>
-
-      <div class="ev-card execucao" onclick="evModal('execucao')">
-        <div class="ev-card-pulse cyan"></div>
-        <div class="ev-card-titulo">OS em Execução</div>
-        <div class="ev-card-valor" style="color:var(--cyan)">${r.em_campo||0}</div>
-        <div class="ev-card-desc">Em atendimento agora</div>
-      </div>
-
-      <div class="ev-card ${metaPct>=80?'ok':metaPct>=50?'alerta':'critico'}"
-           onclick="evModal('meta')">
-        <div class="ev-card-pulse ${metaPct>=80?'green':metaPct>=50?'amber':'red'}"></div>
-        <div class="ev-card-titulo">Meta do Dia</div>
-        <div class="ev-card-valor" style="color:${metaPct>=80?'var(--green)':metaPct>=50?'var(--amber)':'var(--red)'}">${metaPct}%</div>
-        <div class="ev-card-desc">${r.finalizadas||0} de ${resumo.meta_os_dia||150} OS</div>
-      </div>
-
-      <div class="ev-card ${ptsPct>=80?'ok':ptsPct>=50?'alerta':'critico'}"
-           onclick="evModal('pontuacao')">
-        <div class="ev-card-pulse ${ptsPct>=80?'green':ptsPct>=50?'amber':'red'}"></div>
-        <div class="ev-card-titulo">Qualidade (Pontos)</div>
-        <div class="ev-card-valor" style="color:${ptsPct>=80?'var(--green)':ptsPct>=50?'var(--amber)':'var(--red)'}">${ptsPct}%</div>
-        <div class="ev-card-desc">${pont.total_pontos||0} pts · ${pont.os_perfeitas||0} perfeitas</div>
-      </div>
-    `
-    renderEventos()
-  }catch(e){
-    document.getElementById('ev-sub').textContent = 'Erro ao carregar dados'
-    console.error('loadEventosDash:', e)
-  }
-}
-
-function evModal(tipo){
-  const d = _evDashData
-  let titulo = '', itens = [], rec = ''
-
-  if(tipo==='criticas'){
-    titulo = 'OS Críticas Paradas'
-    itens  = (d.crList||[]).map(o=>`
-      <div class="ev-modal-item">
-        <span><strong>#${o.ixc_os_id}</strong> — ${o.assunto||'—'} · ${o.tecnico_nome||'—'}</span>
-        <span class="badge red">${o.horas_abertas}h</span>
-      </div>`)
-    rec = '🚨 Priorizar atendimento imediato nas OS acima de 4h'
-  }
-  else if(tipo==='sla'){
-    titulo = 'SLA Estourado'
-    itens  = (d.slaList||[]).map(o=>`
-      <div class="ev-modal-item">
-        <span><strong>#${o.ixc_os_id}</strong> — ${o.assunto||'—'} · ${o.tecnico_nome||'—'}</span>
-        <span class="badge red">${o.horas_abertas}h atraso</span>
-      </div>`)
-    rec = '🚨 Acionar técnico imediatamente e notificar supervisão'
-  }
-  else if(tipo==='ociosos'){
-    titulo = 'Técnicos Ociosos'
-    itens  = (d.ocList||[]).map(t=>`
-      <div class="ev-modal-item">
-        <span><strong>${t.nome||'—'}</strong></span>
-        <span class="badge amber">${t.horas_ocioso}h parado</span>
-      </div>`)
-    rec = '🔧 Alocar OS pendentes imediatamente para estes técnicos'
-  }
-  else if(tipo==='execucao'){
-    titulo = 'OS em Execução'
-    const r = d.resumo || {}
-    itens  = [`<div class="ev-modal-item"><span>OS em campo agora</span><span class="badge cyan">${r.em_campo||0}</span></div>`]
-    rec = '⏱ Monitorar tempo de execução e evitar estouro de SLA'
-  }
-  else if(tipo==='meta'){
-    titulo = 'Meta do Dia'
-    const r = d.resumo || {}
-    itens  = [
-      `<div class="ev-modal-item"><span>Finalizadas hoje</span><span class="badge green">${r.finalizadas||0}</span></div>`,
-      `<div class="ev-modal-item"><span>Em campo</span><span class="badge cyan">${r.em_campo||0}</span></div>`,
-      `<div class="ev-modal-item"><span>Agendadas</span><span class="badge amber">${r.agendadas||0}</span></div>`,
-    ]
-    rec = '📊 Meta diária: 150 OS finalizadas pela equipe'
-  }
-  else if(tipo==='pontuacao'){
-    titulo = 'Qualidade de Pontuação'
-    const p = d.pont || {}
-    itens  = [
-      `<div class="ev-modal-item"><span>Total de pontos</span><span class="badge cyan">${p.total_pontos||0}</span></div>`,
-      `<div class="ev-modal-item"><span>OS perfeitas</span><span class="badge green">${p.os_perfeitas||0}</span></div>`,
-      `<div class="ev-modal-item"><span>Aproveitamento</span><span class="badge ${(p.aproveitamento||0)>=80?'green':(p.aproveitamento||0)>=50?'':'red'}">${p.aproveitamento||0}%</span></div>`,
-      p.pendencias?.sem_app    ? `<div class="ev-modal-item"><span>Sem app</span><span class="badge red">${p.pendencias.sem_app}</span></div>` : '',
-      p.pendencias?.sem_produto? `<div class="ev-modal-item"><span>Sem produto</span><span class="badge red">${p.pendencias.sem_produto}</span></div>` : '',
-      p.pendencias?.sem_foto   ? `<div class="ev-modal-item"><span>Sem foto</span><span class="badge red">${p.pendencias.sem_foto}</span></div>` : '',
-    ]
-    rec = '📋 Treinar técnicos nas pendências mais comuns'
-  }
-
-  // Abre modal lista-os reaproveitado
-  document.getElementById('modal-lista-os-title').textContent = titulo
-  document.getElementById('modal-lista-os-sub').textContent = `${itens.filter(Boolean).length} itens`
-  document.getElementById('modal-lista-os-body').innerHTML =
-    itens.filter(Boolean).join('') +
-    (rec ? `<div class="ev-recomendacao">🔧 ${rec}</div>` : '')
-  abrirModal('modal-lista-os')
-}
-
+function loadEventos(){renderEventos()}
 function renderEventos(){
-  const el = document.getElementById('eventos-list')
-  const ct = document.getElementById('ev-ws-count')
-  if(!eventosBuffer.length){
-    el.innerHTML=`<div style="color:var(--muted);font-size:11px;padding:8px 0">Nenhum evento recebido ainda</div>`
-    if(ct) ct.textContent=''
-    return
-  }
-  if(ct) ct.textContent = eventosBuffer.length + ' eventos'
-  const tipoIcon = {
-    os_atrasada:'🚨', tecnico_ocioso:'😴', meta_atingida:'🏆',
-    meta_em_risco:'⚠️', os_finalizada:'✅', os_aberta:'📋'
-  }
-  el.innerHTML=eventosBuffer.slice(0,20).map(e=>`
-    <div class="ev-ws-item">
-      <span style="color:var(--muted);font-family:'DM Mono',monospace;min-width:55px">${e.recebido}</span>
-      <span style="min-width:20px">${tipoIcon[e.tipo]||'📡'}</span>
-      <span style="font-weight:600;min-width:140px;color:var(--text)">${e.tipo}</span>
-      <span style="color:var(--muted)">${JSON.stringify(e.dados||{}).slice(0,60)}</span>
+  const el=document.getElementById('eventos-list')
+  if(!eventosBuffer.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📡</div>Aguardando eventos do WebSocket...</div>`;return}
+  el.innerHTML=eventosBuffer.map(e=>`
+    <div class="os-row" style="margin-bottom:6px">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-right:10px;flex-shrink:0">${e.recebido}</div>
+      <div style="flex:1"><div style="font-size:11px;font-weight:600">${e.tipo}</div><div style="font-size:10px;color:var(--muted)">${JSON.stringify(e.dados||{}).slice(0,80)}</div></div>
     </div>
   `).join('')
 }
@@ -1599,8 +1047,7 @@ function fmtData(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-
 // CENTRAL OPERACIONAL
 // ═══════════════════════════════════════════════════
 async function loadOsAtrasadas(){
-  const _fp=getFiltrosParams()
-  const d=await apiFetch(_fp?`${SAIS}/central/os-criticas?${_fp}`:`${SAIS}/central/os-criticas`)
+  const d=await apiFetch(`${SAIS}/central/os-criticas`)
   const el=document.getElementById('os-atrasadas-list')
   if(!d.os_criticas?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS atrasada</div>`;return}
   el.innerHTML=d.os_criticas.map(o=>`
@@ -1620,8 +1067,7 @@ async function loadSlaRisco(){
 }
 
 async function loadOciosos(){
-  const _fp=getFiltrosParams()
-  const d=await apiFetch(_fp?`${SAIS}/central/tecnicos-ociosos?${_fp}`:`${SAIS}/central/tecnicos-ociosos`)
+  const d=await apiFetch(`${SAIS}/central/tecnicos-ociosos`)
   const el=document.getElementById('ociosos-list')
   if(!d.tecnicos_ociosos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhum técnico ocioso</div>`;return}
   el.innerHTML=d.tecnicos_ociosos.map(t=>`
@@ -1666,8 +1112,7 @@ async function loadAgendaDia(offsetDias=0, btn=null){
   if(btn){document.querySelectorAll('#page-agenda-dia .period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
   const data=new Date(Date.now()+(offsetDias-3)*0 ) // offset simples
   const dataStr=new Date(new Date().getTime()+(offsetDias*86400000)).toISOString().split('T')[0]
-  const _agFp=getFiltrosParams()
-  const d=await apiFetch(_agFp?`${SAIS}/agenda/dia?data=${dataStr}&${_agFp}`:`${SAIS}/agenda/dia?data=${dataStr}`)
+  const d=await apiFetch(`${SAIS}/agenda/dia?data=${dataStr}`)
   document.getElementById('agenda-dia-sub').textContent=`${d.total||0} OS agendadas para ${dataStr}`
   const el=document.getElementById('agenda-dia-content')
   if(!d.por_tecnico?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📅</div>Nenhuma OS agendada</div>`;return}
@@ -2014,7 +1459,8 @@ async function abrirModalListaOS(status='finalizada', data=null){
     const d = await apiFetch(url)
     const lista = d.os || []
 
-
+    document.getElementById('modal-lista-os-sub').textContent =
+      `${lista.length} OS finalizadas hoje`
 
     if(!lista.length){
       document.getElementById('modal-lista-os-body').innerHTML =

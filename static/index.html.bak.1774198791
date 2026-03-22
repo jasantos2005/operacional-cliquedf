@@ -981,14 +981,6 @@ function criticidadeCls(c){return{critica:'red',alta:'red',media:'amber',baixa:'
 
 // Date chip
 // date-chip removido da topbar
-// Define data inicial = hoje
-;(function(){
-  const hoje = new Date().toISOString().split('T')[0]
-  const di = document.getElementById('f-data-inicio')
-  const df = document.getElementById('f-data-fim')
-  if(di && !di.value) di.value = hoje
-  if(df && !df.value) df.value = hoje
-})()
 
 // ═══════════════════════════════════════════════════
 // NAVEGAÇÃO
@@ -1069,19 +1061,11 @@ let _filtros = { tecnico:[], categoria:[], cidade:[], bairro:[], concentrador:[]
 let _filtroOpcoes = null
 let _filtroAtual = null
 
-async function carregarFiltroOpcoes(forcar=false){
-  const di = document.getElementById('f-data-inicio')?.value || ''
-  const df = document.getElementById('f-data-fim')?.value || ''
-  const chave = di+'_'+df
-  if(!forcar && _filtroOpcoes && _filtroOpcoes._chave === chave) return _filtroOpcoes
+async function carregarFiltroOpcoes(){
+  if(_filtroOpcoes) return _filtroOpcoes
   try{
-    const params = []
-    if(di) params.push('data_inicio='+di)
-    if(df) params.push('data_fim='+df)
-    const url = `${SAIS}/visao-geral/filtros-opcoes` + (params.length ? '?'+params.join('&') : '')
-    _filtroOpcoes = await apiFetch(url)
-    _filtroOpcoes._chave = chave
-  }catch(e){ _filtroOpcoes = {tecnicos:[],categorias:[],bairros:[],concentradores:[],assuntos:[],_chave:chave} }
+    _filtroOpcoes = await apiFetch(`${SAIS}/visao-geral/filtros-opcoes`)
+  }catch(e){ _filtroOpcoes = {tecnicos:[],categorias:[],bairros:[],concentradores:[],assuntos:[]} }
   return _filtroOpcoes
 }
 
@@ -1096,12 +1080,12 @@ async function abrirFiltroModal(tipo){
   document.getElementById('filtro-search').value = ''
 
   const listas = {
-    tecnico:      (opts.tecnicos||[]).map(t=>({id:t.id, nome:t.nome, total:t.total||0})),
-    categoria:    (opts.categorias||[]).map(c=>({id:c.id, nome:c.nome, total:c.total||0})),
-    cidade:       (opts.cidades||[]).map(c=>({id:c.nome, nome:c.nome, total:c.total||0})),
-    bairro:       (opts.bairros||[]).map(b=>({id:b.nome, nome:b.nome, total:b.total||0})),
-    concentrador: (opts.concentradores||[]).map(c=>({id:c.nome||c, nome:c.nome||c, total:0})),
-    assunto:      (opts.assuntos||[]).map(a=>({id:a.id, nome:a.nome, total:a.total||0})),
+    tecnico:      opts.tecnicos?.map(t=>({id:t.id,  nome:t.nome})) || [],
+    categoria:    opts.categorias?.map(c=>({id:c.id, nome:c.nome})) || [],
+    cidade:       (opts.cidades||[]).map(c=>({id:c,  nome:c})),
+    bairro:       (opts.bairros||[]).map(b=>({id:b,  nome:b})),
+    concentrador: (opts.concentradores||[]).map(c=>({id:c, nome:c})),
+    assunto:      opts.assuntos?.map(a=>({id:a.id,  nome:a.nome})) || [],
   }
   window._filtroListaAtual = listas[tipo] || []
   renderFiltroLista(window._filtroListaAtual)
@@ -1110,18 +1094,12 @@ async function abrirFiltroModal(tipo){
 
 function renderFiltroLista(lista){
   const sel = _filtros[_filtroAtual] || []
-  document.getElementById('filtro-lista').innerHTML = lista.map(item=>{
-    const checked = sel.includes(String(item.id)) || sel.includes(item.id)
-    const temMov  = (item.total||0) > 0
-    const badge   = temMov
-      ? `<span style="margin-left:auto;font-size:9px;background:rgba(0,212,255,.15);color:var(--cyan);border-radius:4px;padding:1px 5px">${item.total}</span>`
-      : `<span style="margin-left:auto;font-size:9px;color:var(--border)">—</span>`
-    return `<label class="filtro-item" style="opacity:${temMov?1:.5}">
-      <input type="checkbox" value="${item.id}" ${checked?'checked':''}>
-      <span style="flex:1">${esc(item.nome)}</span>
-      ${badge}
-    </label>`
-  }).join('')
+  document.getElementById('filtro-lista').innerHTML = lista.map(item=>`
+    <label class="filtro-item">
+      <input type="checkbox" value="${item.id}" ${sel.includes(String(item.id))||sel.includes(item.id)?'checked':''}>
+      ${esc(item.nome)}
+    </label>
+  `).join('')
 }
 
 function filtroSearchUpdate(){
@@ -1152,9 +1130,6 @@ function filtroLimparTodos(){
 }
 
 function globalFiltroChange(){
-  // Invalida cache de opções quando período muda
-  if(_filtroOpcoes) _filtroOpcoes._chave = null
-  atualizarBotoesFiltro()
   const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
