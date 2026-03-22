@@ -317,12 +317,16 @@ async def get_filtros_opcoes(
             cidades = [{"nome": r["cidade_nome"], "total": r["total"]} for r in cur.fetchall() if r["cidade_nome"]]
 
             cur.execute("""
-                SELECT DISTINCT descricao AS nome FROM su_oss_assunto
-                WHERE descricao LIKE '%CTO%' OR descricao LIKE '%OLT%'
-                   OR descricao LIKE '%SPLITTER%' OR descricao LIKE '%FIBRA%'
-                ORDER BY descricao LIMIT 50
-            """)
-            concentradores = [r["nome"] for r in cur.fetchall() if r["nome"]]
+                SELECT rp.pop AS nome, COUNT(DISTINCT o.id) AS total
+                FROM su_oss_chamado o
+                JOIN cliente_contrato cc ON cc.id_cliente = o.id_cliente
+                JOIN radpop_radio_cliente_fibra rf ON rf.id_contrato = cc.id
+                JOIN radpop rp ON rp.id = rf.id_transmissor
+                WHERE DATE(CONVERT_TZ(o.data_abertura,'+00:00','-03:00')) BETWEEN %s AND %s
+                  AND rp.pop IS NOT NULL AND rp.pop != ''
+                GROUP BY rp.pop ORDER BY total DESC LIMIT 30
+            """, (di, df))
+            concentradores = [{"nome": r["nome"], "total": r["total"]} for r in cur.fetchall() if r["nome"]]
         ixc.close()
     except Exception as e:
         print(f"ERRO filtros-opcoes IXC: {e}")
@@ -335,7 +339,7 @@ async def get_filtros_opcoes(
         "assuntos":   [{"id": a["id"], "nome": a["assunto"], "total": a["total"]} for a in assuntos_mov],
         "bairros":    bairros,
         "cidades":    cidades,
-        "concentradores": [{"nome": c, "total": 0} for c in concentradores],
+        "concentradores": concentradores,
     }
 
 @router.get("/resumo-filtrado")
