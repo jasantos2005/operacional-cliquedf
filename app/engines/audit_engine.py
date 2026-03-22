@@ -175,13 +175,16 @@ def auditar_comportamento(db, tecnicos: list) -> int:
 
 
 def auditar_os_sem_fechamento(db) -> int:
-    """OS em execução há mais de 8 horas sem fechamento."""
+    """OS em execução há mais de 8 horas sem fechamento.
+    Excluir OS de retirada (assuntos 6,22,39,40,89,111) — abertas em lote automático.
+    """
     agora = datetime.now()
     limite = agora - timedelta(hours=8)
     count = 0
+    ASSUNTOS_EXCLUIR = {6, 22, 39, 40, 89, 111}
 
     rows = db.execute("""
-        SELECT ixc_os_id, tecnico_id, data_abertura
+        SELECT ixc_os_id, tecnico_id, data_abertura, ixc_assunto_id
         FROM prod_os_cache
         WHERE status IN ('execucao', 'aberta')
           AND data_abertura IS NOT NULL
@@ -189,6 +192,9 @@ def auditar_os_sem_fechamento(db) -> int:
     """, (limite.strftime("%Y-%m-%d %H:%M:%S"),)).fetchall()
 
     for r in rows:
+        # Pular OS de retirada
+        if r["ixc_assunto_id"] in ASSUNTOS_EXCLUIR:
+            continue
         dt_ab = _parse_dt(r["data_abertura"])
         if dt_ab:
             horas = (agora - dt_ab).total_seconds() / 3600
