@@ -84,6 +84,10 @@ def sync():
                   AND DATE(CONVERT_TZ(o.data_abertura,'+00:00','-03:00'))
                       = DATE(CONVERT_TZ(NOW(),'+00:00','-03:00'))
                 )
+                OR (
+                  o.status IN ('F','AG','RAG')
+                  AND o.data_fechamento >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
+                )
               )
             ORDER BY o.data_fechamento DESC
         """, ids_ixc)

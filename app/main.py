@@ -10,7 +10,7 @@ from app.routes import dashboard, ranking, os_tipos, metas, tecnicos, telegram, 
 from app.routes import dashboard_v2
 
 # SAIS — novos módulos
-from app.routes.sais import visao_geral, central, agenda, produtividade, auditoria, tv
+from app.routes.sais import visao_geral, central, agenda, produtividade, auditoria, tv, pontuacao
 from app.core.websocket import ws_router
 
 app = FastAPI(title="SAIS — HubProdutividade", version="2.0.0")
@@ -40,6 +40,7 @@ app.include_router(agenda.router,     prefix="/api/sais/agenda",         tags=["
 app.include_router(produtividade.router, prefix="/api/sais/produtividade", tags=["SAIS Produtividade"])
 app.include_router(auditoria.router,  prefix="/api/sais/auditoria",      tags=["SAIS Auditoria"])
 app.include_router(tv.router,         prefix="/api/sais/tv",             tags=["SAIS TV"])
+app.include_router(pontuacao.router,  prefix="/api/sais/pontuacao",       tags=["SAIS Pontuação"])
 
 # ── WebSocket ──────────────────────────────────────────
 app.include_router(ws_router)

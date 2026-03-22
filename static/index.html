@@ -1394,12 +1394,13 @@ async function abrirModalTecnico(tecId,tecNome){
         ${statBox('Agendadas', hoje.agendadas||0, 'var(--cyan)')}
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-        ${Object.entries(score.por_categoria||{}).map(([cat,total])=>`
-          <div style="background:var(--s2);border-radius:6px;padding:8px;text-align:center">
+        ${Object.entries(score.por_categoria||{}).map(([cat,v])=>{
+          const total = typeof v === 'object' ? (v.os||v.pontos||0) : v
+          return `<div style="background:var(--s2);border-radius:6px;padding:8px;text-align:center">
             <div style="font-size:16px;font-weight:800;color:${catCor(cat)}">${total}</div>
             <div style="font-size:9px;color:var(--muted);text-transform:capitalize">${cat}</div>
-          </div>
-        `).join('')}
+          </div>`
+        }).join('')}
       </div>
     `
 
