@@ -1227,11 +1227,12 @@ function getFiltrosParams(){
   const df = document.getElementById('f-data-fim')?.value
   if(di) p.set('data_inicio', di)
   if(df) p.set('data_fim', df)
-  if(_filtros.tecnico.length)      p.set('tecnico_id',  _filtros.tecnico.join(','))
-  if(_filtros.categoria.length)    p.set('categoria',   _filtros.categoria.join(','))
-  if(_filtros.cidade.length)       p.set('cidade',      _filtros.cidade.join(','))
-  if(_filtros.bairro.length)       p.set('bairro',      _filtros.bairro.join(','))
-  if(_filtros.assunto.length)      p.set('assunto_id',  _filtros.assunto.join(','))
+  if(_filtros.tecnico.length)      p.set('tecnico_id',    _filtros.tecnico.join(','))
+  if(_filtros.categoria.length)    p.set('categoria',     _filtros.categoria.join(','))
+  if(_filtros.cidade.length)       p.set('cidade',        _filtros.cidade.join(','))
+  if(_filtros.bairro.length)       p.set('bairro',        _filtros.bairro.join(','))
+  if(_filtros.concentrador.length) p.set('concentrador',  _filtros.concentrador.join(','))
+  if(_filtros.assunto.length)      p.set('assunto_id',    _filtros.assunto.join(','))
   return p.toString()
 }
 

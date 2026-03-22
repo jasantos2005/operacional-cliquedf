@@ -26,7 +26,7 @@ def hoje_brt():
 async def get_resumo(data: Optional[str] = Query(None)):
     """KPIs principais do dia para o dashboard."""
     db = get_db()
-    data = data or hoje_brt()
+    data = str(data) if data else hoje_brt()
 
     resumo = dict(db.execute("""
         SELECT
@@ -53,7 +53,6 @@ async def get_resumo(data: Optional[str] = Query(None)):
     efic  = round(fins / total * 100, 1) if total > 0 else 0
     pct_meta = round(fins / meta * 100) if meta > 0 else 0
 
-    # Pontuação ponderada por assunto
     pontos_row = db.execute("""
         SELECT SUM(COALESCE(p.pontuacao, 0)) AS pontos
         FROM prod_os_cache o
@@ -62,22 +61,18 @@ async def get_resumo(data: Optional[str] = Query(None)):
         WHERE o.status = 'finalizada'
           AND DATE(o.data_fechamento, '+3 hours') = ?
     """, (data,)).fetchone()
-
     total_pontos = pontos_row["pontos"] or 0 if pontos_row else 0
 
-    # Técnicos ativos no dia
     tecs_ativos = db.execute("""
         SELECT COUNT(DISTINCT tecnico_id) as total
         FROM prod_os_cache
         WHERE DATE(COALESCE(data_fechamento, data_agenda, data_abertura), '+3 hours') = ?
     """, (data,)).fetchone()
 
-    # Alertas não lidos
     alertas = db.execute(
         "SELECT COUNT(*) as total FROM sais_alertas WHERE lido=0"
     ).fetchone()
 
-    # Auditorias críticas não resolvidas
     audits = db.execute(
         "SELECT COUNT(*) as total FROM sais_auditorias WHERE criticidade IN ('critica','alta') AND resolvida=0"
     ).fetchone()
@@ -99,7 +94,7 @@ async def get_resumo(data: Optional[str] = Query(None)):
 
 @router.get("/eventos-recentes")
 async def get_eventos_recentes(limit: int = Query(20)):
-    """Últimas OS finalizadas e eventos do dia."""
+    """Ultimas OS finalizadas e eventos do dia."""
     db = get_db()
     data = hoje_brt()
 
@@ -121,43 +116,25 @@ async def get_eventos_recentes(limit: int = Query(20)):
     return {"eventos": [dict(r) for r in rows]}
 
 
-
-
 @router.get("/os-finalizadas")
 async def get_os_finalizadas(data: str = Query(None)):
-    """Lista de OS finalizadas do dia com dados de pontuação para o modal."""
+    """Lista de OS finalizadas do dia com dados de pontuacao para o modal."""
     db = get_db()
     data = str(data) if data else hoje_brt()
 
     rows = db.execute("""
         SELECT
-            o.ixc_os_id,
-            o.status,
-            o.categoria,
-            o.data_abertura,
-            o.data_fechamento,
-            t.nome        AS tecnico_nome,
+            o.ixc_os_id, o.status, o.categoria,
+            o.data_abertura, o.data_fechamento,
+            t.nome AS tecnico_nome,
             t.ixc_funcionario_id AS tecnico_id,
             COALESCE(a.assunto, 'Assunto ' || o.ixc_assunto_id) AS nome_assunto,
-            -- pontuação (pode ser NULL se ainda não calculada)
-            p.pontos_final,
-            p.pontos_base,
-            p.pen_foto,
-            p.pen_app,
-            p.pen_produto,
-            p.pen_descricao,
-            p.bonus_tempo,
-            p.bonus_fibra,
-            p.total_fotos,
-            p.tem_produto,
-            p.tem_comodato,
-            p.tem_app,
-            p.metros_fibra,
-            p.minutos_exec,
-            p.len_descricao,
-            p.pendencias,
-            p.aprovada,
-            -- sla
+            p.pontos_final, p.pontos_base,
+            p.pen_foto, p.pen_app, p.pen_produto, p.pen_descricao,
+            p.bonus_tempo, p.bonus_fibra,
+            p.total_fotos, p.tem_produto, p.tem_comodato, p.tem_app,
+            p.metros_fibra, p.minutos_exec, p.len_descricao,
+            p.pendencias, p.aprovada,
             s.horas_sla
         FROM prod_os_cache o
         LEFT JOIN prod_tecnicos t      ON t.id = o.tecnico_id
@@ -173,22 +150,19 @@ async def get_os_finalizadas(data: str = Query(None)):
     result = []
     for r in rows:
         d = dict(r)
-        # Calcular tempo de execução em minutos
         tempo_min = None
         if d.get("data_abertura") and d.get("data_fechamento"):
             try:
                 from datetime import datetime as dt
                 fmt = "%Y-%m-%d %H:%M:%S"
-                ab  = dt.strptime(d["data_abertura"][:19],  fmt)
-                fe  = dt.strptime(d["data_fechamento"][:19], fmt)
+                ab = dt.strptime(d["data_abertura"][:19], fmt)
+                fe = dt.strptime(d["data_fechamento"][:19], fmt)
                 tempo_min = round((fe - ab).total_seconds() / 60)
             except:
                 pass
 
-        # SLA
-        horas_sla = d.get("horas_sla") or 4.0
-        sla_min   = horas_sla * 60
-        pct_sla   = round(tempo_min / sla_min * 100) if tempo_min else None
+        horas_sla  = d.get("horas_sla") or 4.0
+        pct_sla    = round(tempo_min / (horas_sla * 60) * 100) if tempo_min else None
         status_sla = None
         if pct_sla is not None:
             status_sla = "no_prazo" if pct_sla <= 80 else "em_risco" if pct_sla <= 100 else "estourado"
@@ -197,21 +171,21 @@ async def get_os_finalizadas(data: str = Query(None)):
 
         result.append({
             "os_id":        d["ixc_os_id"],
-            "tecnico_nome": d["tecnico_nome"] or "—",
+            "tecnico_nome": d["tecnico_nome"] or "---",
             "tecnico_id":   d["tecnico_id"],
-            "nome_assunto": d["nome_assunto"] or "—",
-            "categoria":    d["categoria"] or "—",
+            "nome_assunto": d["nome_assunto"] or "---",
+            "categoria":    d["categoria"] or "---",
             "data_fechamento": d["data_fechamento"],
             "tempo_min":    tempo_min,
             "sla": {
                 "horas_previstas": horas_sla,
-                "pct":            pct_sla,
-                "status":         status_sla,
+                "pct":             pct_sla,
+                "status":          status_sla,
             },
             "pontuacao": {
-                "calculado":     d["pontos_final"] is not None,
-                "pontos_base":   d["pontos_base"]   or 0,
-                "pontos_final":  d["pontos_final"]  or 0,
+                "calculado":      d["pontos_final"] is not None,
+                "pontos_base":    d["pontos_base"]   or 0,
+                "pontos_final":   d["pontos_final"]  or 0,
                 "aproveitamento": round(d["pontos_final"] / d["pontos_base"] * 100)
                                   if d["pontos_base"] and d["pontos_final"] is not None else 0,
                 "pen_foto":      d["pen_foto"]      or 0,
@@ -237,14 +211,12 @@ async def get_os_finalizadas(data: str = Query(None)):
     return {"data": data, "total": len(result), "os": result}
 
 
-
-
 @router.get("/filtros-opcoes")
 async def get_filtros_opcoes(
     data_inicio: Optional[str] = Query(None),
     data_fim:    Optional[str] = Query(None),
 ):
-    """Retorna opções para os filtros ordenadas por movimentação no período."""
+    """Retorna opcoes para os filtros ordenadas por movimentacao no periodo."""
     import os as _os, pymysql
     hoje = hoje_brt()
     di = str(data_inicio) if data_inicio else hoje
@@ -278,11 +250,13 @@ async def get_filtros_opcoes(
     db.close()
 
     categorias = sorted([
-        {"id": "servico",  "nome": "Serviço",  "total": cats_dict.get("servico",  0)},
+        {"id": "servico",  "nome": "Servico",  "total": cats_dict.get("servico",  0)},
         {"id": "suporte",  "nome": "Suporte",  "total": cats_dict.get("suporte",  0)},
         {"id": "infra",    "nome": "Infra",    "total": cats_dict.get("infra",    0)},
         {"id": "retirada", "nome": "Retirada", "total": cats_dict.get("retirada", 0)},
     ], key=lambda x: -x["total"])
+    # Restaura nomes com acento para exibicao
+    nomes_cat = {"servico": "Servico", "suporte": "Suporte", "infra": "Infra", "retirada": "Retirada"}
 
     bairros = []
     cidades = []
@@ -342,29 +316,56 @@ async def get_filtros_opcoes(
         "concentradores": concentradores,
     }
 
+
 @router.get("/resumo-filtrado")
 async def get_resumo_filtrado(
-    data_inicio:   Optional[str] = Query(None),
-    data_fim:      Optional[str] = Query(None),
-    tecnico_id:    Optional[str] = Query(None),   # comma-separated ids
-    categoria:     Optional[str] = Query(None),   # comma-separated
-    bairro:        Optional[str] = Query(None),   # comma-separated
-    assunto_id:    Optional[str] = Query(None),   # comma-separated
-    cidade:        Optional[str] = Query(None),   # comma-separated
+    data_inicio:  Optional[str] = Query(None),
+    data_fim:     Optional[str] = Query(None),
+    tecnico_id:   Optional[str] = Query(None),
+    categoria:    Optional[str] = Query(None),
+    bairro:       Optional[str] = Query(None),
+    assunto_id:   Optional[str] = Query(None),
+    cidade:       Optional[str] = Query(None),
+    concentrador: Optional[str] = Query(None),
 ):
     """Resumo do dashboard com filtros aplicados."""
     import os as _os, pymysql
     db = get_db()
     hoje = hoje_brt()
-    data_inicio = str(data_inicio) if data_inicio else hoje
-    data_fim    = str(data_fim)    if data_fim    else hoje
 
-    # Monta filtros SQLite
+    # Converte TODOS os parametros Query para string
+    di           = str(data_inicio)  if data_inicio  else hoje
+    df           = str(data_fim)     if data_fim     else hoje
+    tecnico_id   = str(tecnico_id)   if tecnico_id   else None
+    categoria    = str(categoria)    if categoria    else None
+    bairro       = str(bairro)       if bairro       else None
+    assunto_id   = str(assunto_id)   if assunto_id   else None
+    cidade       = str(cidade)       if cidade       else None
+    concentrador = str(concentrador) if concentrador else None
+
+    # Helper: busca os_ids no IXC com tratamento de erro
+    def _busca_ixc(query, lista):
+        try:
+            conn = pymysql.connect(
+                host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT", 3306)),
+                user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
+                database=_os.getenv("DB_NAME"),
+                cursorclass=pymysql.cursors.DictCursor, connect_timeout=8
+            )
+            with conn.cursor() as cur:
+                cur.execute(query, lista)
+                ids = [r["id"] for r in cur.fetchall()]
+            conn.close()
+            return ids  # lista vazia = sem resultados (sem erro)
+        except Exception as e:
+            print(f"ERRO IXC filtro: {e}")
+            return None  # None = erro de conexao
+
+    # Monta clausulas WHERE SQLite
     where  = ["DATE(COALESCE(data_fechamento, data_agenda, data_abertura), '+3 hours') BETWEEN ? AND ?"]
-    params = [data_inicio, data_fim]
+    params = [di, df]
 
-    # Técnico: converter ixc_funcionario_id → id interno
-    tec_ids_internos = []
+    # Tecnico
     if tecnico_id:
         ixc_ids = [int(x) for x in tecnico_id.split(",") if x.strip().isdigit()]
         if ixc_ids:
@@ -394,51 +395,58 @@ async def get_resumo_filtrado(
             where.append(f"ixc_assunto_id IN ({ph})")
             params.extend(aids)
 
-    # Cidade — filtrar via IXC
+    # Cidade -- via cliente_contrato -> cidade (nome real)
     if cidade:
         cids = [c.strip() for c in cidade.split(",") if c.strip()]
-        os_ids_cid = []
-        try:
-            ixc2 = pymysql.connect(host=_os.getenv("DB_HOST"),port=int(_os.getenv("DB_PORT",3306)),user=_os.getenv("DB_USER"),password=_os.getenv("DB_PASS"),database=_os.getenv("DB_NAME"),cursorclass=pymysql.cursors.DictCursor,connect_timeout=8)
-            ph_c = ",".join(["%s"]*len(cids))
-            with ixc2.cursor() as cur:
-                cur.execute(f"SELECT o.id FROM su_oss_chamado o LEFT JOIN cliente c ON c.id=o.id_cliente WHERE c.cidade IN ({ph_c}) AND o.data_abertura>=DATE_SUB(NOW(),INTERVAL 60 DAY)", cids)
-                os_ids_cid = [r["id"] for r in cur.fetchall()]
-            ixc2.close()
-        except: pass
-        if os_ids_cid:
-            ph = ",".join("?"*len(os_ids_cid))
-            where.append(f"ixc_os_id IN ({ph})")
-            params.extend(os_ids_cid)
+        ph   = ",".join(["%s"] * len(cids))
+        ids  = _busca_ixc(
+            "SELECT DISTINCT o.id AS id FROM su_oss_chamado o "
+            "JOIN cliente_contrato cc ON cc.id_cliente=o.id_cliente "
+            "JOIN cidade cd ON cd.id=cc.cidade "
+            f"WHERE cd.nome IN ({ph}) AND o.data_abertura>=DATE_SUB(NOW(),INTERVAL 90 DAY)",
+            cids
+        )
+        if ids:
+            where.append(f"ixc_os_id IN ({','.join(['?']*len(ids))})")
+            params.extend(ids)
+        elif ids is not None:
+            where.append("1=0")
 
-    # Bairro — precisamos filtrar via IXC (busca os os_ids do bairro)
+    # Bairro -- via cliente_contrato
     if bairro:
-        bairros_lista = [b.strip() for b in bairro.split(",") if b.strip()]
-        os_ids_bairro = []
-        try:
-            ixc = pymysql.connect(
-                host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT", 3306)),
-                user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
-                database=_os.getenv("DB_NAME"),
-                cursorclass=pymysql.cursors.DictCursor,
-                connect_timeout=8,
-            )
-            ph_b = ",".join(["%s"] * len(bairros_lista))
-            with ixc.cursor() as cur:
-                cur.execute(f"""
-                    SELECT o.id FROM su_oss_chamado o
-                    LEFT JOIN cliente c ON c.id = o.id_cliente
-                    WHERE c.bairro IN ({ph_b})
-                      AND o.data_abertura >= DATE_SUB(NOW(), INTERVAL 60 DAY)
-                """, bairros_lista)
-                os_ids_bairro = [r["id"] for r in cur.fetchall()]
-            ixc.close()
-        except: pass
-        if os_ids_bairro:
-            ph = ",".join("?" * len(os_ids_bairro))
-            where.append(f"ixc_os_id IN ({ph})")
-            params.extend(os_ids_bairro)
+        blist = [b.strip() for b in bairro.split(",") if b.strip()]
+        ph    = ",".join(["%s"] * len(blist))
+        ids   = _busca_ixc(
+            "SELECT DISTINCT o.id AS id FROM su_oss_chamado o "
+            "JOIN cliente_contrato cc ON cc.id_cliente=o.id_cliente "
+            f"WHERE cc.bairro IN ({ph}) AND o.data_abertura>=DATE_SUB(NOW(),INTERVAL 90 DAY)",
+            blist
+        )
+        if ids:
+            where.append(f"ixc_os_id IN ({','.join(['?']*len(ids))})")
+            params.extend(ids)
+        elif ids is not None:
+            where.append("1=0")
 
+    # Concentrador -- via radpop
+    if concentrador:
+        clist = [c.strip() for c in concentrador.split(",") if c.strip()]
+        ph    = ",".join(["%s"] * len(clist))
+        ids   = _busca_ixc(
+            "SELECT DISTINCT o.id AS id FROM su_oss_chamado o "
+            "JOIN cliente_contrato cc ON cc.id_cliente=o.id_cliente "
+            "JOIN radpop_radio_cliente_fibra rf ON rf.id_contrato=cc.id "
+            "JOIN radpop rp ON rp.id=rf.id_transmissor "
+            f"WHERE rp.pop IN ({ph}) AND o.data_abertura>=DATE_SUB(NOW(),INTERVAL 90 DAY)",
+            clist
+        )
+        if ids:
+            where.append(f"ixc_os_id IN ({','.join(['?']*len(ids))})")
+            params.extend(ids)
+        elif ids is not None:
+            where.append("1=0")
+
+    # Monta SQL final
     where_sql = " AND ".join(where)
 
     resumo = dict(db.execute(f"""
@@ -456,29 +464,23 @@ async def get_resumo_filtrado(
     """, params).fetchone())
 
     meta_row = db.execute("SELECT valor FROM sais_config WHERE chave='meta_dia'").fetchone()
-    meta = int(meta_row["valor"]) if meta_row else 150
-    fins = resumo["finalizadas"] or 0
-    total = resumo["total"] or 0
+    meta     = int(meta_row["valor"]) if meta_row else 150
+    fins     = resumo["finalizadas"] or 0
     pct_meta = round(fins / meta * 100) if meta > 0 else 0
 
-    # Ranking filtrado
-    rank_where  = [w for w in where]
-    rank_params = list(params)
     ranking_rows = db.execute(f"""
         SELECT
             t.nome, t.ixc_funcionario_id AS tecnico_id,
             COUNT(*) AS total_os,
-            SUM(CASE WHEN o.status='finalizada' THEN 1 ELSE 0 END) AS finalizadas,
-            o.categoria
+            SUM(CASE WHEN o.status='finalizada' THEN 1 ELSE 0 END) AS finalizadas
         FROM prod_os_cache o
         LEFT JOIN prod_tecnicos t ON t.id = o.tecnico_id
         WHERE {where_sql}
         GROUP BY o.tecnico_id
         ORDER BY finalizadas DESC
         LIMIT 20
-    """, rank_params).fetchall()
+    """, params).fetchall()
 
-    # Pontuação
     pontos_row = db.execute(f"""
         SELECT SUM(COALESCE(p.pontuacao, 0)) AS pontos
         FROM prod_os_cache o
@@ -494,27 +496,21 @@ async def get_resumo_filtrado(
     db.close()
 
     return {
-        "data_inicio":   data_inicio,
-        "data_fim":      data_fim,
-        "filtros_ativos": {
-            "tecnico_id": tecnico_id,
-            "categoria":  categoria,
-            "bairro":     bairro,
-            "assunto_id": assunto_id,
-        },
+        "data_inicio":    di,
+        "data_fim":       df,
         "resumo":         resumo,
         "meta_dia":       meta,
         "meta_percentual": pct_meta,
         "tecnicos_ativos": tecs_ativos["total"] if tecs_ativos else 0,
         "total_pontos":   pontos_row["pontos"] or 0 if pontos_row else 0,
         "ranking": [{
-            "nome":       r["nome"] or "—",
+            "nome":       r["nome"] or "---",
             "tecnico_id": r["tecnico_id"],
             "total_os":   r["total_os"],
             "finalizadas": r["finalizadas"],
-            "pct_meta":   round(r["finalizadas"] / (meta / 11) * 100) if meta > 0 else 0,
+            "pct_meta":   round((r["finalizadas"] or 0) / (meta / 11) * 100) if meta > 0 else 0,
             "score":      r["finalizadas"],
-            "eficiencia": round(r["finalizadas"] / r["total_os"] * 100) if r["total_os"] > 0 else 0,
+            "eficiencia": round((r["finalizadas"] or 0) / r["total_os"] * 100) if r["total_os"] > 0 else 0,
         } for r in ranking_rows],
     }
 
@@ -550,11 +546,8 @@ async def marcar_lido(alerta_id: int):
 
 @router.get("/tecnico/{tecnico_id}")
 async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
-    """Dados completos para o modal do técnico."""
+    """Dados completos para o modal do tecnico."""
     db = get_db()
-    data = data or hoje_brt()
-
-    # Garantir que data é string
     data = str(data) if data else hoje_brt()
 
     tecnico = db.execute(
@@ -562,9 +555,8 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
     ).fetchone()
     if not tecnico:
         db.close()
-        return {"erro": "Técnico não encontrado"}
+        return {"erro": "Tecnico nao encontrado"}
 
-    # OS do dia
     os_hoje = dict(db.execute("""
         SELECT
             COUNT(*) AS total,
@@ -576,11 +568,9 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
           AND DATE(COALESCE(data_fechamento, data_agenda, data_abertura), '+3 hours') = ?
     """, (tecnico_id, data)).fetchone())
 
-    # Score do dia
     from app.engines.score_engine import calcular_pontos_tecnico as calcular_score_tecnico
     score = calcular_score_tecnico(tecnico_id, data)
 
-    # OS recentes (últimas 10)
     os_recentes = db.execute("""
         SELECT o.ixc_os_id, o.status, o.categoria,
                o.data_abertura, o.data_fechamento, o.data_agenda,
@@ -592,7 +582,6 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
         LIMIT 10
     """, (tecnico_id,)).fetchall()
 
-    # Agenda hoje e amanhã
     amanha = (datetime.strptime(data, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
     agenda = db.execute("""
         SELECT o.ixc_os_id, o.data_agenda, o.status,
@@ -605,7 +594,6 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
         ORDER BY o.data_agenda
     """, (tecnico_id, data, amanha)).fetchall()
 
-    # Auditorias do técnico
     auditorias = db.execute("""
         SELECT tipo, subtipo, criticidade, descricao, criado_em
         FROM sais_auditorias
@@ -613,7 +601,6 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
         ORDER BY criado_em DESC LIMIT 10
     """, (tecnico_id,)).fetchall()
 
-    # Histórico 7 dias
     from app.engines.score_engine import historico_tecnico
     historico = historico_tecnico(tecnico_id, dias=7)
 
@@ -649,15 +636,13 @@ async def get_modal_os(os_id: int):
 
     if not os:
         db.close()
-        return {"erro": "OS não encontrada"}
+        return {"erro": "OS nao encontrada"}
 
     os_dict = dict(os)
 
-    # SLA da OS
     from app.engines.sla_engine import calcular_sla
     sla = calcular_sla(os_dict)
 
-    # Auditorias desta OS
     auditorias = db.execute("""
         SELECT tipo, subtipo, criticidade, descricao, valor_detectado, valor_esperado, criado_em
         FROM sais_auditorias
