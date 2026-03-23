@@ -570,8 +570,10 @@ async def get_resumo_filtrado(
     _mes_inicio = _date(_d1.year, _d1.month, 1)
     _mes_fim    = _date(_d1.year, _d1.month, _cal.monthrange(_d1.year, _d1.month)[1])
     _mes_inteiro = (_d1 == _mes_inicio and _d2 == _mes_fim)
-    dias_uteis  = dias_uteis_periodo(di, df)
-    meta_periodo = 1760 if _mes_inteiro else dias_uteis * 80
+    dias_uteis   = dias_uteis_periodo(di, df)
+    tecs_ativos_n = tecs_ativos["total"] if tecs_ativos else 1
+    # Meta da equipe = 80pts × técnicos ativos × dias úteis (mês inteiro = 1760 × tecs)
+    meta_periodo = (1760 * tecs_ativos_n) if _mes_inteiro else (dias_uteis * 80 * tecs_ativos_n)
     total_pts   = pontos_row["pontos"] or 0 if pontos_row else 0
     pct_pts     = round(total_pts / meta_periodo * 100) if meta_periodo > 0 else 0
 
