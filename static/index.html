@@ -1290,15 +1290,11 @@ function renderDashboardKPIs(d){
   const df = document.getElementById('f-data-fim')?.value
   const temPeriodo = !!(di && df && di !== df)
 
-  // Meta correta pelo período (não só diária)
-  let diasPeriodo = 1
-  if(di && df){
-    const d1 = new Date(di), d2 = new Date(df)
-    diasPeriodo = Math.max(1, Math.round((d2 - d1) / (1000*60*60*24)) + 1)
-  }
-  const metaPeriodo = (d.meta_dia || 150) * diasPeriodo
+  // Meta por PONTUAÇÃO (não por quantidade de OS)
+  const totalPontos  = d.total_pontos  || 0
+  const metaPeriodo  = d.meta_periodo  || 1760
+  const pct = metaPeriodo > 0 ? Math.min(Math.round(totalPontos / metaPeriodo * 100), 999) : (d.meta_percentual || 0)
   const fins = r.finalizadas || 0
-  const pct  = metaPeriodo > 0 ? Math.round(fins / metaPeriodo * 100) : (d.meta_percentual || 0)
 
   // Label do período
   const periodoLabel = temPeriodo
@@ -1389,26 +1385,19 @@ function renderTopTecs(ranking){
 }
 
 function renderMeta(d){
-  const fins = d.resumo?.finalizadas || 0
-  const metaDia = d.meta_dia || 150
-  const di = document.getElementById('f-data-inicio')?.value
-  const df = document.getElementById('f-data-fim')?.value
-  // Calcula meta correta pelo período
-  let diasPeriodo = 1
-  if(di && df){
-    const d1 = new Date(di), d2 = new Date(df)
-    diasPeriodo = Math.max(1, Math.round((d2 - d1) / (1000*60*60*24)) + 1)
-  }
-  const meta = metaDia * diasPeriodo
-  const pct  = Math.min(meta > 0 ? Math.round(fins / meta * 100) : 0, 100)
+  const fins        = d.resumo?.finalizadas || 0
+  const totalPontos = d.total_pontos  || 0
+  const metaPeriodo = d.meta_periodo  || 1760
+  const diasUteis   = d.dias_uteis    || 1
+  const pct  = Math.min(metaPeriodo > 0 ? Math.round(totalPontos / metaPeriodo * 100) : 0, 100)
   const cor  = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)'
-  const labelMeta = diasPeriodo > 1 ? `${meta} (${diasPeriodo}d)` : String(meta)
+  const ptsFaltam = Math.max(0, metaPeriodo - totalPontos)
   document.getElementById('db-meta').innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;text-align:center">
-      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Finalizadas</div></div>
-      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber)">${Math.max(0,meta-fins)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Restantes</div></div>
+      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${totalPontos}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Pts Obtidos</div></div>
+      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber)">${ptsFaltam}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Pts Restantes</div></div>
       <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:${cor}">${pct}%</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Atingimento</div></div>
-      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${labelMeta}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta</div></div>
+      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${metaPeriodo}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta (pts)</div></div>
     </div>
     <div class="meta-track"><div class="meta-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div></div>
   `
@@ -1895,6 +1884,12 @@ async function loadAuditoriaIndividual(){
         +'<div class="kpi" style="--ac:'+corMeta+'"><div class="kpi-val">'+r.pct_meta+'%</div><div class="kpi-lbl">Meta ('+r.meta_periodo+' pts)</div></div>'
         +(r.sem_regra>0?'<div class="kpi" id="kpi-semregra" style="--ac:var(--muted);cursor:pointer"><div class="kpi-val">'+r.sem_regra+'</div><div class="kpi-lbl">Sem Regra ▾</div></div>':'')
     }
+    // Bind onclick nos KPIs — precisa vir APÓS kpis.innerHTML ser preenchido
+    ;['perdidos','bonus','semregra'].forEach(function(f){
+      var k=document.getElementById('kpi-'+f)
+      if(k) k.onclick=function(){toggleAuditFiltro(f)}
+    })
+
     if(!os.length){el.innerHTML='<div style="color:var(--muted);padding:20px">Nenhuma OS no periodo.</div>';return}
 
     // Guarda OS para filtro por KPI

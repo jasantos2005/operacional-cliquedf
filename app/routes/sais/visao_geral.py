@@ -117,12 +117,61 @@ async def get_eventos_recentes(limit: int = Query(20)):
 
 
 @router.get("/os-finalizadas")
-async def get_os_finalizadas(data: str = Query(None)):
-    """Lista de OS finalizadas do dia com dados de pontuacao para o modal."""
+async def get_os_finalizadas(
+    data:        Optional[str] = Query(None),
+    data_inicio: Optional[str] = Query(None),
+    data_fim:    Optional[str] = Query(None),
+    tecnico_id:  Optional[str] = Query(None),
+    categoria:   Optional[str] = Query(None),
+):
+    """Lista de OS finalizadas com suporte a período (data_inicio/data_fim).
+    Retrocompatível com ?data= (1 dia).
+    Filtros opcionais: tecnico_id (ixc_funcionario_id, aceita múltiplos separados por vírgula),
+    categoria (servico|suporte|infra|retirada).
+    """
     db = get_db()
-    data = str(data) if data else hoje_brt()
+    hoje = hoje_brt()
 
-    rows = db.execute("""
+    # Resolve período
+    if data_inicio or data_fim:
+        di = str(data_inicio) if data_inicio else hoje
+        df = str(data_fim)    if data_fim    else hoje
+    else:
+        dia = str(data) if data else hoje
+        di = df = dia
+
+    # Monta WHERE dinâmico
+    where  = [
+        "o.status = 'finalizada'",
+        "DATE(COALESCE(o.data_fechamento, o.data_agenda, o.data_abertura), '+3 hours') BETWEEN ? AND ?",
+    ]
+    params = [di, df]
+
+    if tecnico_id:
+        ixc_ids = [int(x) for x in tecnico_id.split(",") if x.strip().isdigit()]
+        if ixc_ids:
+            ph = ",".join("?" * len(ixc_ids))
+            tec_rows = db.execute(
+                f"SELECT id FROM prod_tecnicos WHERE ixc_funcionario_id IN ({ph})", ixc_ids
+            ).fetchall()
+            tec_internos = [r["id"] for r in tec_rows]
+            if tec_internos:
+                ph2 = ",".join("?" * len(tec_internos))
+                where.append(f"o.tecnico_id IN ({ph2})")
+                params.extend(tec_internos)
+            else:
+                where.append("1=0")
+
+    if categoria:
+        cats = [c.strip() for c in categoria.split(",") if c.strip()]
+        if cats:
+            ph = ",".join("?" * len(cats))
+            where.append(f"o.categoria IN ({ph})")
+            params.extend(cats)
+
+    where_sql = " AND ".join(where)
+
+    rows = db.execute(f"""
         SELECT
             o.ixc_os_id, o.status, o.categoria,
             o.data_abertura, o.data_fechamento,
@@ -141,10 +190,9 @@ async def get_os_finalizadas(data: str = Query(None)):
         LEFT JOIN prod_assuntos a      ON a.id = o.ixc_assunto_id
         LEFT JOIN sais_os_pontuacao p  ON p.os_id = o.ixc_os_id
         LEFT JOIN sais_sla_config s    ON s.assunto_id = o.ixc_assunto_id
-        WHERE o.status = 'finalizada'
-          AND DATE(COALESCE(o.data_fechamento, o.data_agenda, o.data_abertura), '+3 hours') = ?
+        WHERE {where_sql}
         ORDER BY COALESCE(o.data_fechamento, o.data_abertura) DESC
-    """, (data,)).fetchall()
+    """, params).fetchall()
     db.close()
 
     result = []
@@ -208,7 +256,7 @@ async def get_os_finalizadas(data: str = Query(None)):
             "pendencias": pends,
         })
 
-    return {"data": data, "total": len(result), "os": result}
+    return {"data_inicio": di, "data_fim": df, "total": len(result), "os": result}
 
 
 @router.get("/filtros-opcoes")
@@ -515,14 +563,28 @@ async def get_resumo_filtrado(
 
     db.close()
 
+    import calendar as _cal
+    from datetime import date as _date
+    _d1 = _date.fromisoformat(di)
+    _d2 = _date.fromisoformat(df) if True else None
+    _mes_inicio = _date(_d1.year, _d1.month, 1)
+    _mes_fim    = _date(_d1.year, _d1.month, _cal.monthrange(_d1.year, _d1.month)[1])
+    _mes_inteiro = (_d1 == _mes_inicio and _d2 == _mes_fim)
+    dias_uteis  = dias_uteis_periodo(di, df)
+    meta_periodo = 1760 if _mes_inteiro else dias_uteis * 80
+    total_pts   = pontos_row["pontos"] or 0 if pontos_row else 0
+    pct_pts     = round(total_pts / meta_periodo * 100) if meta_periodo > 0 else 0
+
     return {
         "data_inicio":    di,
         "data_fim":       df,
         "resumo":         resumo,
         "meta_dia":       meta,
-        "meta_percentual": pct_meta,
+        "meta_periodo":   meta_periodo,
+        "dias_uteis":     dias_uteis,
+        "meta_percentual": pct_pts,
         "tecnicos_ativos": tecs_ativos["total"] if tecs_ativos else 0,
-        "total_pontos":   pontos_row["pontos"] or 0 if pontos_row else 0,
+        "total_pontos":   total_pts,
         "ranking": [{
             "nome":       r["nome"] or "---",
             "tecnico_id": r["tecnico_id"],
