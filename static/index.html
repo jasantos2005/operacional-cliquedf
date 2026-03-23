@@ -448,7 +448,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
         <div class="sb-item" onclick="nav('ranking','produtividade')"><span class="dot"></span> Ranking Técnicos</div>
         <div class="sb-item" onclick="nav('prod-assunto','produtividade')"><span class="dot"></span> Por Tipo de OS</div>
         <div class="sb-item" onclick="nav('prod-eficiencia','produtividade')"><span class="dot"></span> Eficiência</div>
-        <div class="sb-item" onclick="nav('prod-auditoria','produtividade')"><span class="dot"></span> Auditoria Individual</div>
       </div>
     </div>
 
@@ -458,6 +457,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
         <span class="ic">🧾</span> Auditoria <span class="arrow">›</span>
       </div>
       <div class="sb-sub" id="grp-auditoria">
+        <div class="sb-item" onclick="nav('prod-auditoria','auditoria')"><span class="dot"></span> Auditoria Individual</div>
         <div class="sb-item" onclick="nav('audit-exec','auditoria')"><span class="dot"></span> Execução</div>
         <div class="sb-item" onclick="nav('audit-tempo','auditoria')"><span class="dot"></span> Tempo</div>
         <div class="sb-item" onclick="nav('audit-sla','auditoria')"><span class="dot"></span> SLA</div>
@@ -969,7 +969,7 @@ const PAGES_CFG = {
   'ranking':           {title:'Ranking Técnicos',       path:'/produtividade/ranking',        load:()=>loadRanking(null)},
   'prod-assunto':      {title:'Produtividade por Tipo', path:'/produtividade/por-assunto',    load:loadProdAssunto},
   'prod-eficiencia':   {title:'Eficiência',             path:'/produtividade/eficiencia',     load:loadProdAssunto},
-  'prod-auditoria':    {title:'Auditoria Individual',  path:'/produtividade/auditoria',      load:loadAuditoriaIndividual},
+  'prod-auditoria':    {title:'Auditoria Individual',  path:'/auditoria/individual',         load:loadAuditoriaIndividual},
   'audit-exec':        {title:'Auditoria Operacional',  path:'/auditoria/execucao',           load:loadAuditoria},
   'audit-tempo':       {title:'Auditoria de Tempo',     path:'/auditoria/tempo',              load:()=>loadAuditoriaTipo('tempo')},
   'audit-sla':         {title:'Auditoria de SLA',       path:'/auditoria/sla',                load:()=>loadAuditoriaTipo('sla')},
@@ -1796,6 +1796,59 @@ function loadRankingOntem(btn){
   loadRanking(ontem,btn)
 }
 
+
+// ═══════════════════════════════════════════════════
+// EDIÇÃO MANUAL DE OS — AUDITORIA INDIVIDUAL
+// ═══════════════════════════════════════════════════
+let _editOsAtual = null
+
+function abrirEditOS(osId, assunto, pontosAuto, pendencias, pontosOverride, obs, revisada, revisadoPor){
+  _editOsAtual = osId
+  document.getElementById('edit-os-id').textContent = '#' + osId
+  document.getElementById('edit-os-assunto').textContent = assunto || ''
+  document.getElementById('edit-os-pontos-auto').textContent = pontosAuto + ' pts'
+  document.getElementById('edit-os-pendencias').textContent = pendencias || ''
+  document.getElementById('edit-pontos-input').value = pontosOverride != null ? pontosOverride : ''
+  document.getElementById('edit-obs-input').value = obs || ''
+  document.getElementById('edit-revisada-input').checked = !!revisada
+  document.getElementById('edit-revisor-input').value = revisadoPor || ''
+  const m = document.getElementById('modal-edit-os')
+  m.style.display = 'flex'
+}
+
+function fecharEditOS(){
+  document.getElementById('modal-edit-os').style.display = 'none'
+  _editOsAtual = null
+}
+
+async function salvarEditOS(){
+  if(!_editOsAtual) return
+  const pontosInput = document.getElementById('edit-pontos-input').value.trim()
+  const obs         = document.getElementById('edit-obs-input').value.trim()
+  const revisada    = document.getElementById('edit-revisada-input').checked ? 1 : 0
+  const revisor     = document.getElementById('edit-revisor-input').value.trim()
+
+  const params = []
+  if(pontosInput !== '') params.push('pontos_override=' + parseInt(pontosInput))
+  if(obs)                params.push('obs_manual='      + encodeURIComponent(obs))
+  params.push('revisada=' + revisada)
+  if(revisor)            params.push('revisado_por='    + encodeURIComponent(revisor))
+
+  try {
+    const url = '/api/sais/produtividade/auditoria/os/' + _editOsAtual + '?' + params.join('&')
+    const r = await fetch(url, {method:'PATCH'})
+    const d = await r.json()
+    if(d.ok){
+      fecharEditOS()
+      loadAuditoriaIndividual()
+    } else {
+      alert('Erro: ' + (d.erro || 'Falha ao salvar'))
+    }
+  } catch(e){
+    alert('Erro de comunicação: ' + e.message)
+  }
+}
+
 async function loadAuditoriaIndividual(){
   const tecIds=_filtros.tecnico||[]
   const di=document.getElementById('f-data-inicio')?.value
@@ -1853,6 +1906,11 @@ async function loadAuditoriaIndividual(){
         +'<td style="padding:7px 6px;line-height:1.8">'+sr+pens+bon+'</td>'
         +'<td style="padding:7px 6px;text-align:center">'+(o.evidencias.fotos||0)+'</td>'
         +'<td style="padding:7px 6px;text-align:center">'+(o.evidencias.tem_app?'OK':'--')+'</td>'
+        +'<td style="padding:7px 6px;text-align:center">'
+        +(o.revisada?'<span style="color:var(--green);font-size:10px">✅</span> ':'')
+        +'<button style="background:rgba(255,255,255,.08);border:none;color:var(--text);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px" '
+        +'onclick="event.stopPropagation();abrirEditOS('+o.os_id+',\''+o.nome_assunto+'\',' +o.pontos_base+',\''+o.pendencias_txt+'\','+(o.pontos_override!=null?o.pontos_override:'null')+',\''+( o.obs_manual||'')+'\',' +o.revisada+',\''+( o.revisado_por||'')+'\')">✏️</button>'
+        +'</td>'
         +'</tr>'
     })
     el.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
@@ -1861,7 +1919,7 @@ async function loadAuditoriaIndividual(){
       +'<th style="padding:8px 6px">Cat.</th><th style="padding:8px 6px;text-align:center">Base</th>'
       +'<th style="padding:8px 6px;text-align:center">Final</th><th style="padding:8px 6px;text-align:center">Perdido</th>'
       +'<th style="padding:8px 6px">Penalidades/Bonus</th><th style="padding:8px 6px;text-align:center">Fotos</th>'
-      +'<th style="padding:8px 6px;text-align:center">App</th></tr></thead>'
+      +'<th style="padding:8px 6px;text-align:center">App</th><th style="padding:8px 6px;text-align:center">Ação</th></tr></thead>'
       +'<tbody>'+rows+'</tbody></table></div>'
   }catch(e){el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>';console.error(e)}
 }
@@ -2747,5 +2805,68 @@ function mostrarPopupTV(dados){
 // ═══════════════════════════════════════════════════
 loadDashboard()
 </script>
+
+  <!-- ══ MODAL EDIÇÃO OS AUDITORIA ══════════════════ -->
+  <div id="modal-edit-os" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#12122a;border:1px solid var(--cyan);border-radius:12px;padding:24px;width:480px;max-width:95vw">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div>
+          <div style="font-size:16px;font-weight:700">✏️ Editar OS <span id="edit-os-id" style="color:var(--cyan)"></span></div>
+          <div id="edit-os-assunto" style="font-size:12px;color:var(--muted);margin-top:2px"></div>
+        </div>
+        <button onclick="fecharEditOS()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <!-- Pontos originais -->
+        <div style="background:rgba(0,200,255,.08);border:1px solid rgba(0,200,255,.2);border-radius:8px;padding:10px;font-size:12px;color:#a0a8c0">
+          Pontos calculados automaticamente: <strong id="edit-os-pontos-auto" style="color:var(--text)"></strong>
+          <span id="edit-os-pendencias" style="color:var(--red);margin-left:8px;font-size:11px"></span>
+        </div>
+
+        <!-- Override de pontos -->
+        <div>
+          <label style="font-size:12px;color:#a0a8c0;display:block;margin-bottom:6px">Pontos manuais (deixe vazio para usar o cálculo automático)</label>
+          <input id="edit-pontos-input" type="number" min="0" max="100"
+            placeholder="Ex: 15"
+            style="width:100%;background:#1a1a2e;border:1px solid var(--cyan);border-radius:8px;padding:8px 12px;color:#ffffff;font-size:14px;box-sizing:border-box">
+        </div>
+
+        <!-- Observação -->
+        <div>
+          <label style="font-size:12px;color:#a0a8c0;display:block;margin-bottom:6px">Observação / Justificativa</label>
+          <textarea id="edit-obs-input" rows="3"
+            placeholder="Ex: Técnico realizou procedimento especial não coberto pela regra padrão..."
+            style="width:100%;background:#1a1a2e;border:1px solid var(--cyan);border-radius:8px;padding:8px 12px;color:#ffffff;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+        </div>
+
+        <!-- Revisada -->
+        <div style="display:flex;align-items:center;gap:10px">
+          <input id="edit-revisada-input" type="checkbox" style="width:16px;height:16px;cursor:pointer">
+          <label for="edit-revisada-input" style="font-size:13px;cursor:pointer">Marcar OS como revisada/aprovada</label>
+        </div>
+
+        <!-- Revisado por -->
+        <div>
+          <label style="font-size:12px;color:#a0a8c0;display:block;margin-bottom:6px">Revisado por</label>
+          <input id="edit-revisor-input" type="text"
+            placeholder="Seu nome"
+            style="width:100%;background:#1a1a2e;border:1px solid var(--cyan);border-radius:8px;padding:8px 12px;color:#ffffff;font-size:14px;box-sizing:border-box">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="fecharEditOS()"
+          style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">
+          Cancelar
+        </button>
+        <button onclick="salvarEditOS()"
+          style="background:var(--cyan);border:none;color:#000;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">
+          💾 Salvar
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

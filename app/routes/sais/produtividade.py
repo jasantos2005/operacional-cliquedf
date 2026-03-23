@@ -256,3 +256,69 @@ async def get_auditoria_tecnico(
         },
         "os": os_list,
     }
+
+
+@router.patch("/auditoria/os/{os_id}")
+async def editar_pontuacao_os(
+    os_id: int,
+    pontos_override: Optional[int]  = Query(None),
+    obs_manual:      Optional[str]  = Query(None),
+    revisada:        Optional[int]  = Query(None),
+    revisado_por:    Optional[str]  = Query(None),
+):
+    """Edição manual de pontuação de uma OS na auditoria."""
+    db = get_db()
+
+    # Verifica se OS existe na pontuacao
+    row = db.execute("SELECT os_id FROM sais_os_pontuacao WHERE os_id=?", (os_id,)).fetchone()
+    if not row:
+        # Cria registro mínimo se não existir
+        os_row = db.execute("SELECT id, tecnico_id, ixc_assunto_id FROM prod_os_cache WHERE ixc_os_id=?", (os_id,)).fetchone()
+        if not os_row:
+            db.close()
+            return {"erro": "OS não encontrada"}
+        db.execute(
+            "INSERT OR IGNORE INTO sais_os_pontuacao (os_id, tecnico_id, assunto_id) VALUES (?,?,?)",
+            (os_id, os_row["tecnico_id"], os_row["ixc_assunto_id"])
+        )
+        db.commit()
+
+    agora = (datetime.now() + timedelta(hours=-3)).strftime("%Y-%m-%d %H:%M:%S")
+    campos = []
+    valores = []
+
+    if pontos_override is not None:
+        campos.append("pontos_override=?")
+        valores.append(pontos_override)
+        # Atualiza pontos_final com override
+        campos.append("pontos_final=?")
+        valores.append(pontos_override)
+
+    if obs_manual is not None:
+        campos.append("obs_manual=?")
+        valores.append(obs_manual)
+
+    if revisada is not None:
+        campos.append("revisada=?")
+        valores.append(revisada)
+        campos.append("revisado_em=?")
+        valores.append(agora)
+
+    if revisado_por is not None:
+        campos.append("revisado_por=?")
+        valores.append(revisado_por)
+
+    if not campos:
+        db.close()
+        return {"erro": "Nenhum campo para atualizar"}
+
+    valores.append(os_id)
+    db.execute(f"UPDATE sais_os_pontuacao SET {', '.join(campos)} WHERE os_id=?", valores)
+    db.commit()
+
+    updated = dict(db.execute(
+        "SELECT os_id, pontos_final, pontos_override, obs_manual, revisada, revisado_por, revisado_em FROM sais_os_pontuacao WHERE os_id=?",
+        (os_id,)
+    ).fetchone())
+    db.close()
+    return {"ok": True, "os": updated}
