@@ -1361,6 +1361,7 @@ function renderTopTecs(ranking){
         <span class="rpos ${rposCls(i)}">${i+1}</span>
         <div style="flex:1;font-size:12px;font-weight:600">${t.nome}</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan);font-weight:700;margin-right:8px">${t.total_os} OS</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--yellow);font-weight:700;margin-right:8px">${t.pontos||0} pts</div>
         <span class="badge ${cls}">${pct}%</span>
       </div>
     `

@@ -317,6 +317,23 @@ async def get_filtros_opcoes(
     }
 
 
+def dias_uteis_periodo(di: str, df: str) -> int:
+    """Conta dias úteis (seg a sáb, excluindo domingos) entre di e df inclusive."""
+    from datetime import date as _date, timedelta as _td
+    try:
+        d_ini = _date.fromisoformat(di)
+        d_fim = _date.fromisoformat(df)
+        total = 0
+        d = d_ini
+        while d <= d_fim:
+            if d.weekday() != 6:  # 6 = domingo
+                total += 1
+            d += _td(days=1)
+        return max(total, 1)
+    except:
+        return 1
+
+
 @router.get("/resumo-filtrado")
 async def get_resumo_filtrado(
     data_inicio:  Optional[str] = Query(None),
@@ -471,10 +488,13 @@ async def get_resumo_filtrado(
     ranking_rows = db.execute(f"""
         SELECT
             t.nome, t.ixc_funcionario_id AS tecnico_id,
+            t.meta_dia AS meta_tecnico,
             COUNT(*) AS total_os,
-            SUM(CASE WHEN o.status='finalizada' THEN 1 ELSE 0 END) AS finalizadas
+            SUM(CASE WHEN o.status='finalizada' THEN 1 ELSE 0 END) AS finalizadas,
+            COALESCE(SUM(p.pontos_final), 0) AS pontos_total
         FROM prod_os_cache o
         LEFT JOIN prod_tecnicos t ON t.id = o.tecnico_id
+        LEFT JOIN sais_os_pontuacao p ON p.os_id = o.ixc_os_id
         WHERE {where_sql}
         GROUP BY o.tecnico_id
         ORDER BY finalizadas DESC
@@ -508,8 +528,9 @@ async def get_resumo_filtrado(
             "tecnico_id": r["tecnico_id"],
             "total_os":   r["total_os"],
             "finalizadas": r["finalizadas"],
-            "pct_meta":   round((r["finalizadas"] or 0) / (meta / 11) * 100) if meta > 0 else 0,
-            "score":      r["finalizadas"],
+            "pontos":     r["pontos_total"] or 0,
+            "pct_meta":   round((r["pontos_total"] or 0) / (dias_uteis_periodo(di, df) * (r["meta_tecnico"] or 80)) * 100),
+            "score":      r["pontos_total"] or 0,
             "eficiencia": round((r["finalizadas"] or 0) / r["total_os"] * 100) if r["total_os"] > 0 else 0,
         } for r in ranking_rows],
     }
