@@ -545,10 +545,17 @@ async def marcar_lido(alerta_id: int):
 
 
 @router.get("/tecnico/{tecnico_id}")
-async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
-    """Dados completos para o modal do tecnico."""
+async def get_modal_tecnico(
+    tecnico_id:  int,
+    data:        Optional[str] = Query(None),
+    data_inicio: Optional[str] = Query(None),
+    data_fim:    Optional[str] = Query(None),
+):
+    """Dados completos para o modal do tecnico com suporte a periodo."""
     db = get_db()
-    data = str(data) if data else hoje_brt()
+    hoje = hoje_brt()
+    di = str(data_inicio) if data_inicio else (str(data) if data else hoje)
+    df = str(data_fim)    if data_fim    else (str(data) if data else hoje)
 
     tecnico = db.execute(
         "SELECT * FROM prod_tecnicos WHERE id=?", (tecnico_id,)
@@ -565,8 +572,8 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
             SUM(CASE WHEN status='agendada' THEN 1 ELSE 0 END) AS agendadas
         FROM prod_os_cache
         WHERE tecnico_id=?
-          AND DATE(COALESCE(data_fechamento, data_agenda, data_abertura), '+3 hours') = ?
-    """, (tecnico_id, data)).fetchone())
+          AND DATE(COALESCE(data_fechamento, data_agenda, data_abertura), '+3 hours') BETWEEN ? AND ?
+    """, (tecnico_id, di, df)).fetchone())
 
     from app.engines.score_engine import calcular_pontos_tecnico as calcular_score_tecnico
     score = calcular_score_tecnico(tecnico_id, di)
@@ -583,7 +590,7 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
         LIMIT 20
     """, (tecnico_id, di, df)).fetchall()
 
-    amanha = (datetime.strptime(data, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    amanha = (datetime.strptime(df, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
     agenda = db.execute("""
         SELECT o.ixc_os_id, o.data_agenda, o.status,
                COALESCE(a.assunto, 'Assunto ' || o.ixc_assunto_id) AS assunto
