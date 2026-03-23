@@ -296,6 +296,19 @@ def main():
         registrar_log(db, modo, ins, upd)
         log.info(f"✅ Sync {modo} concluído: {ins} inseridas | {upd} atualizadas")
 
+        # Rodar regras_engine para hoje após sync que trouxe dados novos
+        # Modo critico só trata OS em execução — não precisa recalcular pontuação
+        if modo in ("full", "delta") and (ins + upd) > 0:
+            try:
+                from app.engines.regras_engine import rodar_regras
+                hoje_brt = (datetime.now() + timedelta(hours=-3)).strftime("%Y-%m-%d")
+                log.info(f"[REGRAS] Rodando regras_engine para {hoje_brt}...")
+                rodar_regras(hoje_brt)
+                log.info("[REGRAS] ✅ Pontuação atualizada")
+            except Exception as re:
+                log.error(f"[REGRAS] Erro ao rodar regras_engine: {re}")
+                import traceback; traceback.print_exc()
+
     except Exception as e:
         log.error(f"Erro no sync: {e}")
         import traceback; traceback.print_exc()
