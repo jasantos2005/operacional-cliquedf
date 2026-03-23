@@ -600,7 +600,7 @@ async def get_modal_tecnico(
           AND o.status = 'agendada'
           AND DATE(o.data_agenda, '+3 hours') BETWEEN ? AND ?
         ORDER BY o.data_agenda
-    """, (tecnico_id, data, amanha)).fetchall()
+    """, (tecnico_id, df, amanha)).fetchall()
 
     auditorias = db.execute("""
         SELECT tipo, subtipo, criticidade, descricao, criado_em
