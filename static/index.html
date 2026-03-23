@@ -1849,6 +1849,14 @@ async function salvarEditOS(){
   }
 }
 
+
+function toggleAuditFiltro(tipo){
+  const atual = window._auditFiltro
+  if(typeof window._renderAuditTabela==='function'){
+    window._renderAuditTabela(atual===tipo ? null : tipo)
+  }
+}
+
 async function loadAuditoriaIndividual(){
   const tecIds=_filtros.tecnico||[]
   const di=document.getElementById('f-data-inicio')?.value
@@ -1882,14 +1890,30 @@ async function loadAuditoriaIndividual(){
       const corMeta=r.pct_meta>=80?'var(--green)':r.pct_meta>=50?'var(--amber)':'var(--red)'
       kpis.innerHTML='<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+r.total_os+'</div><div class="kpi-lbl">OS Finalizadas</div></div>'
         +'<div class="kpi" style="--ac:var(--green)"><div class="kpi-val">'+r.pontos_ganhos+'</div><div class="kpi-lbl">Pontos Ganhos</div></div>'
-        +'<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+r.pontos_perdidos+'</div><div class="kpi-lbl">Pontos Perdidos</div></div>'
-        +'<div class="kpi" style="--ac:var(--yellow)"><div class="kpi-val">'+r.bonus_total+'</div><div class="kpi-lbl">Bonus</div></div>'
+        +'<div class="kpi" id="kpi-perdidos" style="--ac:var(--red);cursor:pointer"><div class="kpi-val">'+r.pontos_perdidos+'</div><div class="kpi-lbl">Pontos Perdidos ▾</div></div>'
+        +'<div class="kpi" id="kpi-bonus" style="--ac:var(--yellow);cursor:pointer"><div class="kpi-val">'+r.bonus_total+'</div><div class="kpi-lbl">Bônus ▾</div></div>'
         +'<div class="kpi" style="--ac:'+corMeta+'"><div class="kpi-val">'+r.pct_meta+'%</div><div class="kpi-lbl">Meta ('+r.meta_periodo+' pts)</div></div>'
-        +(r.sem_regra>0?'<div class="kpi" style="--ac:var(--muted)"><div class="kpi-val">'+r.sem_regra+'</div><div class="kpi-lbl">Sem Regra</div></div>':'')
+        +(r.sem_regra>0?'<div class="kpi" id="kpi-semregra" style="--ac:var(--muted);cursor:pointer"><div class="kpi-val">'+r.sem_regra+'</div><div class="kpi-lbl">Sem Regra ▾</div></div>':'')
     }
     if(!os.length){el.innerHTML='<div style="color:var(--muted);padding:20px">Nenhuma OS no periodo.</div>';return}
-    let rows=''
-    os.forEach(function(o){
+
+    // Guarda OS para filtro por KPI
+    window._auditOsData = os
+    window._auditFiltro = null
+
+    window._renderAuditTabela = function(filtro){
+      window._auditFiltro = filtro
+      // Atualiza visual dos KPIs
+      ;['perdidos','bonus','semregra'].forEach(function(f){
+        const k=document.getElementById('kpi-'+f)
+        if(k) k.style.outline = filtro===f?'2px solid var(--cyan)':'none'
+      })
+      const lista = filtro==='perdidos' ? os.filter(function(o){return o.perdidos>0})
+                  : filtro==='bonus'    ? os.filter(function(o){return o.bonus&&o.bonus.length>0})
+                  : filtro==='semregra' ? os.filter(function(o){return !o.calculado})
+                  : os
+      let rows=''
+      lista.forEach(function(o){
       const cor=o.perdidos>0?'var(--red)':o.pontos_final>0?'var(--green)':'var(--muted)'
       const pens=o.penalidades.map(function(p){return '<span style="color:var(--red);font-size:10px">'+p.motivo+'('+p.valor+')</span>'}).join(' · ')
       const bon=o.bonus.map(function(b){return '<span style="color:var(--green);font-size:10px">'+b.motivo+'(+'+b.valor+')</span>'}).join(' · ')
@@ -1913,14 +1937,17 @@ async function loadAuditoriaIndividual(){
         +'</td>'
         +'</tr>'
     })
-    el.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
-      +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
-      +'<th style="padding:8px 6px">Data</th><th style="padding:8px 6px">OS</th><th style="padding:8px 6px">Assunto</th>'
-      +'<th style="padding:8px 6px">Cat.</th><th style="padding:8px 6px;text-align:center">Base</th>'
-      +'<th style="padding:8px 6px;text-align:center">Final</th><th style="padding:8px 6px;text-align:center">Perdido</th>'
-      +'<th style="padding:8px 6px">Penalidades/Bonus</th><th style="padding:8px 6px;text-align:center">Fotos</th>'
-      +'<th style="padding:8px 6px;text-align:center">App</th><th style="padding:8px 6px;text-align:center">Ação</th></tr></thead>'
-      +'<tbody>'+rows+'</tbody></table></div>'
+      el.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+        +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
+        +'<th style="padding:8px 6px">Data</th><th style="padding:8px 6px">OS</th><th style="padding:8px 6px">Assunto</th>'
+        +'<th style="padding:8px 6px">Cat.</th><th style="padding:8px 6px;text-align:center">Base</th>'
+        +'<th style="padding:8px 6px;text-align:center">Final</th><th style="padding:8px 6px;text-align:center">Perdido</th>'
+        +'<th style="padding:8px 6px">Penalidades/Bonus</th><th style="padding:8px 6px;text-align:center">Fotos</th>'
+        +'<th style="padding:8px 6px;text-align:center">App</th><th style="padding:8px 6px;text-align:center">Ação</th></tr></thead>'
+        +'<tbody>'+rows+'</tbody></table></div>'
+      if(!lista.length) el.innerHTML='<div style="color:var(--muted);padding:20px">Nenhuma OS neste filtro.</div>'
+    }
+    window._renderAuditTabela(null)
   }catch(e){el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>';console.error(e)}
 }
 

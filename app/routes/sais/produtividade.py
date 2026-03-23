@@ -149,7 +149,17 @@ async def get_auditoria_tecnico(
     except:
         dias_uteis = 1
 
-    meta_periodo = dias_uteis * (tecnico["meta_dia"] or 80)
+    # Meta: 1760 fixo se período = mês inteiro, proporcional se parcial
+    try:
+        _d1 = _date.fromisoformat(di)
+        _d2 = _date.fromisoformat(df)
+        import calendar as _cal
+        _mes_inicio = _date(_d1.year, _d1.month, 1)
+        _mes_fim    = _date(_d1.year, _d1.month, _cal.monthrange(_d1.year, _d1.month)[1])
+        _mes_inteiro = (_d1 == _mes_inicio and _d2 == _mes_fim)
+    except:
+        _mes_inteiro = False
+    meta_periodo = (tecnico["meta_mes"] or 1760) if _mes_inteiro else dias_uteis * (tecnico["meta_dia"] or 80)
 
     # OS do período
     os_rows = db.execute("""
