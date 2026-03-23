@@ -1421,28 +1421,20 @@ let _evDashData = {}
 async function loadEventosDash(){
   document.getElementById('ev-sub').textContent = 'Atualizando...'
   try{
-    const [resumo, ociosos, criticas, pont, reincid, semTec, concent, emAtraso] = await Promise.all([
+    const [resumo, ociosos, criticas, pont] = await Promise.all([
       apiFetch(`${SAIS}/visao-geral/resumo`),
       apiFetch(`${SAIS}/central/tecnicos-ociosos`),
       apiFetch(`${SAIS}/central/os-criticas`),
       apiFetch(`${SAIS}/pontuacao/resumo-dia`),
-      apiFetch(`${SAIS}/central/reincidencias`),
-      apiFetch(`${SAIS}/central/os-sem-tecnico`),
-      apiFetch(`${SAIS}/central/concentradores-criticos`),
-      apiFetch(`${SAIS}/central/tecnicos-em-atraso`),
     ])
 
     const r       = resumo.resumo || {}
-    const ocList      = ociosos.tecnicos_ociosos || []
-    const crList      = criticas.os_criticas || []
-    const reincList   = reincid.reincidencias || []
-    const semTecList  = semTec.os_sem_tecnico || []
-    const concentList = concent.concentradores || []
-    const atrasoList  = emAtraso.tecnicos_em_atraso || []
+    const ocList  = ociosos.tecnicos_ociosos || []
+    const crList  = criticas.os_criticas || []
     const slaList = crList.filter(o => (o.horas_abertas||0) > 4)
     const execList= crList.filter(o => o.status === 'execucao')
 
-    _evDashData = { resumo: r, ocList, crList, slaList, execList, pont, reincList, semTecList, concentList, atrasoList }
+    _evDashData = { resumo: r, ocList, crList, slaList, execList, pont }
 
     const agora = new Date().toLocaleTimeString('pt-BR')
     document.getElementById('ev-sub').textContent =
@@ -1498,30 +1490,6 @@ async function loadEventosDash(){
         <div class="ev-card-valor" style="color:${ptsPct>=80?'var(--green)':ptsPct>=50?'var(--amber)':'var(--red)'}">${ptsPct}%</div>
         <div class="ev-card-desc">${pont.total_pontos||0} pts · ${pont.os_perfeitas||0} perfeitas</div>
       </div>
-      <div class="ev-card ${reincList.length>0?'alerta':'ok'}" onclick="evModal('reincidencias')">
-        <div class="ev-card-pulse ${reincList.length>0?'amber':'green'}"></div>
-        <div class="ev-card-titulo">Reincidência</div>
-        <div class="ev-card-valor" style="color:${reincList.length>0?'var(--purple)':'var(--green)'}">${reincList.length}</div>
-        <div class="ev-card-desc">OS repetidas no mês</div>
-      </div>
-      <div class="ev-card ${semTecList.length>0?'critico':'ok'}" onclick="evModal('semtecnico')">
-        <div class="ev-card-pulse ${semTecList.length>0?'red':'green'}"></div>
-        <div class="ev-card-titulo">Sem Técnico</div>
-        <div class="ev-card-valor" style="color:${semTecList.length>0?'var(--amber)':'var(--green)'}">${semTecList.length}</div>
-        <div class="ev-card-desc">Abertas há +1h sem atribuição</div>
-      </div>
-      <div class="ev-card ${concentList.length>0?'alerta':'ok'}" onclick="evModal('concentrador')">
-        <div class="ev-card-pulse ${concentList.length>0?'cyan':'green'}"></div>
-        <div class="ev-card-titulo">Concentrador Crítico</div>
-        <div class="ev-card-valor" style="color:var(--cyan);font-size:16px;margin-top:4px">${concentList[0]?.concentrador||'—'}</div>
-        <div class="ev-card-desc">${concentList[0]?.total_os||0} OS abertas</div>
-      </div>
-      <div class="ev-card ${atrasoList.length>0?'critico':'ok'}" onclick="evModal('emAtraso')">
-        <div class="ev-card-pulse ${atrasoList.length>0?'red':'green'}"></div>
-        <div class="ev-card-titulo">Técnico em Atraso</div>
-        <div class="ev-card-valor" style="color:${atrasoList.length>0?'var(--red)':'var(--green)'}">${atrasoList.length}</div>
-        <div class="ev-card-desc">Com OS parada há +2h</div>
-      </div>
     `
     renderEventos()
   }catch(e){
@@ -1534,62 +1502,7 @@ function evModal(tipo){
   const d = _evDashData
   let titulo = '', itens = [], rec = ''
 
-  if(tipo==='reincidencias'){
-    titulo='🔁 Reincidências no Mês'
-    // Ranking de técnicos
-    const tecRanking={}
-    ;(d.reincList||[]).forEach(function(r){
-      const t=r.tecnico||'Sem técnico'
-      if(!tecRanking[t]) tecRanking[t]={nome:t,total:0,clientes:new Set()}
-      tecRanking[t].total+=1
-      tecRanking[t].clientes.add(r.cliente_nome||r.contrato_id)
-    })
-    const tecList=Object.values(tecRanking).sort(function(a,b){return b.total-a.total})
-    const rankingHtml='<div style="margin-bottom:16px;padding:12px;background:rgba(167,139,250,.08);border-radius:8px;border:1px solid rgba(167,139,250,.2)">'
-      +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-weight:600">TÉCNICOS COM MAIS REINCIDÊNCIAS</div>'
-      +'<div style="display:flex;flex-wrap:wrap;gap:8px">'
-      +tecList.map(function(t,i){
-        const cor=i===0?'var(--red)':i===1?'var(--amber)':'var(--purple)'
-        return '<div style="background:rgba(0,0,0,.3);border-radius:6px;padding:6px 10px;font-size:12px">'
-          +'<span style="color:'+cor+';font-weight:700">'+(i+1)+'º '+t.nome+'</span>'
-          +' <span style="color:var(--muted)">'+t.total+'x · '+t.clientes.size+' clientes</span>'
-          +'</div>'
-      }).join('')
-      +'</div></div>'
-    itens=[rankingHtml].concat((d.reincList||[]).slice(0,15).map(r=>`
-      <div class="ev-modal-item" style="flex-direction:column;align-items:flex-start;gap:3px">
-        <div style="display:flex;justify-content:space-between;width:100%">
-          <span><strong>#${r.os_id}</strong> · ${r.assunto||'—'}</span>
-          <span class="badge" style="background:rgba(167,139,250,.2);color:var(--purple)">${r.tecnico||'—'} · ${r.ocorrencias}x</span>
-        </div>
-        <span style="font-size:11px;color:var(--muted)">${r.cliente_nome||'Cliente não identificado'}</span>
-      </div>`))
-  }
-  else if(tipo==='semtecnico'){
-    titulo='⚠️ OS Sem Técnico (+1h)'
-    itens=(d.semTecList||[]).slice(0,15).map(o=>`
-      <div class="ev-modal-item">
-        <span><strong>#${o.ixc_os_id}</strong> · ${o.assunto||'—'}</span>
-        <span class="badge amber">${o.horas_abertas}h aberta</span>
-      </div>`)
-  }
-  else if(tipo==='concentrador'){
-    titulo='📡 Concentradores com mais OS'
-    itens=(d.concentList||[]).slice(0,10).map(c=>`
-      <div class="ev-modal-item">
-        <span>${c.concentrador}</span>
-        <span class="badge" style="background:rgba(34,211,238,.15);color:var(--cyan)">${c.total_os} OS</span>
-      </div>`)
-  }
-  else if(tipo==='emAtraso'){
-    titulo='🚨 Técnicos com OS Parada (+2h)'
-    itens=(d.atrasoList||[]).slice(0,15).map(o=>`
-      <div class="ev-modal-item">
-        <span><strong>${o.tecnico||'—'}</strong> · #${o.ixc_os_id} · ${o.assunto||'—'}</span>
-        <span class="badge red">${o.horas_abertas}h</span>
-      </div>`)
-  }
-  else if(tipo==='criticas'){
+  if(tipo==='criticas'){
     titulo = 'OS Críticas Paradas'
     itens  = (d.crList||[]).map(o=>`
       <div class="ev-modal-item">

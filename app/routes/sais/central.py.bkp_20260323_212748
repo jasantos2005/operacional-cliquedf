@@ -121,74 +121,42 @@ async def get_resumo_critico():
 
 @router.get("/reincidencias")
 async def get_reincidencias():
-    """Reincidências reais: mesmo contrato (id_login), assunto de suporte, dentro de 60 dias.
-    Exclui retirada, instalação e infra. Busca direto no IXC MySQL."""
-    import os as _os, pymysql
+    """Clientes com 2ª OS no mesmo assunto no mês corrente."""
+    db = get_db()
+    hoje = hoje_brt()
+    mes_inicio = hoje[:8] + "01"
 
-    # Assuntos de suporte considerados (sem acesso / lenta / reincidência)
-    ASSUNTOS_SUPORTE = (5, 20, 21, 44, 47)  # 94=[CDF] SUPORTE TECNICO excluído — é intermediário
+    rows = db.execute("""
+        SELECT
+            o.ixc_os_id,
+            o.ixc_assunto_id,
+            COALESCE(a.assunto, 'Assunto ' || o.ixc_assunto_id) AS assunto,
+            t.nome AS tecnico,
+            o.data_abertura,
+            o.status,
+            cnt.total AS ocorrencias,
+            ROUND((julianday('now') - julianday(o.data_abertura)) * 24, 1) AS horas_abertas
+        FROM prod_os_cache o
+        JOIN (
+            SELECT ixc_assunto_id, tecnico_id, COUNT(*) AS total
+            FROM prod_os_cache
+            WHERE DATE(COALESCE(data_fechamento, data_agenda, data_abertura), '+3 hours')
+                  BETWEEN ? AND ?
+            GROUP BY ixc_assunto_id, tecnico_id
+            HAVING COUNT(*) >= 2
+        ) cnt ON cnt.ixc_assunto_id = o.ixc_assunto_id
+             AND cnt.tecnico_id = o.tecnico_id
+        LEFT JOIN prod_tecnicos t ON t.id = o.tecnico_id
+        LEFT JOIN prod_assuntos a ON a.id = o.ixc_assunto_id
+        WHERE DATE(COALESCE(o.data_fechamento, o.data_agenda, o.data_abertura), '+3 hours')
+              BETWEEN ? AND ?
+          AND o.status NOT IN ('cancelada')
+        ORDER BY cnt.total DESC, o.data_abertura DESC
+        LIMIT 50
+    """, (mes_inicio, hoje, mes_inicio, hoje)).fetchall()
+    db.close()
 
-    try:
-        ixc = pymysql.connect(
-            host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT", 3306)),
-            user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
-            database=_os.getenv("DB_NAME"),
-            cursorclass=pymysql.cursors.DictCursor, connect_timeout=10,
-        )
-        ph = ",".join([str(x) for x in ASSUNTOS_SUPORTE])
-
-        with ixc.cursor() as cur:
-            cur.execute(f"""
-                SELECT
-                    o.id              AS os_id,
-                    o.id_login        AS contrato_id,
-                    o.id_assunto,
-                    a.assunto,
-                    o.data_abertura,
-                    o.status,
-                    f.funcionario     AS tecnico,
-                    cl.razao          AS cliente_nome,
-                    cnt.total         AS ocorrencias,
-                    ROUND(TIMESTAMPDIFF(HOUR, o.data_abertura, NOW()), 1) AS horas_abertas
-                FROM su_oss_chamado o
-                JOIN (
-                    SELECT id_login, id_assunto, COUNT(*) AS total
-                    FROM su_oss_chamado
-                    WHERE id_assunto IN ({ph})
-                      AND id_login > 0
-                      AND data_abertura >= DATE_SUB(NOW(), INTERVAL 60 DAY)
-                      AND status != 'C'
-                    GROUP BY id_login, id_assunto
-                    HAVING COUNT(*) >= 2
-                ) cnt ON cnt.id_login = o.id_login
-                     AND cnt.id_assunto = o.id_assunto
-                LEFT JOIN su_oss_assunto a  ON a.id = o.id_assunto
-                LEFT JOIN funcionarios f    ON f.id = o.id_tecnico
-                LEFT JOIN cliente cl        ON cl.id = o.id_cliente
-                WHERE o.id_assunto IN ({ph})
-                  AND o.id_login > 0
-                  AND o.data_abertura >= DATE_SUB(NOW(), INTERVAL 60 DAY)
-                  AND o.status != 'C'
-                ORDER BY cnt.total DESC, o.data_abertura DESC
-                LIMIT 100
-            """)
-            rows = cur.fetchall()
-        ixc.close()
-
-        # Serializar datas
-        result = []
-        for r in rows:
-            d = dict(r)
-            if hasattr(d.get("data_abertura"), "strftime"):
-                d["data_abertura"] = d["data_abertura"].strftime("%Y-%m-%d %H:%M:%S")
-            result.append(d)
-
-        return {"reincidencias": result, "total": len(result)}
-
-    except Exception as e:
-        print(f"ERRO reincidencias IXC: {e}")
-        import traceback; traceback.print_exc()
-        return {"reincidencias": [], "total": 0, "erro": str(e)}
+    return {"reincidencias": [dict(r) for r in rows], "total": len(rows)}
 
 
 @router.get("/os-sem-tecnico")
@@ -295,73 +263,3 @@ async def get_tecnicos_em_atraso():
     db.close()
 
     return {"tecnicos_em_atraso": [dict(r) for r in rows], "total": len(rows)}
-
-
-@router.get("/instalacao-com-suporte")
-async def get_instalacao_com_suporte():
-    """Contratos que tiveram instalação e abriram suporte em até 30 dias.
-    Indica qualidade da instalação por técnico."""
-    import os as _os, pymysql
-
-    ASSUNTOS_INSTALACAO = (2, 3, 26, 30, 48, 101, 239)
-    ASSUNTOS_SUPORTE    = (5, 20, 21, 44, 47, 94)
-    ph_inst = ",".join([str(x) for x in ASSUNTOS_INSTALACAO])
-    ph_sup  = ",".join([str(x) for x in ASSUNTOS_SUPORTE])
-
-    try:
-        ixc = pymysql.connect(
-            host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT", 3306)),
-            user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
-            database=_os.getenv("DB_NAME"),
-            cursorclass=pymysql.cursors.DictCursor, connect_timeout=10,
-        )
-        with ixc.cursor() as cur:
-            cur.execute(f"""
-                SELECT
-                    inst.id          AS os_inst_id,
-                    sup.id           AS os_sup_id,
-                    inst.id_login    AS contrato_id,
-                    cl.razao         AS cliente_nome,
-                    a_inst.assunto   AS assunto_instalacao,
-                    a_sup.assunto    AS assunto_suporte,
-                    f_inst.funcionario AS tecnico_instalacao,
-                    f_sup.funcionario  AS tecnico_suporte,
-                    inst.data_fechamento AS data_instalacao,
-                    sup.data_abertura   AS data_suporte,
-                    DATEDIFF(sup.data_abertura, inst.data_fechamento) AS dias_entre
-                FROM su_oss_chamado inst
-                JOIN su_oss_chamado sup
-                    ON  sup.id_login   = inst.id_login
-                    AND sup.id_assunto IN ({ph_sup})
-                    AND sup.data_abertura > inst.data_fechamento
-                    AND sup.data_abertura <= DATE_ADD(inst.data_fechamento, INTERVAL 30 DAY)
-                    AND sup.status != 'C'
-                LEFT JOIN su_oss_assunto a_inst ON a_inst.id = inst.id_assunto
-                LEFT JOIN su_oss_assunto a_sup  ON a_sup.id  = sup.id_assunto
-                LEFT JOIN funcionarios f_inst   ON f_inst.id = inst.id_tecnico
-                LEFT JOIN funcionarios f_sup    ON f_sup.id  = sup.id_tecnico
-                LEFT JOIN cliente cl            ON cl.id     = inst.id_cliente
-                WHERE inst.id_assunto IN ({ph_inst})
-                  AND inst.status = 'F'
-                  AND inst.data_fechamento >= DATE_SUB(NOW(), INTERVAL 90 DAY)
-                  AND inst.id_login > 0
-                ORDER BY dias_entre ASC
-                LIMIT 50
-            """)
-            rows = cur.fetchall()
-        ixc.close()
-
-        result = []
-        for r in rows:
-            d = dict(r)
-            for campo in ("data_instalacao", "data_suporte"):
-                if hasattr(d.get(campo), "strftime"):
-                    d[campo] = d[campo].strftime("%Y-%m-%d %H:%M:%S")
-            result.append(d)
-
-        return {"casos": result, "total": len(result)}
-
-    except Exception as e:
-        print(f"ERRO instalacao-com-suporte IXC: {e}")
-        import traceback; traceback.print_exc()
-        return {"casos": [], "total": 0, "erro": str(e)}

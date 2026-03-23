@@ -1,0 +1,312 @@
+"""
+cron_sync_ixc.py — Sync Inteligente IXC → SQLite
+=================================================
+Estratégia em 3 modos:
+
+MODO FULL (--full ou primeira execução do dia):
+  - Busca hoje + 2 dias à frente + 3 dias atrás
+  - Usado no botão "Sync IXC" e na inicialização
+
+MODO DELTA (padrão, a cada 10 min):
+  - Busca apenas OS modificadas nos últimos 30 min (ultima_atualizacao)
+  - Muito mais rápido — só as OS que mudaram
+
+MODO CRITICO (a cada 5 min):
+  - Apenas OS em execução (EN/AS/EX) para atualização quase real
+  - Garante que técnicos em campo aparecem atualizados
+
+Uso:
+  python3 -m app.bootstrap.cron_sync_ixc          # modo delta
+  python3 -m app.bootstrap.cron_sync_ixc --full   # modo full
+  python3 -m app.bootstrap.cron_sync_ixc --critico # modo critico
+"""
+
+import sqlite3
+import sys
+import os
+import logging
+from datetime import datetime, timedelta
+
+import pymysql
+from dotenv import load_dotenv
+
+load_dotenv("/opt/automacoes/cliquedf/operacional/.env")
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [SYNC] %(message)s")
+log = logging.getLogger(__name__)
+
+DB_PATH = "/opt/automacoes/cliquedf/operacional/prod_local.db"
+
+STATUS_MAP = {
+    "A":   "aberta",
+    "F":   "finalizada",
+    "C":   "cancelada",
+    "AG":  "agendada",
+    "RAG": "agendada",
+    "EN":  "execucao",
+    "AS":  "execucao",
+    "EX":  "execucao",
+}
+
+CATEGORIAS_SERVICO  = set(int(x) for x in os.getenv("IXC_ASSUNTOS_SERVICO",  "").split(",") if x.strip())
+CATEGORIAS_SUPORTE  = set(int(x) for x in os.getenv("IXC_ASSUNTOS_SUPORTE",  "").split(",") if x.strip())
+CATEGORIAS_INFRA    = set(int(x) for x in os.getenv("IXC_ASSUNTOS_INFRA",    "").split(",") if x.strip())
+CATEGORIAS_RETIRADA = set(int(x) for x in os.getenv("IXC_ASSUNTOS_RETIRADA", "").split(",") if x.strip())
+
+
+def get_categoria(id_assunto):
+    if id_assunto in CATEGORIAS_SERVICO:  return "servico"
+    if id_assunto in CATEGORIAS_SUPORTE:  return "suporte"
+    if id_assunto in CATEGORIAS_INFRA:    return "infra"
+    if id_assunto in CATEGORIAS_RETIRADA: return "retirada"
+    return "suporte"
+
+
+def get_ixc_conn():
+    return pymysql.connect(
+        host=os.getenv("DB_HOST"),
+        port=int(os.getenv("DB_PORT", 3306)),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASS"),
+        database=os.getenv("DB_NAME"),
+        cursorclass=pymysql.cursors.DictCursor,
+        connect_timeout=15,
+    )
+
+
+def get_tecnicos_ids(db):
+    """Retorna lista de ixc_funcionario_id dos técnicos ativos."""
+    rows = db.execute("SELECT ixc_funcionario_id FROM prod_tecnicos WHERE ativo=1").fetchall()
+    return [r["ixc_funcionario_id"] for r in rows]
+
+
+def upsert_os(db, os_list):
+    """Insere ou atualiza OS no SQLite. Retorna (inseridos, atualizados)."""
+    inseridos = atualizados = 0
+    for o in os_list:
+        status_raw = o.get("status_raw") or o.get("status", "A")
+        status     = STATUS_MAP.get(status_raw, "aberta")
+        categoria  = get_categoria(o["ixc_assunto_id"] or 0)
+
+        # Trata datas zeradas
+        def clean_dt(v):
+            if not v or str(v).startswith("0000"):
+                return None
+            return str(v)
+
+        data_fechamento = clean_dt(o.get("data_fechamento"))
+        data_agenda     = clean_dt(o.get("data_agenda"))
+        data_abertura   = clean_dt(o.get("data_abertura"))
+
+        existing = db.execute(
+            "SELECT id FROM prod_os_cache WHERE ixc_os_id=?", (o["ixc_os_id"],)
+        ).fetchone()
+
+        if existing:
+            db.execute("""
+                UPDATE prod_os_cache SET
+                    status=?, categoria=?,
+                    data_fechamento=?, data_agenda=?,
+                    sincronizado_em=datetime('now','-3 hours')
+                WHERE ixc_os_id=?
+            """, (status, categoria, data_fechamento, data_agenda, o["ixc_os_id"]))
+            atualizados += 1
+        else:
+            # Busca tecnico_id interno
+            tec_row = db.execute(
+                "SELECT id FROM prod_tecnicos WHERE ixc_funcionario_id=?",
+                (o["ixc_funcionario_id"],)
+            ).fetchone()
+            tec_id = tec_row["id"] if tec_row else None
+
+            db.execute("""
+                INSERT INTO prod_os_cache
+                    (ixc_os_id, tecnico_id, ixc_assunto_id, categoria, status,
+                     data_abertura, data_fechamento, data_agenda, sincronizado_em)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now','-3 hours'))
+            """, (
+                o["ixc_os_id"], tec_id, o["ixc_assunto_id"],
+                categoria, status,
+                data_abertura, data_fechamento, data_agenda,
+            ))
+            inseridos += 1
+
+    db.commit()
+    return inseridos, atualizados
+
+
+def sync_full(db, ids_ixc):
+    """
+    Modo FULL: hoje + 2 dias à frente + 3 dias atrás.
+    Também sincroniza assuntos.
+    """
+    log.info("=== MODO FULL ===")
+    ixc = get_ixc_conn()
+    placeholders = ",".join(["%s"] * len(ids_ixc))
+
+    with ixc.cursor() as cur:
+        # Sync assuntos
+        cur.execute("SELECT id, assunto FROM su_oss_assunto ORDER BY id")
+        assuntos = cur.fetchall()
+        for a in assuntos:
+            db.execute(
+                "INSERT OR REPLACE INTO prod_assuntos (id, assunto) VALUES (?, ?)",
+                (a["id"], a["assunto"])
+            )
+        db.commit()
+        log.info(f"Assuntos sincronizados: {len(assuntos)}")
+
+        # Busca OS
+        cur.execute(f"""
+            SELECT
+                o.id                AS ixc_os_id,
+                o.id_tecnico        AS ixc_funcionario_id,
+                o.id_assunto        AS ixc_assunto_id,
+                o.status            AS status_raw,
+                o.data_abertura,
+                o.data_fechamento,
+                o.data_agenda
+            FROM su_oss_chamado o
+            WHERE o.id_tecnico IN ({placeholders})
+              AND (
+                -- Hoje e 3 dias atrás
+                DATE(CONVERT_TZ(o.data_abertura,'+00:00','-03:00'))
+                    >= DATE(CONVERT_TZ(NOW(),'+00:00','-03:00') - INTERVAL 3 DAY)
+                -- Agendadas até 2 dias à frente
+                OR (o.status IN ('AG','RAG')
+                    AND DATE(CONVERT_TZ(o.data_agenda,'+00:00','-03:00'))
+                        <= DATE(CONVERT_TZ(NOW(),'+00:00','-03:00') + INTERVAL 2 DAY))
+                -- Em execução (sempre atualiza)
+                OR o.status IN ('EN','AS','EX','A')
+              )
+            ORDER BY o.ultima_atualizacao DESC
+        """, ids_ixc)
+        os_list = cur.fetchall()
+
+    ixc.close()
+    log.info(f"OS encontradas (full): {len(os_list)}")
+    ins, upd = upsert_os(db, os_list)
+    log.info(f"Full sync: {ins} inseridas | {upd} atualizadas")
+    return ins, upd
+
+
+def sync_delta(db, ids_ixc, minutos=30):
+    """
+    Modo DELTA: apenas OS modificadas nos últimos N minutos.
+    Muito mais rápido — usa ultima_atualizacao.
+    """
+    log.info(f"=== MODO DELTA (últimos {minutos} min) ===")
+    ixc = get_ixc_conn()
+    placeholders = ",".join(["%s"] * len(ids_ixc))
+
+    with ixc.cursor() as cur:
+        cur.execute(f"""
+            SELECT
+                o.id                AS ixc_os_id,
+                o.id_tecnico        AS ixc_funcionario_id,
+                o.id_assunto        AS ixc_assunto_id,
+                o.status            AS status_raw,
+                o.data_abertura,
+                o.data_fechamento,
+                o.data_agenda
+            FROM su_oss_chamado o
+            WHERE o.id_tecnico IN ({placeholders})
+              AND o.ultima_atualizacao >= NOW() - INTERVAL {minutos} MINUTE
+            ORDER BY o.ultima_atualizacao DESC
+        """, ids_ixc)
+        os_list = cur.fetchall()
+
+    ixc.close()
+    log.info(f"OS modificadas (delta): {len(os_list)}")
+    if not os_list:
+        log.info("Nenhuma OS modificada — nada a fazer")
+        return 0, 0
+    ins, upd = upsert_os(db, os_list)
+    log.info(f"Delta sync: {ins} inseridas | {upd} atualizadas")
+    return ins, upd
+
+
+def sync_critico(db, ids_ixc):
+    """
+    Modo CRITICO: apenas OS em execução.
+    Ideal para cron de 5 min — atualiza técnicos no campo em tempo quase real.
+    """
+    log.info("=== MODO CRITICO (em execução) ===")
+    ixc = get_ixc_conn()
+    placeholders = ",".join(["%s"] * len(ids_ixc))
+
+    with ixc.cursor() as cur:
+        cur.execute(f"""
+            SELECT
+                o.id                AS ixc_os_id,
+                o.id_tecnico        AS ixc_funcionario_id,
+                o.id_assunto        AS ixc_assunto_id,
+                o.status            AS status_raw,
+                o.data_abertura,
+                o.data_fechamento,
+                o.data_agenda
+            FROM su_oss_chamado o
+            WHERE o.id_tecnico IN ({placeholders})
+              AND o.status IN ('EN','AS','EX','A')
+            ORDER BY o.ultima_atualizacao DESC
+        """, ids_ixc)
+        os_list = cur.fetchall()
+
+    ixc.close()
+    log.info(f"OS em execução/abertas: {len(os_list)}")
+    ins, upd = upsert_os(db, os_list)
+    log.info(f"Critico sync: {ins} inseridas | {upd} atualizadas")
+    return ins, upd
+
+
+def registrar_log(db, modo, ins, upd):
+    db.execute("""
+        INSERT INTO sais_automacoes_log (automacao, status, itens_afetados, detalhe, criado_em)
+        VALUES (?, 'ok', ?, ?, datetime('now','-3 hours'))
+    """, (f"sync_ixc_{modo}", ins + upd, f"{ins} inseridas, {upd} atualizadas"))
+    db.commit()
+
+
+def main():
+    modo = "delta"
+    if "--full" in sys.argv:
+        modo = "full"
+    elif "--critico" in sys.argv:
+        modo = "critico"
+
+    db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
+    db.execute("PRAGMA journal_mode=WAL")
+
+    try:
+        ids_ixc = get_tecnicos_ids(db)
+        if not ids_ixc:
+            log.error("Nenhum técnico ativo encontrado")
+            return
+
+        log.info(f"Técnicos ativos: {len(ids_ixc)} | IDs: {ids_ixc}")
+
+        if modo == "full":
+            ins, upd = sync_full(db, ids_ixc)
+        elif modo == "critico":
+            ins, upd = sync_critico(db, ids_ixc)
+        else:
+            ins, upd = sync_delta(db, ids_ixc)
+
+        registrar_log(db, modo, ins, upd)
+        log.info(f"✅ Sync {modo} concluído: {ins} inseridas | {upd} atualizadas")
+
+    except Exception as e:
+        log.error(f"Erro no sync: {e}")
+        import traceback; traceback.print_exc()
+        db.execute("""
+            INSERT INTO sais_automacoes_log (automacao, status, detalhe, criado_em)
+            VALUES (?, 'erro', ?, datetime('now','-3 hours'))
+        """, (f"sync_ixc_{modo}", str(e)))
+        db.commit()
+    finally:
+        db.close()
+
+
+if __name__ == "__main__":
+    main()
