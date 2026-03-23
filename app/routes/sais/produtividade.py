@@ -117,3 +117,142 @@ async def get_produtividade_assunto(data: Optional[str] = Query(None)):
     db.close()
 
     return {"data": data, "por_assunto": [dict(r) for r in rows]}
+
+
+@router.get("/auditoria/{tecnico_id}")
+async def get_auditoria_tecnico(
+    tecnico_id: int,
+    data_inicio: Optional[str] = Query(None),
+    data_fim:    Optional[str] = Query(None),
+):
+    """Auditoria individual do técnico — cada OS com pontuação detalhada."""
+    db = get_db()
+    hoje = hoje_brt()
+    di = str(data_inicio) if data_inicio else hoje
+    df = str(data_fim)    if data_fim    else hoje
+
+    tecnico = db.execute(
+        "SELECT id, nome, ixc_funcionario_id, meta_dia FROM prod_tecnicos WHERE id=?",
+        (tecnico_id,)
+    ).fetchone()
+    if not tecnico:
+        db.close()
+        return {"erro": "Técnico não encontrado"}
+
+    # Dias úteis (seg-sáb) no período
+    from datetime import date as _date, timedelta as _td
+    try:
+        d1 = _date.fromisoformat(di)
+        d2 = _date.fromisoformat(df)
+        dias_uteis = sum(1 for i in range((d2-d1).days+1) if (d1+_td(i)).weekday()!=6)
+        dias_uteis = max(dias_uteis, 1)
+    except:
+        dias_uteis = 1
+
+    meta_periodo = dias_uteis * (tecnico["meta_dia"] or 80)
+
+    # OS do período
+    os_rows = db.execute("""
+        SELECT
+            o.ixc_os_id, o.status, o.categoria,
+            o.data_abertura, o.data_fechamento,
+            COALESCE(a.assunto, 'Assunto '||o.ixc_assunto_id) AS nome_assunto,
+            o.ixc_assunto_id,
+            p.pontos_base, p.pontos_final,
+            p.pen_foto, p.pen_app, p.pen_produto, p.pen_descricao,
+            p.bonus_tempo, p.bonus_fibra,
+            p.total_fotos, p.tem_produto, p.tem_comodato, p.tem_app,
+            p.pendencias, p.aprovada,
+            ap.pontuacao AS pontuacao_assunto
+        FROM prod_os_cache o
+        LEFT JOIN prod_assuntos a ON a.id = o.ixc_assunto_id
+        LEFT JOIN sais_os_pontuacao p ON p.os_id = o.ixc_os_id
+        LEFT JOIN prod_assuntos_pontuacao ap ON ap.id_assunto_ixc = o.ixc_assunto_id AND ap.ativo=1
+        WHERE o.tecnico_id = ?
+          AND o.status = 'finalizada'
+          AND DATE(o.data_fechamento, '+3 hours') BETWEEN ? AND ?
+        ORDER BY o.data_fechamento DESC
+    """, (tecnico_id, di, df)).fetchall()
+
+    db.close()
+
+    # Monta lista de OS com penalidades detalhadas
+    os_list = []
+    total_pontos_ganhos  = 0
+    total_pontos_perdidos = 0
+    total_pontos_bonus   = 0
+    sem_regra = 0
+
+    for r in os_rows:
+        d = dict(r)
+
+        # Penalidades em lista legível
+        pens = []
+        if (d["pen_foto"] or 0) < 0:
+            pens.append({"motivo": "Sem foto(s)", "valor": d["pen_foto"]})
+        if (d["pen_app"] or 0) < 0:
+            pens.append({"motivo": "Sem deslocamento/execução no app", "valor": d["pen_app"]})
+        if (d["pen_produto"] or 0) < 0:
+            pens.append({"motivo": "Produto não registrado", "valor": d["pen_produto"]})
+        if (d["pen_descricao"] or 0) < 0:
+            pens.append({"motivo": "Descrição insuficiente", "valor": d["pen_descricao"]})
+
+        bonus = []
+        if (d["bonus_tempo"] or 0) > 0:
+            bonus.append({"motivo": "Bônus tempo", "valor": d["bonus_tempo"]})
+        elif (d["bonus_tempo"] or 0) < 0:
+            pens.append({"motivo": "Tempo muito curto", "valor": d["bonus_tempo"]})
+        if (d["bonus_fibra"] or 0) > 0:
+            bonus.append({"motivo": "Bônus fibra", "valor": d["bonus_fibra"]})
+
+        calculado = d["pontos_final"] is not None
+        if not calculado:
+            sem_regra += 1
+
+        pontos_final  = d["pontos_final"] or 0
+        pontos_base   = d["pontos_base"]  or 0
+        perdidos      = pontos_base - pontos_final
+        bonus_total   = sum(b["valor"] for b in bonus)
+
+        total_pontos_ganhos   += pontos_final
+        total_pontos_perdidos += max(perdidos, 0)
+        total_pontos_bonus    += bonus_total
+
+        os_list.append({
+            "os_id":          d["ixc_os_id"],
+            "data":           (d["data_fechamento"] or "")[:10],
+            "categoria":      d["categoria"] or "---",
+            "nome_assunto":   d["nome_assunto"],
+            "assunto_id":     d["ixc_assunto_id"],
+            "pontuacao_assunto": d["pontuacao_assunto"] or 0,
+            "calculado":      calculado,
+            "pontos_base":    pontos_base,
+            "pontos_final":   pontos_final,
+            "perdidos":       max(perdidos, 0),
+            "penalidades":    pens,
+            "bonus":          bonus,
+            "evidencias": {
+                "fotos":      d["total_fotos"] or 0,
+                "tem_app":    bool(d["tem_app"]),
+                "tem_produto":bool(d["tem_produto"]),
+                "tem_comodato":bool(d["tem_comodato"]),
+                "aprovada":   bool(d["aprovada"]),
+            },
+        })
+
+    pct_meta = round(total_pontos_ganhos / meta_periodo * 100) if meta_periodo > 0 else 0
+
+    return {
+        "tecnico":       dict(tecnico),
+        "periodo":       {"data_inicio": di, "data_fim": df, "dias_uteis": dias_uteis},
+        "resumo": {
+            "total_os":        len(os_list),
+            "pontos_ganhos":   total_pontos_ganhos,
+            "pontos_perdidos": total_pontos_perdidos,
+            "bonus_total":     total_pontos_bonus,
+            "sem_regra":       sem_regra,
+            "meta_periodo":    meta_periodo,
+            "pct_meta":        pct_meta,
+        },
+        "os": os_list,
+    }

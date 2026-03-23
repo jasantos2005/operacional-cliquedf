@@ -448,6 +448,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
         <div class="sb-item" onclick="nav('ranking','produtividade')"><span class="dot"></span> Ranking Técnicos</div>
         <div class="sb-item" onclick="nav('prod-assunto','produtividade')"><span class="dot"></span> Por Tipo de OS</div>
         <div class="sb-item" onclick="nav('prod-eficiencia','produtividade')"><span class="dot"></span> Eficiência</div>
+        <div class="sb-item" onclick="nav('prod-auditoria','produtividade')"><span class="dot"></span> Auditoria Individual</div>
       </div>
     </div>
 
@@ -673,6 +674,24 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     </div>
 
     <!-- ══ PRODUTIVIDADE POR ASSUNTO ══════════════ -->
+    <div class="page" id="page-prod-auditoria">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Auditoria <span>Individual</span></div>
+          <div class="pg-sub">Validação de pontuação por técnico no período</div>
+        </div>
+      </div>
+      <!-- Resumo KPIs -->
+      <div id="audit-ind-kpis" style="display:none;gap:12px;margin-bottom:16px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"></div>
+      <!-- Tabela OS -->
+      <div id="audit-ind-content">
+        <div style="color:var(--muted);font-size:13px;padding:20px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:20px">👆</span>
+          Selecione 1 <strong style="color:var(--text)">técnico</strong> no filtro do topo e clique em <strong style="color:var(--cyan)">Aplicar</strong>.
+        </div>
+      </div>
+    </div>
+
     <div class="page" id="page-prod-assunto">
       <div class="pg-hd"><div><div class="pg-title">Produtividade <span>por Tipo</span></div><div class="pg-sub">Distribuição de OS por assunto hoje</div></div></div>
       <div id="prod-assunto-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
@@ -950,6 +969,7 @@ const PAGES_CFG = {
   'ranking':           {title:'Ranking Técnicos',       path:'/produtividade/ranking',        load:()=>loadRanking(null)},
   'prod-assunto':      {title:'Produtividade por Tipo', path:'/produtividade/por-assunto',    load:loadProdAssunto},
   'prod-eficiencia':   {title:'Eficiência',             path:'/produtividade/eficiencia',     load:loadProdAssunto},
+  'prod-auditoria':    {title:'Auditoria Individual',  path:'/produtividade/auditoria',      load:loadAuditoriaIndividual},
   'audit-exec':        {title:'Auditoria Operacional',  path:'/auditoria/execucao',           load:loadAuditoria},
   'audit-tempo':       {title:'Auditoria de Tempo',     path:'/auditoria/tempo',              load:()=>loadAuditoriaTipo('tempo')},
   'audit-sla':         {title:'Auditoria de SLA',       path:'/auditoria/sla',                load:()=>loadAuditoriaTipo('sla')},
@@ -1163,7 +1183,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto']
+  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -1774,6 +1794,76 @@ function loadRankingOntem(btn){
   if(di) di.value = ontem
   if(df) df.value = ontem
   loadRanking(ontem,btn)
+}
+
+async function loadAuditoriaIndividual(){
+  const tecIds=_filtros.tecnico||[]
+  const di=document.getElementById('f-data-inicio')?.value
+  const df=document.getElementById('f-data-fim')?.value
+  const kpis=document.getElementById('audit-ind-kpis')
+  const el=document.getElementById('audit-ind-content')
+  if(!el)return
+  const semTec='<div style="color:var(--muted);font-size:13px;padding:20px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">👆</span> Selecione 1 <strong style="color:var(--text)">técnico</strong> no filtro do topo e clique em <strong style="color:var(--cyan)">Aplicar</strong>.</div>'
+  if(tecIds.length===0){el.innerHTML=semTec;if(kpis){kpis.style.display='none';kpis.innerHTML=''}return}
+  if(tecIds.length>1){el.innerHTML='<div style="color:var(--amber);font-size:13px;padding:20px">⚠️ Selecione apenas <strong>1 técnico</strong> no filtro.</div>';if(kpis){kpis.style.display='none';kpis.innerHTML=''}return}
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Carregando auditoria...</div>'
+  let tecId=null,tecNome='---'
+  try{
+    const tlist=await apiFetch('/api/tecnicos/')
+    const tecs=tlist.tecnicos||tlist
+    const tec=tecs.find(t=>String(t.ixc_funcionario_id)===String(tecIds[0])||String(t.id)===String(tecIds[0]))
+    if(tec){tecId=tec.id;tecNome=tec.nome}
+  }catch(e){console.error(e)}
+  if(!tecId){el.innerHTML='<div style="color:var(--red);padding:20px">Tecnico nao encontrado.</div>';return}
+  let url='/api/sais/produtividade/auditoria/'+tecId
+  const params=[]
+  if(di)params.push('data_inicio='+di)
+  if(df)params.push('data_fim='+df)
+  if(params.length)url+='?'+params.join('&')
+  try{
+    const d=await apiFetch(url)
+    const r=d.resumo
+    const os=d.os||[]
+    if(kpis){
+      kpis.style.display='grid'
+      const corMeta=r.pct_meta>=80?'var(--green)':r.pct_meta>=50?'var(--amber)':'var(--red)'
+      kpis.innerHTML='<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+r.total_os+'</div><div class="kpi-lbl">OS Finalizadas</div></div>'
+        +'<div class="kpi" style="--ac:var(--green)"><div class="kpi-val">'+r.pontos_ganhos+'</div><div class="kpi-lbl">Pontos Ganhos</div></div>'
+        +'<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+r.pontos_perdidos+'</div><div class="kpi-lbl">Pontos Perdidos</div></div>'
+        +'<div class="kpi" style="--ac:var(--yellow)"><div class="kpi-val">'+r.bonus_total+'</div><div class="kpi-lbl">Bonus</div></div>'
+        +'<div class="kpi" style="--ac:'+corMeta+'"><div class="kpi-val">'+r.pct_meta+'%</div><div class="kpi-lbl">Meta ('+r.meta_periodo+' pts)</div></div>'
+        +(r.sem_regra>0?'<div class="kpi" style="--ac:var(--muted)"><div class="kpi-val">'+r.sem_regra+'</div><div class="kpi-lbl">Sem Regra</div></div>':'')
+    }
+    if(!os.length){el.innerHTML='<div style="color:var(--muted);padding:20px">Nenhuma OS no periodo.</div>';return}
+    let rows=''
+    os.forEach(function(o){
+      const cor=o.perdidos>0?'var(--red)':o.pontos_final>0?'var(--green)':'var(--muted)'
+      const pens=o.penalidades.map(function(p){return '<span style="color:var(--red);font-size:10px">'+p.motivo+'('+p.valor+')</span>'}).join(' · ')
+      const bon=o.bonus.map(function(b){return '<span style="color:var(--green);font-size:10px">'+b.motivo+'(+'+b.valor+')</span>'}).join(' · ')
+      const sr=!o.calculado?'<span style="color:var(--muted);font-size:10px">sem regra</span>':''
+      const catCor=o.categoria==='servico'?'green':o.categoria==='suporte'?'amber':o.categoria==='infra'?'blue':'red'
+      rows+='<tr style="border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer" onclick="abrirModalOS('+o.os_id+')">'
+        +'<td style="padding:7px 6px;color:var(--muted)">'+o.data+'</td>'
+        +'<td style="padding:7px 6px;color:var(--cyan);font-family:monospace">#'+o.os_id+'</td>'
+        +'<td style="padding:7px 6px;font-weight:600;max-width:180px">'+o.nome_assunto+'</td>'
+        +'<td style="padding:7px 6px"><span class="badge '+catCor+'" style="font-size:9px">'+o.categoria+'</span></td>'
+        +'<td style="padding:7px 6px;text-align:center;color:var(--muted)">'+o.pontos_base+'</td>'
+        +'<td style="padding:7px 6px;text-align:center;font-weight:700;color:'+cor+'">'+o.pontos_final+'</td>'
+        +'<td style="padding:7px 6px;text-align:center;color:var(--red)">'+(o.perdidos>0?'-'+o.perdidos:'')+'</td>'
+        +'<td style="padding:7px 6px;line-height:1.8">'+sr+pens+bon+'</td>'
+        +'<td style="padding:7px 6px;text-align:center">'+(o.evidencias.fotos||0)+'</td>'
+        +'<td style="padding:7px 6px;text-align:center">'+(o.evidencias.tem_app?'OK':'--')+'</td>'
+        +'</tr>'
+    })
+    el.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+      +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
+      +'<th style="padding:8px 6px">Data</th><th style="padding:8px 6px">OS</th><th style="padding:8px 6px">Assunto</th>'
+      +'<th style="padding:8px 6px">Cat.</th><th style="padding:8px 6px;text-align:center">Base</th>'
+      +'<th style="padding:8px 6px;text-align:center">Final</th><th style="padding:8px 6px;text-align:center">Perdido</th>'
+      +'<th style="padding:8px 6px">Penalidades/Bonus</th><th style="padding:8px 6px;text-align:center">Fotos</th>'
+      +'<th style="padding:8px 6px;text-align:center">App</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table></div>'
+  }catch(e){el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>';console.error(e)}
 }
 
 async function loadProdAssunto(){
