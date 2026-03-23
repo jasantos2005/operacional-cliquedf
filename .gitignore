@@ -6,3 +6,4 @@ venv/
 *.log
 *.bak.*
 patch_*.py
+*.bkp*
