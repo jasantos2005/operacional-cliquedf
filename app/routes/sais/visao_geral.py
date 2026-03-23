@@ -569,7 +569,7 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
     """, (tecnico_id, data)).fetchone())
 
     from app.engines.score_engine import calcular_pontos_tecnico as calcular_score_tecnico
-    score = calcular_score_tecnico(tecnico_id, data)
+    score = calcular_score_tecnico(tecnico_id, di)
 
     os_recentes = db.execute("""
         SELECT o.ixc_os_id, o.status, o.categoria,
@@ -578,9 +578,10 @@ async def get_modal_tecnico(tecnico_id: int, data: Optional[str] = Query(None)):
         FROM prod_os_cache o
         LEFT JOIN prod_assuntos a ON a.id = o.ixc_assunto_id
         WHERE o.tecnico_id=?
+          AND DATE(COALESCE(o.data_fechamento, o.data_agenda, o.data_abertura), '+3 hours') BETWEEN ? AND ?
         ORDER BY COALESCE(o.data_fechamento, o.data_agenda, o.data_abertura) DESC
-        LIMIT 10
-    """, (tecnico_id,)).fetchall()
+        LIMIT 20
+    """, (tecnico_id, di, df)).fetchall()
 
     amanha = (datetime.strptime(data, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
     agenda = db.execute("""

@@ -911,15 +911,14 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
   </div>
 </div>
 
-<!-- ══ MODAL FILTROS ITEM (seleção múltipla) ═════════════════════════════ -->
-<!-- ══ MODAL FILTROS ════════════════════════════════ -->
+<!-- ══ MODAL FILTROS (seleção múltipla) ════════════════════════════════ -->
 <div class="filtro-modal-overlay" id="filtro-modal-overlay">
   <div class="filtro-modal-box">
     <div class="filtro-modal-title" id="filtro-modal-title" style="display:flex;justify-content:space-between;align-items:center">
       <span id="filtro-modal-title-text">Filtro</span>
       <button class="modal-close" onclick="document.getElementById('filtro-modal-overlay').classList.remove('active')" style="position:static;margin-left:8px">×</button>
     </div>
-    <input class="filtro-search" id="filtro-modal-title" placeholder="Buscar..." oninput="filtroSearchUpdate()" style="display:none">
+    <!-- input duplicado removido -->
     <input class="filtro-search" id="filtro-search" placeholder="Buscar..." oninput="filtroSearchUpdate()">
     <div class="filtro-lista" id="filtro-lista"></div>
     <div class="filtro-modal-actions">
@@ -968,7 +967,16 @@ const PAGES_CFG = {
 // ═══════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════
-async function apiFetch(url){const r=await fetch(url);return r.json()}
+async function apiFetch(url){
+  try{
+    const r = await fetch(url)
+    if(!r.ok) throw new Error(`HTTP ${r.status}`)
+    return await r.json()
+  }catch(e){
+    console.warn('[apiFetch]', url, e.message)
+    return {}
+  }
+}
 function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}catch{return d}}
 function fmtHora(d){if(!d)return'—';try{return new Date(d).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}catch{return d}}
 function rposCls(i){return['p1','p2','p3'][i]||'pn'}
@@ -1155,7 +1163,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos']
+  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -1182,44 +1190,8 @@ function atualizarBotoesFiltro(){
   // mantém compatibilidade com fmAtualizar se existir
   if(typeof fmAtualizar === 'function') fmAtualizar()
 }
-function _OLD_atualizarBotoesFiltro_REMOVED(){
-  const tipos = ['tecnico','categoria','cidade','bairro','concentrador','assunto']
-  const labels = {tecnico:'👷 Técnicos',categoria:'📂 Categoria',cidade:'🏙️ Cidade',bairro:'📍 Bairro',concentrador:'🔌 Concentrador',assunto:'📋 Serviço'}
-  let total = 0
-  tipos.forEach(t=>{
-    const btn = document.getElementById('fb-'+t)
-    if(!btn) return
-    const cnt = (_filtros[t]||[]).length
-    total += cnt
-    btn.classList.toggle('ativo', cnt>0)
-    btn.textContent = cnt > 0 ? `${labels[t]} (${cnt})` : labels[t]
-  })
-  const di = document.getElementById('f-data-inicio')?.value
-  const df = document.getElementById('f-data-fim')?.value
-  if(di||df) total++
-  const clearBtn = document.getElementById('filtro-clear-btn')
-  if(clearBtn) clearBtn.style.display = total > 0 ? '' : 'none'
-  // mantém compatibilidade com fmAtualizar se existir
-  if(typeof fmAtualizar === 'function') fmAtualizar()
-}
-function _OLD_atualizarBotoesFiltro_REMOVED(){
-  const tipos = ['tecnico','categoria','cidade','bairro','concentrador','assunto']
-  let algumAtivo = false
-  tipos.forEach(t=>{
-    const btn = document.getElementById('fb-'+t)
-    if(!btn) return
-    const ativo = (_filtros[t]||[]).length > 0
-    if(ativo){ algumAtivo=true; btn.classList.add('ativo') }
-    else btn.classList.remove('ativo')
-    const cnt = (_filtros[t]||[]).length
-    const labels = {tecnico:'👷 Técnicos',categoria:'📂 Categoria',cidade:'🏙️ Cidade',bairro:'📍 Bairro',concentrador:'🔌 Concentrador',assunto:'📋 Serviço'}
-    btn.textContent = cnt > 0 ? `${labels[t]} (${cnt})` : labels[t]
-  })
-  const diInicio = document.getElementById('f-data-inicio')?.value
-  const diFim    = document.getElementById('f-data-fim')?.value
-  if(diInicio||diFim) algumAtivo = true
-  fmAtualizar()
-}
+
+
 
 function getFiltrosParams(){
   const p = new URLSearchParams()
@@ -1293,32 +1265,53 @@ async function loadDashboard(){
 }
 
 function renderDashboardKPIs(d){
-  const r=d.resumo||{}
-  const pct=d.meta_percentual||0
-  document.getElementById('db-sub').textContent=
-    `Atualizado às ${new Date().toLocaleTimeString('pt-BR')} · ${r.total||0} OS no período`
+  const r = d.resumo || {}
+  const di = document.getElementById('f-data-inicio')?.value
+  const df = document.getElementById('f-data-fim')?.value
+  const temPeriodo = !!(di && df && di !== df)
+
+  // Meta correta pelo período (não só diária)
+  let diasPeriodo = 1
+  if(di && df){
+    const d1 = new Date(di), d2 = new Date(df)
+    diasPeriodo = Math.max(1, Math.round((d2 - d1) / (1000*60*60*24)) + 1)
+  }
+  const metaPeriodo = (d.meta_dia || 150) * diasPeriodo
+  const fins = r.finalizadas || 0
+  const pct  = metaPeriodo > 0 ? Math.round(fins / metaPeriodo * 100) : (d.meta_percentual || 0)
+
+  // Label do período
+  const periodoLabel = temPeriodo
+    ? `${new Date(di+'T12:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} → ${new Date(df+'T12:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} · ${r.total||0} OS`
+    : `Atualizado às ${new Date().toLocaleTimeString('pt-BR')} · ${r.total||0} OS`
+  document.getElementById('db-sub').textContent = periodoLabel
+
+  const subTotal    = temPeriodo ? 'no período' : 'hoje'
+  const subCampo    = temPeriodo ? 'no período' : 'em execução'
+  const subAgendada = temPeriodo ? 'no período' : 'hoje'
+  const subMeta     = `${pct}% da meta${temPeriodo ? ' (período)' : ''}`
 
   document.getElementById('db-kpis').innerHTML=`
-    <div class="kpi" style="--ac:var(--cyan)" onclick="nav('ultimas-os','visao-geral')">
+    <div class="kpi" style="--ac:var(--cyan)" onclick="abrirModalListaOSTodas()">
       <div class="kpi-lbl">Total OS</div><div class="kpi-val">${r.total||0}</div>
-      <div class="kpi-sub">hoje</div>
+      <div class="kpi-sub">${subTotal}</div>
     </div>
     <div class="kpi" style="--ac:var(--green)" onclick="abrirModalListaOS('finalizada', document.getElementById('f-data-inicio')?.value||null)">
-      <div class="kpi-lbl">Finalizadas</div><div class="kpi-val">${r.finalizadas||0}</div>
-      <div class="kpi-sub">${pct}% da meta</div>
+      <div class="kpi-lbl">Finalizadas</div><div class="kpi-val">${fins}</div>
+      <div class="kpi-sub">${subMeta}</div>
       <div class="kpi-badge ${pct>=80?'up':'dn'}">${pct}%</div>
     </div>
     <div class="kpi" style="--ac:var(--amber)" onclick="nav('os-atrasadas','central')">
       <div class="kpi-lbl">Em Campo</div><div class="kpi-val">${r.em_campo||0}</div>
-      <div class="kpi-sub">em execução</div>
+      <div class="kpi-sub">${subCampo}</div>
     </div>
     <div class="kpi" style="--ac:var(--cyan)" onclick="nav('agenda-dia','agenda')">
       <div class="kpi-lbl">Agendadas</div><div class="kpi-val">${r.agendadas||0}</div>
-      <div class="kpi-sub">hoje</div>
+      <div class="kpi-sub">${subAgendada}</div>
     </div>
     <div class="kpi" style="--ac:var(--orange)" onclick="nav('ranking','produtividade')">
       <div class="kpi-lbl">Técnicos</div><div class="kpi-val">${d.tecnicos_ativos||0}</div>
-      <div class="kpi-sub">ativos hoje</div>
+      <div class="kpi-sub">ativos no período</div>
     </div>
   `
 }
@@ -1361,8 +1354,10 @@ function renderTopTecs(ranking){
   document.getElementById('db-top-tecs').innerHTML=ranking.slice(0,8).map((t,i)=>{
     const pct=t.pct_meta||0
     const cls=pct>=80?'green':pct>=50?'amber':'red'
+    // usa id_interno se disponível, senão tecnico_id
+    const modalId = t.id_interno || t.tecnico_id
     return `
-      <div class="tec-row" onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}')">
+      <div class="tec-row" onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}',true)">
         <span class="rpos ${rposCls(i)}">${i+1}</span>
         <div style="flex:1;font-size:12px;font-weight:600">${t.nome}</div>
         <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--cyan);font-weight:700;margin-right:8px">${t.total_os} OS</div>
@@ -1373,16 +1368,26 @@ function renderTopTecs(ranking){
 }
 
 function renderMeta(d){
-  const fins=d.resumo?.finalizadas||0
-  const meta=d.meta_dia||150
-  const pct=Math.min(d.meta_percentual||0,100)
-  const cor=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'
+  const fins = d.resumo?.finalizadas || 0
+  const metaDia = d.meta_dia || 150
+  const di = document.getElementById('f-data-inicio')?.value
+  const df = document.getElementById('f-data-fim')?.value
+  // Calcula meta correta pelo período
+  let diasPeriodo = 1
+  if(di && df){
+    const d1 = new Date(di), d2 = new Date(df)
+    diasPeriodo = Math.max(1, Math.round((d2 - d1) / (1000*60*60*24)) + 1)
+  }
+  const meta = metaDia * diasPeriodo
+  const pct  = Math.min(meta > 0 ? Math.round(fins / meta * 100) : 0, 100)
+  const cor  = pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)'
+  const labelMeta = diasPeriodo > 1 ? `${meta} (${diasPeriodo}d)` : String(meta)
   document.getElementById('db-meta').innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;text-align:center">
       <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--cyan)">${fins}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Finalizadas</div></div>
       <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--amber)">${Math.max(0,meta-fins)}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Restantes</div></div>
       <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:${cor}">${pct}%</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Atingimento</div></div>
-      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${meta}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta</div></div>
+      <div><div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:var(--orange)">${labelMeta}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Meta</div></div>
     </div>
     <div class="meta-track"><div class="meta-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--cyan),var(--green))"></div></div>
   `
@@ -1580,7 +1585,9 @@ function renderEventos(){
 // ÚLTIMAS OS
 // ═══════════════════════════════════════════════════
 async function loadUltimasOS(){
-  const d=await apiFetch(`${SAIS}/visao-geral/eventos-recentes?limit=30`)
+  const fp = getFiltrosParams()
+  const url = fp ? `${SAIS}/visao-geral/eventos-recentes?limit=30&${fp}` : `${SAIS}/visao-geral/eventos-recentes?limit=30`
+  const d=await apiFetch(url)
   const el=document.getElementById('ultimas-os-list')
   if(!d.eventos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>Nenhuma OS hoje</div>`;return}
   el.innerHTML=d.eventos.map(o=>`
@@ -1733,10 +1740,19 @@ async function loadReagendamentos(){
 // ═══════════════════════════════════════════════════
 async function loadRanking(data,btn=null){
   if(btn){document.querySelectorAll('#page-ranking .period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
-  const url=data?`${SAIS}/pontuacao/ranking?data=${data}`:`${SAIS}/pontuacao/ranking`
+  // Usa filtros globais de data se não vier data específica
+  const di = data || document.getElementById('f-data-inicio')?.value
+  const df = document.getElementById('f-data-fim')?.value
+  let url = `${SAIS}/pontuacao/ranking`
+  const qp = []
+  if(di) qp.push(`data=${di}`)
+  if(df && df !== di) qp.push(`data_fim=${df}`)
+  const fp = getFiltrosParams()
+  if(fp) qp.push(fp)
+  if(qp.length) url += '?' + qp.join('&')
   const d=await apiFetch(url)
   document.getElementById('ranking-table').innerHTML=(d.ranking||[]).map((t,i)=>`
-    <tr onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}')">
+    <tr onclick="abrirModalTecnico(${t.tecnico_id},'${esc(t.nome)}',true)">
       <td><span class="rpos ${rposCls(i)}">${i+1}</span></td>
       <td><strong>${t.nome}</strong></td>
       <td class="r" style="color:var(--cyan);font-weight:700">${t.total_os}</td>
@@ -1751,11 +1767,18 @@ async function loadRanking(data,btn=null){
 
 function loadRankingOntem(btn){
   const ontem=new Date(Date.now()-86400000).toISOString().split('T')[0]
+  // Temporariamente seta as datas para ontem
+  const di = document.getElementById('f-data-inicio')
+  const df = document.getElementById('f-data-fim')
+  if(di) di.value = ontem
+  if(df) df.value = ontem
   loadRanking(ontem,btn)
 }
 
 async function loadProdAssunto(){
-  const d=await apiFetch(`${SAIS}/produtividade/por-assunto`)
+  const fp = getFiltrosParams()
+  const url = fp ? `${SAIS}/produtividade/por-assunto?${fp}` : `${SAIS}/produtividade/por-assunto`
+  const d=await apiFetch(url)
   const el=document.getElementById('prod-assunto-content')
   if(!d.por_assunto?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📊</div>Sem dados</div>`;return}
   el.innerHTML=`<div class="card"><div class="tbl-wrap"><table>
@@ -1776,9 +1799,11 @@ async function loadProdAssunto(){
 // AUDITORIA
 // ═══════════════════════════════════════════════════
 async function loadAuditoria(){
+  const fp = getFiltrosParams()
+  const qs = fp ? `?${fp}` : ''
   const [resumo,ocorrs]=await Promise.all([
-    apiFetch(`${SAIS}/auditoria/resumo`),
-    apiFetch(`${SAIS}/auditoria/ocorrencias?limit=30`),
+    apiFetch(`${SAIS}/auditoria/resumo${qs}`),
+    apiFetch(`${SAIS}/auditoria/ocorrencias?limit=30${fp?'&'+fp:''}`),
   ])
   const t=resumo.totais||{}
   document.getElementById('audit-kpis').innerHTML=`
@@ -1815,18 +1840,22 @@ function renderOcorrencias(lista){
 // TÉCNICOS
 // ═══════════════════════════════════════════════════
 async function loadTecnicos(){
+  const fp = getFiltrosParams()
+  const url = fp ? `${SAIS}/produtividade/ranking?${fp}` : `${SAIS}/produtividade/ranking`
   const [ranking,tecs]=await Promise.all([
-    apiFetch(`${SAIS}/produtividade/ranking`),
+    apiFetch(url),
     apiFetch('/api/tecnicos/'),
   ])
   const rankMap={}
+  // ranking usa ixc_funcionario_id como tecnico_id
   ;(ranking.ranking||[]).forEach(t=>{rankMap[t.tecnico_id]=t})
-  document.getElementById('tec-cards').innerHTML=(tecs||[]).map(t=>{
-    const r=rankMap[t.id]||{}
+  // tec-cards: mapeia por ixc_funcionario_id
+  document.getElementById('tec-cards').innerHTML=(tecs||[]).filter(t=>t.ativo).map(t=>{
+    const r=rankMap[t.ixc_funcionario_id]||{}
     const pct=r.pct_meta||0
     const cor=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)'
     return `
-      <div class="card" style="cursor:pointer" onclick="abrirModalTecnico(${t.id},'${esc(t.nome)}')">
+      <div class="card" style="cursor:pointer" onclick="abrirModalTecnico(${t.id},'${esc(t.nome)}',false)">
         <div style="font-size:13px;font-weight:800;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.nome}</div>
         <div style="font-size:9px;color:var(--muted);margin-bottom:10px">ID IXC: ${t.ixc_funcionario_id} · Meta: ${t.meta_dia} OS/dia</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
@@ -2000,6 +2029,12 @@ async function abrirModalOSAg(osId){
 // ═══════════════════════════════════════════════════
 // MODAL LISTA OS FINALIZADAS
 // ═══════════════════════════════════════════════════
+function abrirModalListaOSTodas(){
+  // Abre lista de OS filtradas pelo período atual
+  const di = document.getElementById('f-data-inicio')?.value
+  abrirModalListaOS('todas', di || null)
+}
+
 async function abrirModalListaOS(status='finalizada', data=null){
   document.getElementById('modal-lista-os-title').textContent =
     status==='finalizada' ? 'OS Finalizadas' : 'Lista de OS'
@@ -2009,9 +2044,14 @@ async function abrirModalListaOS(status='finalizada', data=null){
   abrirModal('modal-lista-os')
 
   try{
-    const url = data
-      ? `${SAIS}/visao-geral/os-finalizadas?data=${data}`
-      : `${SAIS}/visao-geral/os-finalizadas`
+    // Monta URL com filtros da topbar
+    const fp = getFiltrosParams()
+    const dataFiltro = data || document.getElementById('f-data-inicio')?.value || null
+    let url = `${SAIS}/visao-geral/os-finalizadas`
+    const qp = []
+    if(dataFiltro) qp.push(`data=${dataFiltro}`)
+    if(fp) qp.push(fp)
+    if(qp.length) url += '?' + qp.join('&')
     const d = await apiFetch(url)
     const lista = d.os || []
 
@@ -2349,7 +2389,7 @@ function statBox(label,value,cor){
 // ═══════════════════════════════════════════════════
 // MODAL TÉCNICO
 // ═══════════════════════════════════════════════════
-async function abrirModalTecnico(tecId,tecNome){
+async function abrirModalTecnico(tecId,tecNome,isIxcId=false){
   document.getElementById('modal-tec-title').textContent=tecNome||'Técnico'
   document.getElementById('modal-tec-sub').textContent='Carregando...'
   document.getElementById('modal-tec-stats').innerHTML=''
@@ -2358,7 +2398,19 @@ async function abrirModalTecnico(tecId,tecNome){
   abrirModal('modal-tec')
 
   try{
-    const d=await apiFetch(`${SAIS}/visao-geral/tecnico/${tecId}`)
+    // Usa data do filtro da topbar
+    const di = document.getElementById('f-data-inicio')?.value || ''
+    const df = document.getElementById('f-data-fim')?.value || ''
+    const fp = getFiltrosParams()
+    // Se for ixc_funcionario_id, busca o id interno primeiro
+    let idInterno = tecId
+    if(isIxcId){
+      const tecs = await apiFetch('/api/tecnicos/')
+      const tec = (tecs||[]).find(t => t.ixc_funcionario_id == tecId)
+      if(tec) idInterno = tec.id
+    }
+    const qs = fp ? `?${fp}` : (di ? `?data=${di}` : '')
+    const d=await apiFetch(`${SAIS}/visao-geral/tecnico/${idInterno}${qs}`)
     const t=d.tecnico||{}
     const hoje=d.hoje||{}
     const score=d.score||{}
