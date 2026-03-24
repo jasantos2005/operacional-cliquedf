@@ -124,14 +124,17 @@ async def get_auditoria_estoque():
 
     # Mapeamento almoxarifado → técnico (baseado no IXC)
     ALMOX_TECS = {
-        44: {"nome": "LEANDRO",               "func_id": 47},
-        43: {"nome": "WELLINGTON PIAÇABUÇU",  "func_id": 46},
-        46: {"nome": "RICARDO - ILHA",        "func_id": 50},
-        48: {"nome": "VICTOR FERREIRA",       "func_id": 55},
-        10: {"nome": "ALEXANDRE",             "func_id": 13},
-        14: {"nome": "DENISON",               "func_id": 17},
-        8:  {"nome": "JONATHAN",              "func_id": 11},
-        11: {"nome": "JOSE MARCONDES",        "func_id": 19},
+        12: {"nome": "ALEXANDRE",            "func_id": 13},
+         7: {"nome": "DENISON",              "func_id": 17},
+        15: {"nome": "JONATHAN",             "func_id": 11},
+        38: {"nome": "JOSEILTON",            "func_id": 38},
+        44: {"nome": "LEANDRO",              "func_id": 47},
+        46: {"nome": "RICARDO - ILHA",       "func_id": 50},
+        33: {"nome": "RODRIGO SANTOS",       "func_id": 35},
+        51: {"nome": "ROGERIO",              "func_id": 56},
+        49: {"nome": "VICTOR FERREIRA",      "func_id": 55},
+        43: {"nome": "WELLINGTON PIAÇABUÇU", "func_id": 46},
+        11: {"nome": "JOSE MARCONDES",       "func_id": 19},
     }
 
     try:
@@ -332,13 +335,16 @@ async def sync_estoque_ixc():
     load_dotenv("/opt/automacoes/cliquedf/operacional/.env")
 
     ALMOX_TECS = {
+        12: {"tec_id": 1,  "func_id": 13},
+         7: {"tec_id": 2,  "func_id": 17},
+        15: {"tec_id": 4,  "func_id": 11},
+        38: {"tec_id": 5,  "func_id": 38},
         44: {"tec_id": 6,  "func_id": 47},
-        43: {"tec_id": 11, "func_id": 46},
         46: {"tec_id": 7,  "func_id": 50},
-        48: {"tec_id": 10, "func_id": 55},
-        10: {"tec_id": 1,  "func_id": 13},
-        14: {"tec_id": 2,  "func_id": 17},
-         8: {"tec_id": 4,  "func_id": 11},
+        33: {"tec_id": 8,  "func_id": 35},
+        51: {"tec_id": 9,  "func_id": 56},
+        49: {"tec_id": 10, "func_id": 55},
+        43: {"tec_id": 11, "func_id": 46},
         11: {"tec_id": 12, "func_id": 19},
     }
 
@@ -435,3 +441,182 @@ async def ajustar_estoque(
     db.commit()
     db.close()
     return {"ok": True, "qtd_anterior": qtd_ant, "qtd_nova": qtd_nova}
+
+
+@router.get("/estoque-divergencias")
+async def get_estoque_divergencias(
+    data_base: Optional[str] = Query(None),
+):
+    """
+    Auditoria real de estoque:
+    saldo_base (data_base) + entradas IXC - saidas IXC = saldo_esperado
+    divergencia = saldo_esperado - saldo_atual_IXC
+    """
+    import os as _os, pymysql
+    from datetime import datetime as _dt, timedelta as _td
+    from dotenv import load_dotenv
+    load_dotenv("/opt/automacoes/cliquedf/operacional/.env")
+
+    hoje = (_dt.now() + _td(hours=-3)).strftime("%Y-%m-%d")
+    data_base = data_base or hoje
+
+    ALMOX_TECS = {
+        12: {"tec_id": 1,  "nome": "ALEXANDRE"},
+         7: {"tec_id": 2,  "nome": "DENISON"},
+        15: {"tec_id": 4,  "nome": "JONATHAN"},
+        38: {"tec_id": 5,  "nome": "JOSEILTON"},
+        44: {"tec_id": 6,  "nome": "LEANDRO"},
+        46: {"tec_id": 7,  "nome": "RICARDO - ILHA"},
+        33: {"tec_id": 8,  "nome": "RODRIGO SANTOS"},
+        51: {"tec_id": 9,  "nome": "ROGERIO"},
+        49: {"tec_id": 10, "nome": "VICTOR FERREIRA"},
+        43: {"tec_id": 11, "nome": "WELLINGTON"},
+        11: {"tec_id": 12, "nome": "JOSE MARCONDES"},
+    }
+
+    db = get_db()
+
+    # Saldo base do SAIS (importado na data_base)
+    base_rows = db.execute("""
+        SELECT e.tecnico_id, e.almox_id, e.id_produto, e.produto_nome,
+               e.saldo AS saldo_base, e.unidade, t.nome AS tecnico_nome
+        FROM sais_estoque_tecnico e
+        JOIN prod_tecnicos t ON t.id = e.tecnico_id
+        WHERE e.saldo != 0
+    """).fetchall()
+    db.close()
+
+    # Monta dicionário base: (almox_id, id_produto) → saldo_base
+    base = {}
+    for r in base_rows:
+        base[(r["almox_id"], r["id_produto"])] = {
+            "tec_id": r["tecnico_id"],
+            "tec_nome": r["tecnico_nome"],
+            "produto": r["produto_nome"],
+            "unidade": r["unidade"],
+            "saldo_base": float(r["saldo_base"] or 0),
+        }
+
+    try:
+        ixc = pymysql.connect(
+            host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT", 3306)),
+            user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
+            database=_os.getenv("DB_NAME"),
+            cursorclass=pymysql.cursors.DictCursor, connect_timeout=10
+        )
+
+        ph = ",".join(["%s"] * len(ALMOX_TECS))
+        almox_ids = list(ALMOX_TECS.keys())
+
+        with ixc.cursor() as cur:
+            # Movimentos desde a data_base
+            cur.execute(f"""
+                SELECT id_almox, id_produto, tipo,
+                       ROUND(quantidade, 3) AS entrada,
+                       ROUND(qtde_saida, 3) AS saida,
+                       id_oss_chamado, data, descricao
+                FROM movimento_produtos
+                WHERE id_almox IN ({ph})
+                  AND data >= %s
+                  AND tipo IN ('E','S')
+                ORDER BY data ASC
+            """, almox_ids + [data_base])
+            movimentos = cur.fetchall()
+
+            # Saldo atual do IXC
+            cur.execute(f"""
+                SELECT id_almox, id_produto, ROUND(saldo, 3) AS saldo_atual
+                FROM estoque_produtos_almox_filial
+                WHERE id_almox IN ({ph})
+                  AND produto_controla_estoque = 'S'
+            """, almox_ids)
+            saldo_atual_ixc = {(r["id_almox"], r["id_produto"]): float(r["saldo_atual"] or 0)
+                               for r in cur.fetchall()}
+
+        ixc.close()
+
+        # Calcula movimentação desde data_base por (almox, produto)
+        movs = {}
+        for m in movimentos:
+            key = (m["id_almox"], m["id_produto"])
+            if key not in movs:
+                movs[key] = {"entradas": 0, "saidas": 0, "os_list": []}
+            if m["tipo"] == "E":
+                movs[key]["entradas"] += float(m["entrada"] or 0)
+            elif m["tipo"] == "S":
+                movs[key]["saidas"] += float(m["saida"] or 0)
+                if m["id_oss_chamado"]:
+                    movs[key]["os_list"].append({
+                        "os_id": m["id_oss_chamado"],
+                        "data": str(m["data"])[:10],
+                        "qtde": float(m["saida"] or 0),
+                        "produto": str(m["descricao"] or "")[:40],
+                    })
+
+        # Calcula divergências
+        divergencias = []
+        ok_count = 0
+        total_itens = 0
+
+        for key, b in base.items():
+            almox_id, prod_id = key
+            if almox_id not in ALMOX_TECS:
+                continue
+            total_itens += 1
+            mov = movs.get(key, {"entradas": 0, "saidas": 0, "os_list": []})
+            saldo_esp = b["saldo_base"] + mov["entradas"] - mov["saidas"]
+            saldo_ixc = saldo_atual_ixc.get(key, 0)
+            diverg = round(saldo_esp - saldo_ixc, 3)
+
+            if abs(diverg) > 0.001:
+                divergencias.append({
+                    "tecnico":      b["tec_nome"],
+                    "tecnico_id":   b["tec_id"],
+                    "produto":      b["produto"],
+                    "id_produto":   prod_id,
+                    "almox_id":     almox_id,
+                    "unidade":      b["unidade"],
+                    "saldo_base":   b["saldo_base"],
+                    "entradas":     mov["entradas"],
+                    "saidas":       mov["saidas"],
+                    "saldo_esperado": round(saldo_esp, 3),
+                    "saldo_ixc":    saldo_ixc,
+                    "divergencia":  diverg,
+                    "tipo":         "falta" if diverg > 0 else "excesso",
+                    "os_list":      mov["os_list"][-5:],
+                })
+            else:
+                ok_count += 1
+
+        divergencias.sort(key=lambda x: -abs(x["divergencia"]))
+
+        # Resumo por técnico
+        por_tec = {}
+        for d in divergencias:
+            t = d["tecnico"]
+            if t not in por_tec:
+                por_tec[t] = {"tecnico": t, "tecnico_id": d["tecnico_id"],
+                               "divergencias": 0, "total_falta": 0, "total_excesso": 0}
+            por_tec[t]["divergencias"] += 1
+            if d["tipo"] == "falta":
+                por_tec[t]["total_falta"] += 1
+            else:
+                por_tec[t]["total_excesso"] += 1
+
+        return {
+            "data_base": data_base,
+            "data_auditoria": hoje,
+            "resumo": {
+                "total_itens":    total_itens,
+                "com_divergencia": len(divergencias),
+                "ok":             ok_count,
+                "precisao":       round(ok_count / total_itens * 100) if total_itens > 0 else 100,
+            },
+            "por_tecnico": sorted(por_tec.values(), key=lambda x: -x["divergencias"]),
+            "divergencias": divergencias[:50],
+        }
+
+    except Exception as e:
+        print(f"ERRO auditoria estoque: {e}")
+        import traceback; traceback.print_exc()
+        return {"erro": str(e), "divergencias": [], "resumo": {}}

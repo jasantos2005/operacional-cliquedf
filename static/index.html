@@ -459,8 +459,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       </div>
       <div class="sb-sub" id="grp-auditoria">
         <div class="sb-item" onclick="nav('prod-auditoria','auditoria')"><span class="dot"></span> Auditoria Individual</div>
-        <div class="sb-item" onclick="nav('audit-estoque','auditoria')"><span class="dot"></span> Estoque Técnico</div>
-        <div class="sb-item" onclick="nav('audit-estoque-cad','auditoria')"><span class="dot"></span> Cadastro de Estoque</div>
+        <div class="sb-item" onclick="nav('audit-estoque','auditoria')"><span class="dot"></span> Auditoria de Estoque</div>
         <div class="sb-item" onclick="nav('audit-exec','auditoria')"><span class="dot"></span> Execução</div>
         <div class="sb-item" onclick="nav('audit-tempo','auditoria')"><span class="dot"></span> Tempo</div>
         <div class="sb-item" onclick="nav('audit-sla','auditoria')"><span class="dot"></span> SLA</div>
@@ -488,6 +487,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       <div class="sb-sub" id="grp-tecnicos">
         <div class="sb-item" onclick="nav('tec-status','tecnicos')"><span class="dot"></span> Status atual</div>
         <div class="sb-item" onclick="nav('tec-performance','tecnicos')"><span class="dot"></span> Performance</div>
+        <div class="sb-item" onclick="nav('audit-estoque-cad','tecnicos')"><span class="dot"></span> Cadastro de Estoque</div>
       </div>
     </div>
 
@@ -1018,6 +1018,7 @@ const PAGES_CFG = {
   'prod-efic-op':      {title:'Eficiência Operacional', path:'/produtividade/eficiencia-op',   load:loadEficOp},
   'prod-auditoria':    {title:'Auditoria Individual',  path:'/auditoria/individual',         load:loadAuditoriaIndividual},
   'audit-estoque':     {title:'Estoque Técnico',       path:'/auditoria/estoque',            load:loadEstoqueTecnico},
+  'audit-estoque-cad': {title:'Cadastro de Estoque',   path:'/auditoria/estoque-cadastro',   load:loadEstoqueCadastro},
   'audit-exec':        {title:'Auditoria Operacional',  path:'/auditoria/execucao',           load:loadAuditoria},
   'audit-tempo':       {title:'Auditoria de Tempo',     path:'/auditoria/tempo',              load:()=>loadAuditoriaTipo('tempo')},
   'audit-sla':         {title:'Auditoria de SLA',       path:'/auditoria/sla',                load:()=>loadAuditoriaTipo('sla')},
@@ -1231,7 +1232,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-eficiencia','prod-efic-op','audit-estoque']
+  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -2416,98 +2417,89 @@ async function salvarAjusteEstoque(){
 async function loadEstoqueTecnico(){
   const el = document.getElementById('estoque-content')
   if(!el) return
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando estoque...</div>'
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando auditoria...</div>'
+
+  // Pega data base do filtro ou usa hoje
+  const di = document.getElementById('f-data-inicio')?.value || ''
+  const urlAudit = '/api/sais/auditoria/estoque-divergencias' + (di ? '?data_base='+di : '')
 
   try {
-    const d = await apiFetch('/api/sais/auditoria/estoque')
+    const d = await apiFetch(urlAudit)
     const r = d.resumo || {}
-    const tecs = d.tecnicos || []
+    const divs = d.divergencias || []
+    const porTec = d.por_tecnico || []
 
     if(d.erro){
       el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+d.erro+'</div>'
       return
     }
 
-    const corPrec = r.precisao_geral>=90?'var(--green)':r.precisao_geral>=70?'var(--amber)':'var(--red)'
-
+    const corPrec = r.precisao>=90?'var(--green)':r.precisao>=70?'var(--amber)':'var(--red)'
     let html = ''
+
+    // Info da data base
+    html += '<div style="font-size:12px;color:var(--muted);margin-bottom:16px;padding:10px;background:rgba(0,212,255,.05);border-radius:8px;border:1px solid rgba(0,212,255,.1)">'
+    html += '📅 Base: <strong style="color:var(--cyan)">'+d.data_base+'</strong> · Auditoria: <strong style="color:var(--text)">'+d.data_auditoria+'</strong>'
+    html += ' · Lógica: saldo_base + entradas − saídas = esperado vs IXC atual</div>'
 
     // KPIs
     html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px">'
-    html += '<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+( r.tecnicos_com_divergencia||0)+'</div><div class="kpi-lbl">Técnicos c/ divergência</div></div>'
-    html += '<div class="kpi" style="--ac:var(--amber)"><div class="kpi-val">'+(r.itens_negativos||0)+'</div><div class="kpi-lbl">Itens com saldo negativo</div></div>'
-    html += '<div class="kpi" style="--ac:'+corPrec+'"><div class="kpi-val">'+(r.precisao_geral||100)+'%</div><div class="kpi-lbl">Precisão geral</div></div>'
-    html += '<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+(r.total_tecnicos||0)+'</div><div class="kpi-lbl">Técnicos auditados</div></div>'
+    html += '<div class="kpi" style="--ac:'+corPrec+'"><div class="kpi-val">'+r.precisao+'%</div><div class="kpi-lbl">Precisão geral</div></div>'
+    html += '<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+r.com_divergencia+'</div><div class="kpi-lbl">Divergências</div></div>'
+    html += '<div class="kpi" style="--ac:var(--green)"><div class="kpi-val">'+r.ok+'</div><div class="kpi-lbl">Itens corretos</div></div>'
+    html += '<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+r.total_itens+'</div><div class="kpi-lbl">Total auditado</div></div>'
     html += '</div>'
 
     // Cards por técnico
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:20px">'
-    tecs.forEach(function(t){
-      const cor = t.divergencias>0?'var(--red)':t.precisao>=90?'var(--green)':'var(--amber)'
-      const brd = t.divergencias>0?'rgba(255,77,79,.2)':'rgba(255,255,255,.06)'
-      html += '<div class="card" style="border-color:'+brd+'">'
-      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
-      html += '<div><div style="font-weight:700;font-size:14px">'+t.nome+'</div>'
-      html += '<div style="font-size:11px;color:var(--muted)">'+t.total_itens+' itens no estoque</div></div>'
-      html += '<div style="text-align:right"><div style="font-size:22px;font-weight:800;color:'+cor+'">'+t.divergencias+'</div>'
-      html += '<div style="font-size:10px;color:var(--muted)">divergências</div></div>'
-      html += '</div>'
-      // Barra de precisão
-      html += '<div style="margin-bottom:10px">'
-      html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">'
-      html += '<span>Precisão</span><span style="color:'+cor+'">'+t.precisao+'%</span></div>'
-      html += '<div style="background:var(--border);border-radius:4px;height:4px">'
-      html += '<div style="background:'+cor+';width:'+t.precisao+'%;height:4px;border-radius:4px"></div>'
-      html += '</div></div>'
-      // Itens negativos
-      if(t.itens_negativos && t.itens_negativos.length>0){
-        html += '<div style="background:rgba(255,77,79,.06);border:1px solid rgba(255,77,79,.15);border-radius:6px;padding:8px;margin-bottom:8px">'
-        html += '<div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:6px">⚠️ SALDO NEGATIVO</div>'
-        t.itens_negativos.forEach(function(item){
-          html += '<div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:3px">'
-          html += '<span style="color:var(--text)">'+item.produto.substring(0,35)+'</span>'
-          html += '<span style="color:var(--red);font-weight:700">'+item.saldo+'</span>'
-          html += '</div>'
-        })
+    if(porTec.length>0){
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:20px">'
+      porTec.forEach(function(t){
+        const cor = t.divergencias>0?'var(--red)':'var(--green)'
+        html += '<div class="card" style="border-color:'+(t.divergencias>0?'rgba(255,77,79,.2)':'var(--border)')+';padding:12px">'
+        html += '<div style="font-weight:700;margin-bottom:4px">'+t.tecnico+'</div>'
+        html += '<div style="font-size:12px;color:'+cor+';font-weight:700">'+t.divergencias+' divergência(s)</div>'
+        if(t.total_falta>0) html += '<div style="font-size:11px;color:var(--red)">📉 '+t.total_falta+' em falta</div>'
+        if(t.total_excesso>0) html += '<div style="font-size:11px;color:var(--amber)">📈 '+t.total_excesso+' em excesso</div>'
         html += '</div>'
-      }
-      // Movimentos recentes
-      if(t.movimentos_recentes && t.movimentos_recentes.length>0){
-        html += '<div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">ÚLTIMAS MOVIMENTAÇÕES</div>'
-        t.movimentos_recentes.forEach(function(m){
-          const tipoCor = m.comodato==='E'?'var(--cyan)':m.comodato==='D'?'var(--amber)':'var(--muted)'
-          const tipoTxt = m.comodato==='E'?'Comodato':m.comodato==='D'?'Devolução':'Uso'
-          html += '<div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:3px;color:var(--muted)">'
-          html += '<span>OS#'+m.os_id+' · '+m.produto.substring(0,25)+'</span>'
-          html += '<span style="color:'+tipoCor+'">-'+m.qtde_saida+' ('+tipoTxt+')</span>'
-          html += '</div>'
-        })
-      }
+      })
       html += '</div>'
-    })
-    html += '</div>'
+    }
 
-    // Tabela detalhada de divergências
-    const comDiverg = tecs.filter(function(t){ return t.divergencias>0 })
-    if(comDiverg.length>0){
+    // Tabela de divergências
+    if(divs.length===0){
+      html += '<div class="card" style="border-color:rgba(0,229,160,.2);background:rgba(0,229,160,.04)">'
+      html += '<div style="color:var(--green);font-weight:700;font-size:14px">✅ Nenhuma divergência encontrada!</div>'
+      html += '<div style="font-size:12px;color:var(--muted);margin-top:4px">Todos os estoques estão de acordo com as movimentações do IXC.</div>'
+      html += '</div>'
+    } else {
       html += '<div class="card">'
-      html += '<div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px">🚨 DIVERGÊNCIAS — AÇÃO NECESSÁRIA</div>'
+      html += '<div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px">🚨 DIVERGÊNCIAS DETECTADAS</div>'
       html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
       html += '<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
       html += '<th style="padding:8px 6px">Técnico</th>'
       html += '<th style="padding:8px 6px">Produto</th>'
-      html += '<th style="padding:8px 6px;text-align:center">Saldo</th>'
-      html += '<th style="padding:8px 6px">Status</th>'
+      html += '<th style="padding:8px 6px;text-align:center">Base</th>'
+      html += '<th style="padding:8px 6px;text-align:center">+Entradas</th>'
+      html += '<th style="padding:8px 6px;text-align:center">-Saídas</th>'
+      html += '<th style="padding:8px 6px;text-align:center">Esperado</th>'
+      html += '<th style="padding:8px 6px;text-align:center">IXC Atual</th>'
+      html += '<th style="padding:8px 6px;text-align:center">Diferença</th>'
+      html += '<th style="padding:8px 6px;text-align:center">Tipo</th>'
       html += '</tr></thead><tbody>'
-      comDiverg.forEach(function(t){
-        t.itens_negativos.forEach(function(item){
-          html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:rgba(255,77,79,.04)">'
-          html += '<td style="padding:7px 6px;font-weight:600">'+t.nome+'</td>'
-          html += '<td style="padding:7px 6px">'+item.produto+'</td>'
-          html += '<td style="padding:7px 6px;text-align:center;color:var(--red);font-weight:700">'+item.saldo+'</td>'
-          html += '<td style="padding:7px 6px"><span class="badge red">Saldo negativo</span></td>'
-          html += '</tr>'
-        })
+      divs.forEach(function(d2){
+        const cor = d2.tipo==='falta'?'var(--red)':'var(--amber)'
+        const bg  = d2.tipo==='falta'?'rgba(255,77,79,.04)':'rgba(255,184,63,.04)'
+        html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:'+bg+'">'
+        html += '<td style="padding:7px 6px;font-weight:600">'+d2.tecnico+'</td>'
+        html += '<td style="padding:7px 6px;max-width:200px">'+d2.produto+'</td>'
+        html += '<td style="padding:7px 6px;text-align:center;color:var(--muted)">'+d2.saldo_base+'</td>'
+        html += '<td style="padding:7px 6px;text-align:center;color:var(--green)">+'+d2.entradas+'</td>'
+        html += '<td style="padding:7px 6px;text-align:center;color:var(--red)">-'+d2.saidas+'</td>'
+        html += '<td style="padding:7px 6px;text-align:center;font-weight:700;color:var(--cyan)">'+d2.saldo_esperado+'</td>'
+        html += '<td style="padding:7px 6px;text-align:center">'+d2.saldo_ixc+'</td>'
+        html += '<td style="padding:7px 6px;text-align:center;font-weight:700;color:'+cor+'">'+(d2.divergencia>0?'+':'')+d2.divergencia+'</td>'
+        html += '<td style="padding:7px 6px"><span class="badge '+(d2.tipo==='falta'?'red':'amber')+'">'+(d2.tipo==='falta'?'Falta':'Excesso')+'</span></td>'
+        html += '</tr>'
       })
       html += '</tbody></table></div></div>'
     }
