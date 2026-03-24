@@ -692,6 +692,16 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       </div>
     </div>
 
+    <div class="page" id="page-prod-eficiencia">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Eficiência <span>Operacional</span></div>
+          <div class="pg-sub">Qualidade, velocidade e aproveitamento da equipe</div>
+        </div>
+      </div>
+      <div id="efic-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
     <div class="page" id="page-prod-assunto">
       <div class="pg-hd"><div><div class="pg-title">Produtividade <span>por Tipo</span></div><div class="pg-sub">Distribuição de OS por assunto hoje</div></div></div>
       <div id="prod-assunto-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
@@ -968,7 +978,7 @@ const PAGES_CFG = {
   'reagendamentos':    {title:'Reagendamentos',         path:'/agenda/reagendamentos',        load:loadReagendamentos},
   'ranking':           {title:'Ranking Técnicos',       path:'/produtividade/ranking',        load:()=>loadRanking(null)},
   'prod-assunto':      {title:'Produtividade por Tipo', path:'/produtividade/por-assunto',    load:loadProdAssunto},
-  'prod-eficiencia':   {title:'Eficiência',             path:'/produtividade/eficiencia',     load:loadProdAssunto},
+  'prod-eficiencia':   {title:'Eficiência',             path:'/produtividade/eficiencia',     load:loadEficiencia},
   'prod-auditoria':    {title:'Auditoria Individual',  path:'/auditoria/individual',         load:loadAuditoriaIndividual},
   'audit-exec':        {title:'Auditoria Operacional',  path:'/auditoria/execucao',           load:loadAuditoria},
   'audit-tempo':       {title:'Auditoria de Tempo',     path:'/auditoria/tempo',              load:()=>loadAuditoriaTipo('tempo')},
@@ -1183,7 +1193,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria']
+  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-eficiencia']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -1448,7 +1458,9 @@ async function loadEventosDash(){
     document.getElementById('ev-sub').textContent =
       `Atualizado às ${agora} · ${r.total||0} OS hoje`
 
-    const metaPct = resumo.meta_percentual || 0
+    const totalPts = resumo.total_pontos || 0
+    const metaPts = resumo.meta_dia ? resumo.meta_dia * 80 : 1760
+    const metaPct = Math.min(Math.round(totalPts / metaPts * 100), 100)
     const ptsPct  = pont.aproveitamento || 0
 
     document.getElementById('ev-cards').innerHTML = `
@@ -1488,7 +1500,7 @@ async function loadEventosDash(){
         <div class="ev-card-pulse ${metaPct>=80?'green':metaPct>=50?'amber':'red'}"></div>
         <div class="ev-card-titulo">Meta do Dia</div>
         <div class="ev-card-valor" style="color:${metaPct>=80?'var(--green)':metaPct>=50?'var(--amber)':'var(--red)'}">${metaPct}%</div>
-        <div class="ev-card-desc">${r.finalizadas||0} de ${resumo.meta_os_dia||150} OS</div>
+        <div class="ev-card-desc">${totalPts} pts de ${metaPts} pts</div>
       </div>
 
       <div class="ev-card ${ptsPct>=80?'ok':ptsPct>=50?'alerta':'critico'}"
@@ -1630,7 +1642,7 @@ function evModal(tipo){
       `<div class="ev-modal-item"><span>Em campo</span><span class="badge cyan">${r.em_campo||0}</span></div>`,
       `<div class="ev-modal-item"><span>Agendadas</span><span class="badge amber">${r.agendadas||0}</span></div>`,
     ]
-    rec = '📊 Meta diária: 150 OS finalizadas pela equipe'
+    rec = '📊 Meta: '+metaPts+' pts por dia pela equipe · '+totalPts+' pts obtidos'
   }
   else if(tipo==='pontuacao'){
     titulo = 'Qualidade de Pontuação'
@@ -2031,6 +2043,119 @@ async function loadAuditoriaIndividual(){
     }
     window._renderAuditTabela(null)
   }catch(e){el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>';console.error(e)}
+}
+
+
+// ═══════════════════════════════════════════════════
+// EFICIÊNCIA OPERACIONAL
+// ═══════════════════════════════════════════════════
+async function loadEficiencia(){
+  const el = document.getElementById('efic-content')
+  if(!el) return
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando eficiência...</div>'
+
+  const diEl = document.getElementById('f-data-inicio')
+  const dfEl = document.getElementById('f-data-fim')
+  const di = diEl ? diEl.value : ''
+  const df = dfEl ? dfEl.value : ''
+  const fp = getFiltrosParams()
+  let url = '/api/sais/produtividade/eficiencia'
+  const p = []
+  if(di) p.push('data_inicio='+di)
+  if(df) p.push('data_fim='+df)
+  if(fp) p.push(fp)
+  if(p.length) url += '?' + p.join('&')
+  console.log('Eficiencia URL:', url)
+
+  try {
+    const d = await apiFetch(url)
+    const g = d.geral
+    const tecs = d.por_tecnico || []
+    const ass  = d.por_assunto || []
+
+    // Cor por tempo médio
+    function corTempo(min){
+      return min <= 60 ? 'var(--green)' : min <= 120 ? 'var(--amber)' : 'var(--red)'
+    }
+    function corPct(pct){
+      return pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)'
+    }
+    function icTempo(min){
+      return min <= 60 ? '✅' : min <= 120 ? '⚠️' : '🚨'
+    }
+
+    // Score geral
+    const score = Math.round((g.aproveitamento + g.qualidade) / 2)
+    const corScore = score >= 80 ? 'var(--green)' : score >= 50 ? 'var(--amber)' : 'var(--red)'
+
+    el.innerHTML =
+
+    // ── KPIs Gerais ──────────────────────────────────
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px">'
+    +'<div class="kpi" style="--ac:'+corScore+'"><div class="kpi-val">'+score+'%</div><div class="kpi-lbl">Score Geral</div></div>'
+    +'<div class="kpi" style="--ac:'+corTempo(g.tempo_medio_min)+'"><div class="kpi-val">'+(g.tempo_medio_min||0)+'min</div><div class="kpi-lbl">Tempo Médio/OS</div></div>'
+    +'<div class="kpi" style="--ac:'+corPct(g.aproveitamento)+'"><div class="kpi-val">'+g.aproveitamento+'%</div><div class="kpi-lbl">Aproveitamento</div></div>'
+    +'<div class="kpi" style="--ac:'+corPct(g.qualidade)+'"><div class="kpi-val">'+g.qualidade+'%</div><div class="kpi-lbl">Qualidade</div></div>'
+    +'<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+g.total_os+'</div><div class="kpi-lbl">OS Finalizadas</div></div>'
+    +'<div class="kpi" style="--ac:var(--yellow)"><div class="kpi-val">'+g.pontos_total+'</div><div class="kpi-lbl">Pontos Totais</div></div>'
+    +'</div>'
+
+    // ── Eficiência por Técnico ────────────────────────
+    +'<div class="card" style="margin-bottom:16px">'
+    +'<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--cyan)">⚡ Eficiência por Técnico</div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
+    +'<th style="padding:8px 6px">#</th>'
+    +'<th style="padding:8px 6px">Técnico</th>'
+    +'<th style="padding:8px 6px;text-align:center">OS</th>'
+    +'<th style="padding:8px 6px;text-align:center">Tempo Médio</th>'
+    +'<th style="padding:8px 6px;text-align:center">Pontos</th>'
+    +'<th style="padding:8px 6px;text-align:center">Aproveit.</th>'
+    +'<th style="padding:8px 6px;text-align:center">Qualidade</th>'
+    +'<th style="padding:8px 6px;text-align:center">Pts/hora</th>'
+    +'</tr></thead><tbody>'
+    +tecs.map(function(t,i){
+      return '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
+        +'<td style="padding:7px 6px;color:var(--muted)">'+(i+1)+'</td>'
+        +'<td style="padding:7px 6px;font-weight:600">'+t.nome+'</td>'
+        +'<td style="padding:7px 6px;text-align:center;color:var(--cyan)">'+t.total_os+'</td>'
+        +'<td style="padding:7px 6px;text-align:center;color:'+corTempo(t.tempo_medio_min)+'">'+icTempo(t.tempo_medio_min)+' '+t.tempo_medio_min+'min</td>'
+        +'<td style="padding:7px 6px;text-align:center;color:var(--yellow)">'+t.pontos_total+'</td>'
+        +'<td style="padding:7px 6px;text-align:center"><span class="badge '+(t.aproveitamento>=80?'green':t.aproveitamento>=50?'amber':'red')+'">'+t.aproveitamento+'%</span></td>'
+        +'<td style="padding:7px 6px;text-align:center"><span class="badge '+(t.qualidade>=80?'green':t.qualidade>=50?'amber':'red')+'">'+t.qualidade+'%</span></td>'
+        +'<td style="padding:7px 6px;text-align:center;color:var(--muted)">'+t.pts_por_hora+'</td>'
+        +'</tr>'
+    }).join('')
+    +'</tbody></table></div></div>'
+
+    // ── Eficiência por Tipo de OS ─────────────────────
+    +'<div class="card">'
+    +'<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--cyan)">📋 Eficiência por Tipo de OS</div>'
+    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
+    +'<th style="padding:8px 6px">Assunto</th>'
+    +'<th style="padding:8px 6px">Categoria</th>'
+    +'<th style="padding:8px 6px;text-align:center">Total OS</th>'
+    +'<th style="padding:8px 6px;text-align:center">Tempo Médio</th>'
+    +'<th style="padding:8px 6px;text-align:center">Status</th>'
+    +'</tr></thead><tbody>'
+    +ass.map(function(a){
+      const catCor = a.categoria==='servico'?'green':a.categoria==='suporte'?'amber':a.categoria==='infra'?'blue':'red'
+      const tMin = a.tempo_medio_min || 0
+      return '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
+        +'<td style="padding:7px 6px;font-weight:600;max-width:200px">'+a.assunto+'</td>'
+        +'<td style="padding:7px 6px"><span class="badge '+catCor+'" style="font-size:9px">'+a.categoria+'</span></td>'
+        +'<td style="padding:7px 6px;text-align:center;color:var(--cyan)">'+a.total_os+'</td>'
+        +'<td style="padding:7px 6px;text-align:center;color:'+corTempo(tMin)+'">'+icTempo(tMin)+' '+tMin+'min</td>'
+        +'<td style="padding:7px 6px;text-align:center;font-size:11px;color:'+corTempo(tMin)+'">'+( tMin<=60?'Normal':tMin<=120?'Atenção':'Crítico')+'</td>'
+        +'</tr>'
+    }).join('')
+    +'</tbody></table></div></div>'
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
+    console.error(e)
+  }
 }
 
 async function loadProdAssunto(){

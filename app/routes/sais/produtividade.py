@@ -332,3 +332,126 @@ async def editar_pontuacao_os(
     ).fetchone())
     db.close()
     return {"ok": True, "os": updated}
+
+
+@router.get("/eficiencia")
+async def get_eficiencia(
+    data_inicio: Optional[str] = Query(None),
+    data_fim:    Optional[str] = Query(None),
+):
+    """Dados de eficiência operacional por técnico e por assunto."""
+    db = get_db()
+    hoje = hoje_brt()
+    di = str(data_inicio) if data_inicio else hoje
+    df = str(data_fim)    if data_fim    else hoje
+
+    # ── Por técnico ───────────────────────────────────────────────
+    tecs = db.execute("""
+        SELECT
+            t.nome,
+            t.ixc_funcionario_id AS tecnico_id,
+            COUNT(o.id) AS total_os,
+            ROUND(AVG(
+                CASE WHEN o.data_fechamento IS NOT NULL
+                     AND o.data_fechamento NOT LIKE '0000%%'
+                THEN (julianday(o.data_fechamento) - julianday(o.data_abertura)) * 60
+                END
+            ), 1) AS tempo_medio_min,
+            COALESCE(SUM(p.pontos_final), 0) AS pontos_total,
+            COALESCE(SUM(p.pontos_base), 0)  AS pontos_max,
+            SUM(CASE WHEN p.pendencias = '' AND p.pontos_final IS NOT NULL
+                THEN 1 ELSE 0 END) AS os_perfeitas,
+            t.meta_dia
+        FROM prod_os_cache o
+        JOIN prod_tecnicos t ON t.id = o.tecnico_id
+        LEFT JOIN sais_os_pontuacao p ON p.os_id = o.ixc_os_id
+        WHERE o.status = 'finalizada'
+          AND DATE(o.data_fechamento, '+3 hours') BETWEEN ? AND ?
+          AND o.data_fechamento NOT LIKE '0000%%'
+          AND t.nome IS NOT NULL
+        GROUP BY t.id
+        ORDER BY tempo_medio_min ASC
+    """, (di, df)).fetchall()
+
+    # ── Por assunto ───────────────────────────────────────────────
+    assuntos = db.execute("""
+        SELECT
+            COALESCE(a.assunto, 'Assunto '||o.ixc_assunto_id) AS assunto,
+            o.categoria,
+            COUNT(o.id) AS total_os,
+            ROUND(AVG(
+                CASE WHEN o.data_fechamento NOT LIKE '0000%%'
+                THEN (julianday(o.data_fechamento) - julianday(o.data_abertura)) * 60
+                END
+            ), 1) AS tempo_medio_min,
+            COALESCE(SUM(p.pontos_final), 0) AS pontos_total
+        FROM prod_os_cache o
+        LEFT JOIN prod_assuntos a ON a.id = o.ixc_assunto_id
+        LEFT JOIN sais_os_pontuacao p ON p.os_id = o.ixc_os_id
+        WHERE o.status = 'finalizada'
+          AND DATE(o.data_fechamento, '+3 hours') BETWEEN ? AND ?
+          AND o.data_fechamento NOT LIKE '0000%%'
+        GROUP BY o.ixc_assunto_id
+        ORDER BY total_os DESC
+        LIMIT 20
+    """, (di, df)).fetchall()
+
+    # ── KPIs gerais ───────────────────────────────────────────────
+    geral = db.execute("""
+        SELECT
+            COUNT(o.id) AS total_os,
+            ROUND(AVG(
+                CASE WHEN o.data_fechamento NOT LIKE '0000%%'
+                THEN (julianday(o.data_fechamento) - julianday(o.data_abertura)) * 60
+                END
+            ), 1) AS tempo_medio_min,
+            COALESCE(SUM(p.pontos_final), 0) AS pontos_total,
+            COALESCE(SUM(p.pontos_base), 0)  AS pontos_max,
+            SUM(CASE WHEN p.pendencias = '' AND p.pontos_final IS NOT NULL
+                THEN 1 ELSE 0 END) AS os_perfeitas
+        FROM prod_os_cache o
+        LEFT JOIN sais_os_pontuacao p ON p.os_id = o.ixc_os_id
+        WHERE o.status = 'finalizada'
+          AND DATE(o.data_fechamento, '+3 hours') BETWEEN ? AND ?
+          AND o.data_fechamento NOT LIKE '0000%%'
+    """, (di, df)).fetchone()
+
+    db.close()
+
+    g = dict(geral)
+    total_os  = g["total_os"] or 1
+    pts_total = g["pontos_total"] or 0
+    pts_max   = g["pontos_max"] or 1
+    perfeitas = g["os_perfeitas"] or 0
+
+    resultado_tecs = []
+    for r in tecs:
+        d = dict(r)
+        os_t   = d["total_os"] or 1
+        pts_t  = d["pontos_total"] or 0
+        pmax_t = d["pontos_max"] or 1
+        perf_t = d["os_perfeitas"] or 0
+        resultado_tecs.append({
+            "nome":           d["nome"],
+            "tecnico_id":     d["tecnico_id"],
+            "total_os":       d["total_os"],
+            "tempo_medio_min": d["tempo_medio_min"] or 0,
+            "pontos_total":   pts_t,
+            "aproveitamento": round(pts_t / pmax_t * 100) if pmax_t > 0 else 0,
+            "qualidade":      round(perf_t / os_t * 100),
+            "os_perfeitas":   perf_t,
+            "pts_por_hora":   round(pts_t / (d["tempo_medio_min"] or 60) * 60, 1),
+        })
+
+    return {
+        "periodo":    {"data_inicio": di, "data_fim": df},
+        "geral": {
+            "total_os":       g["total_os"] or 0,
+            "tempo_medio_min": g["tempo_medio_min"] or 0,
+            "aproveitamento": round(pts_total / pts_max * 100) if pts_max > 0 else 0,
+            "qualidade":      round(perfeitas / total_os * 100),
+            "pontos_total":   pts_total,
+        },
+        "por_tecnico": resultado_tecs,
+        "por_assunto": [dict(r) for r in assuntos],
+    }
