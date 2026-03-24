@@ -113,3 +113,325 @@ async def get_score_risco():
     """).fetchall()
     db.close()
     return {"score_risco": [dict(r) for r in rows]}
+
+
+@router.get("/estoque")
+async def get_auditoria_estoque():
+    """Auditoria de estoque técnico — saldo atual por técnico com divergências."""
+    import os as _os, pymysql
+    from dotenv import load_dotenv
+    load_dotenv("/opt/automacoes/cliquedf/operacional/.env")
+
+    # Mapeamento almoxarifado → técnico (baseado no IXC)
+    ALMOX_TECS = {
+        44: {"nome": "LEANDRO",               "func_id": 47},
+        43: {"nome": "WELLINGTON PIAÇABUÇU",  "func_id": 46},
+        46: {"nome": "RICARDO - ILHA",        "func_id": 50},
+        48: {"nome": "VICTOR FERREIRA",       "func_id": 55},
+        10: {"nome": "ALEXANDRE",             "func_id": 13},
+        14: {"nome": "DENISON",               "func_id": 17},
+        8:  {"nome": "JONATHAN",              "func_id": 11},
+        11: {"nome": "JOSE MARCONDES",        "func_id": 19},
+    }
+
+    try:
+        ixc = pymysql.connect(
+            host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT", 3306)),
+            user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
+            database=_os.getenv("DB_NAME"),
+            cursorclass=pymysql.cursors.DictCursor, connect_timeout=10
+        )
+
+        almox_ids = list(ALMOX_TECS.keys())
+        ph = ",".join(["%s"] * len(almox_ids))
+
+        with ixc.cursor() as cur:
+            # Estoque atual por almoxarifado
+            cur.execute(f"""
+                SELECT e.id_almox, e.id_produto, e.produto_descricao,
+                       ROUND(e.saldo, 2) AS saldo,
+                       e.produto_controla_estoque
+                FROM estoque_produtos_almox_filial e
+                WHERE e.id_almox IN ({ph})
+                  AND e.produto_controla_estoque = 'S'
+                  AND e.saldo != 0
+                ORDER BY e.id_almox, e.saldo ASC
+            """, almox_ids)
+            rows = cur.fetchall()
+
+            # Movimentos recentes (últimos 30 dias) vinculados a OS
+            cur.execute(f"""
+                SELECT mp.id_almox, mp.id_produto, mp.descricao AS produto,
+                       mp.qtde_saida, mp.data, mp.id_oss_chamado,
+                       mp.status_comodato
+                FROM movimento_produtos mp
+                JOIN su_oss_chamado o ON o.id = mp.id_oss_chamado
+                WHERE mp.id_almox IN ({ph})
+                  AND mp.id_oss_chamado > 0
+                  AND mp.data >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                ORDER BY mp.data DESC
+                LIMIT 200
+            """, almox_ids)
+            movs = cur.fetchall()
+
+        ixc.close()
+
+        # Agrupa por técnico
+        tecs = {}
+        for almox_id, tec in ALMOX_TECS.items():
+            key = tec["func_id"]
+            if key not in tecs:
+                tecs[key] = {
+                    "nome":       tec["nome"],
+                    "func_id":    tec["func_id"],
+                    "almox_id":   almox_id,
+                    "itens":      [],
+                    "divergencias": 0,
+                    "itens_negativos": [],
+                    "total_itens": 0,
+                }
+
+        for r in rows:
+            almox_id = r["id_almox"]
+            if almox_id not in ALMOX_TECS:
+                continue
+            func_id = ALMOX_TECS[almox_id]["func_id"]
+            if func_id not in tecs:
+                continue
+            item = {
+                "produto": r["produto_descricao"],
+                "id_produto": r["id_produto"],
+                "saldo": float(r["saldo"]),
+            }
+            tecs[func_id]["itens"].append(item)
+            tecs[func_id]["total_itens"] += 1
+            if float(r["saldo"]) < 0:
+                tecs[func_id]["divergencias"] += 1
+                tecs[func_id]["itens_negativos"].append(item)
+
+        # Movimentos recentes por técnico
+        movs_por_tec = {}
+        for m in movs:
+            almox_id = m["id_almox"]
+            if almox_id not in ALMOX_TECS:
+                continue
+            func_id = ALMOX_TECS[almox_id]["func_id"]
+            if func_id not in movs_por_tec:
+                movs_por_tec[func_id] = []
+            movs_por_tec[func_id].append({
+                "produto":     m["produto"],
+                "qtde_saida":  float(m["qtde_saida"] or 0),
+                "data":        str(m["data"])[:10],
+                "os_id":       m["id_oss_chamado"],
+                "comodato":    m["status_comodato"] or "",
+            })
+
+        resultado = []
+        total_divergencias = 0
+        total_negativos = 0
+
+        for func_id, t in tecs.items():
+            divs = t["divergencias"]
+            total_divergencias += (1 if divs > 0 else 0)
+            total_negativos += divs
+            resultado.append({
+                "nome":             t["nome"],
+                "func_id":          t["func_id"],
+                "almox_id":         t["almox_id"],
+                "total_itens":      t["total_itens"],
+                "divergencias":     divs,
+                "precisao":         round((t["total_itens"] - divs) / t["total_itens"] * 100) if t["total_itens"] > 0 else 100,
+                "itens_negativos":  t["itens_negativos"][:10],
+                "movimentos_recentes": movs_por_tec.get(func_id, [])[:5],
+            })
+
+        resultado.sort(key=lambda x: -x["divergencias"])
+
+        return {
+            "resumo": {
+                "tecnicos_com_divergencia": total_divergencias,
+                "itens_negativos": total_negativos,
+                "total_tecnicos": len(resultado),
+                "precisao_geral": round(
+                    sum(t["precisao"] for t in resultado) / len(resultado)
+                ) if resultado else 100,
+            },
+            "tecnicos": resultado,
+        }
+
+    except Exception as e:
+        print(f"ERRO estoque: {e}")
+        import traceback; traceback.print_exc()
+        return {"erro": str(e), "resumo": {}, "tecnicos": []}
+
+
+@router.get("/estoque-cadastro")
+async def get_estoque_cadastro(
+    tecnico_id:  Optional[int] = Query(None),
+    busca:       Optional[str] = Query(None),
+):
+    """Lista estoque técnico do SAIS com comparação ao IXC."""
+    import os as _os, pymysql
+    from datetime import datetime as _dt
+    db = get_db()
+
+    where = "1=1"
+    params = []
+    if tecnico_id:
+        where += " AND e.tecnico_id=?"
+        params.append(tecnico_id)
+    if busca:
+        where += " AND e.produto_nome LIKE ?"
+        params.append(f"%{busca}%")
+
+    rows = db.execute(f"""
+        SELECT e.id, e.tecnico_id, e.ixc_func_id, e.almox_id,
+               e.id_produto, e.produto_nome, e.saldo, e.unidade,
+               e.sincronizado_em, t.nome AS tecnico_nome
+        FROM sais_estoque_tecnico e
+        JOIN prod_tecnicos t ON t.id = e.tecnico_id
+        WHERE {where}
+        ORDER BY t.nome, e.produto_nome
+    """, params).fetchall()
+
+    # Resumo por técnico
+    resumo = db.execute("""
+        SELECT e.tecnico_id, t.nome,
+               COUNT(*) AS total_itens,
+               SUM(CASE WHEN e.saldo < 0 THEN 1 ELSE 0 END) AS negativos,
+               MAX(e.sincronizado_em) AS ultima_sync
+        FROM sais_estoque_tecnico e
+        JOIN prod_tecnicos t ON t.id = e.tecnico_id
+        GROUP BY e.tecnico_id
+        ORDER BY negativos DESC, t.nome
+    """).fetchall()
+
+    # KPIs
+    kpis = db.execute("""
+        SELECT COUNT(DISTINCT tecnico_id) AS tecnicos,
+               COUNT(*) AS total_itens,
+               SUM(CASE WHEN saldo < 0 THEN 1 ELSE 0 END) AS negativos,
+               MAX(sincronizado_em) AS ultima_sync
+        FROM sais_estoque_tecnico
+    """).fetchone()
+
+    db.close()
+
+    return {
+        "kpis": dict(kpis) if kpis else {},
+        "resumo_tecnicos": [dict(r) for r in resumo],
+        "itens": [dict(r) for r in rows],
+    }
+
+
+@router.post("/estoque-sync")
+async def sync_estoque_ixc():
+    """Sincroniza saldo do IXC para sais_estoque_tecnico."""
+    import os as _os, pymysql
+    from dotenv import load_dotenv
+    load_dotenv("/opt/automacoes/cliquedf/operacional/.env")
+
+    ALMOX_TECS = {
+        44: {"tec_id": 6,  "func_id": 47},
+        43: {"tec_id": 11, "func_id": 46},
+        46: {"tec_id": 7,  "func_id": 50},
+        48: {"tec_id": 10, "func_id": 55},
+        10: {"tec_id": 1,  "func_id": 13},
+        14: {"tec_id": 2,  "func_id": 17},
+         8: {"tec_id": 4,  "func_id": 11},
+        11: {"tec_id": 12, "func_id": 19},
+    }
+
+    try:
+        ixc = pymysql.connect(
+            host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT",3306)),
+            user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
+            database=_os.getenv("DB_NAME"),
+            cursorclass=pymysql.cursors.DictCursor, connect_timeout=10
+        )
+        ph = ",".join(["%s"]*len(ALMOX_TECS))
+        with ixc.cursor() as cur:
+            cur.execute(f"""
+                SELECT id_almox, id_produto, produto_descricao,
+                       ROUND(saldo,3) AS saldo, produto_unidade
+                FROM estoque_produtos_almox_filial
+                WHERE id_almox IN ({ph})
+                  AND produto_controla_estoque = 'S'
+            """, list(ALMOX_TECS.keys()))
+            rows = cur.fetchall()
+        ixc.close()
+
+        db = get_db()
+        total = 0
+        for r in rows:
+            t = ALMOX_TECS.get(r["id_almox"])
+            if not t: continue
+            db.execute("""
+                INSERT INTO sais_estoque_tecnico
+                  (tecnico_id,ixc_func_id,almox_id,id_produto,produto_nome,saldo,unidade,sincronizado_em)
+                VALUES (?,?,?,?,?,?,?,datetime('now','-3 hours'))
+                ON CONFLICT(almox_id,id_produto) DO UPDATE SET
+                  saldo=excluded.saldo,
+                  produto_nome=excluded.produto_nome,
+                  sincronizado_em=excluded.sincronizado_em
+            """, (t["tec_id"],t["func_id"],r["id_almox"],r["id_produto"],
+                  r["produto_descricao"],float(r["saldo"] or 0),r["produto_unidade"] or "UND"))
+            total += 1
+        db.commit()
+        db.close()
+        return {"ok": True, "sincronizados": total}
+
+    except Exception as e:
+        print(f"ERRO sync estoque: {e}")
+        return {"ok": False, "erro": str(e)}
+
+
+@router.get("/estoque-historico/{tecnico_id}")
+async def get_estoque_historico(tecnico_id: int):
+    """Histórico de ajustes de estoque de um técnico."""
+    db = get_db()
+    rows = db.execute("""
+        SELECT a.*, t.nome AS tecnico_nome
+        FROM sais_estoque_ajustes a
+        JOIN prod_tecnicos t ON t.id = a.tecnico_id
+        WHERE a.tecnico_id = ?
+        ORDER BY a.criado_em DESC
+        LIMIT 50
+    """, (tecnico_id,)).fetchall()
+    db.close()
+    return {"historico": [dict(r) for r in rows]}
+
+
+@router.patch("/estoque-ajuste")
+async def ajustar_estoque(
+    tecnico_id:   int = Query(...),
+    id_produto:   int = Query(...),
+    qtd_nova:     float = Query(...),
+    tipo:         Optional[str] = Query("auditoria"),
+    obs:          Optional[str] = Query(None),
+    criado_por:   Optional[str] = Query(None),
+):
+    """Registra ajuste manual no estoque do técnico."""
+    db = get_db()
+    row = db.execute(
+        "SELECT saldo, produto_nome FROM sais_estoque_tecnico WHERE tecnico_id=? AND id_produto=?",
+        (tecnico_id, id_produto)
+    ).fetchone()
+    if not row:
+        db.close()
+        return {"erro": "Item não encontrado"}
+
+    qtd_ant = row["saldo"]
+    db.execute(
+        "UPDATE sais_estoque_tecnico SET saldo=?, sincronizado_em=datetime('now','-3 hours') WHERE tecnico_id=? AND id_produto=?",
+        (qtd_nova, tecnico_id, id_produto)
+    )
+    db.execute("""
+        INSERT INTO sais_estoque_ajustes
+          (tecnico_id,id_produto,produto_nome,qtd_anterior,qtd_nova,tipo,obs,criado_por)
+        VALUES (?,?,?,?,?,?,?,?)
+    """, (tecnico_id, id_produto, row["produto_nome"], qtd_ant, qtd_nova,
+          tipo or "auditoria", obs, criado_por))
+    db.commit()
+    db.close()
+    return {"ok": True, "qtd_anterior": qtd_ant, "qtd_nova": qtd_nova}

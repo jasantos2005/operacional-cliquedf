@@ -447,7 +447,8 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       <div class="sb-sub" id="grp-produtividade">
         <div class="sb-item" onclick="nav('ranking','produtividade')"><span class="dot"></span> Ranking Técnicos</div>
         <div class="sb-item" onclick="nav('prod-assunto','produtividade')"><span class="dot"></span> Por Tipo de OS</div>
-        <div class="sb-item" onclick="nav('prod-eficiencia','produtividade')"><span class="dot"></span> Eficiência</div>
+        <div class="sb-item" onclick="nav('prod-eficiencia','produtividade')"><span class="dot"></span> Análise de Eficiência</div>
+        <div class="sb-item" onclick="nav('prod-efic-op','produtividade')"><span class="dot"></span> Eficiência Operacional</div>
       </div>
     </div>
 
@@ -458,6 +459,8 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       </div>
       <div class="sb-sub" id="grp-auditoria">
         <div class="sb-item" onclick="nav('prod-auditoria','auditoria')"><span class="dot"></span> Auditoria Individual</div>
+        <div class="sb-item" onclick="nav('audit-estoque','auditoria')"><span class="dot"></span> Estoque Técnico</div>
+        <div class="sb-item" onclick="nav('audit-estoque-cad','auditoria')"><span class="dot"></span> Cadastro de Estoque</div>
         <div class="sb-item" onclick="nav('audit-exec','auditoria')"><span class="dot"></span> Execução</div>
         <div class="sb-item" onclick="nav('audit-tempo','auditoria')"><span class="dot"></span> Tempo</div>
         <div class="sb-item" onclick="nav('audit-sla','auditoria')"><span class="dot"></span> SLA</div>
@@ -695,11 +698,21 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     <div class="page" id="page-prod-eficiencia">
       <div class="pg-hd">
         <div>
-          <div class="pg-title">Eficiência <span>Operacional</span></div>
-          <div class="pg-sub">Qualidade, velocidade e aproveitamento da equipe</div>
+          <div class="pg-title">Análise de <span>Eficiência</span></div>
+          <div class="pg-sub">Tabelas de desempenho por técnico e tipo de OS</div>
         </div>
       </div>
       <div id="efic-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <div class="page" id="page-prod-efic-op">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Eficiência <span>Operacional</span></div>
+          <div class="pg-sub">Decisão do dia · Gargalos · Ações imediatas</div>
+        </div>
+      </div>
+      <div id="efic-op-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
     <div class="page" id="page-prod-assunto">
@@ -708,6 +721,29 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     </div>
 
     <!-- ══ AUDITORIA ════════════════════════════ -->
+    <div class="page" id="page-audit-estoque">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Estoque <span>Técnico</span></div>
+          <div class="pg-sub">Auditoria de materiais por técnico · saldo atual vs movimentações</div>
+        </div>
+      </div>
+      <div id="estoque-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <div class="page" id="page-audit-estoque-cad">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Cadastro de <span>Estoque Técnico</span></div>
+          <div class="pg-sub">Base de produtos por técnico · comparação com IXC · histórico de ajustes</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn" onclick="syncEstoqueIXC()" style="background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer">🔄 Sync IXC</button>
+        </div>
+      </div>
+      <div id="estoque-cad-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
     <div class="page" id="page-audit-exec">
       <div class="pg-hd"><div><div class="pg-title">Auditoria <span>Operacional</span></div><div class="pg-sub">Ocorrências detectadas automaticamente</div></div></div>
       <div class="kpi-grid c4" id="audit-kpis"><div class="loading"><div class="spinner"></div></div></div>
@@ -978,8 +1014,10 @@ const PAGES_CFG = {
   'reagendamentos':    {title:'Reagendamentos',         path:'/agenda/reagendamentos',        load:loadReagendamentos},
   'ranking':           {title:'Ranking Técnicos',       path:'/produtividade/ranking',        load:()=>loadRanking(null)},
   'prod-assunto':      {title:'Produtividade por Tipo', path:'/produtividade/por-assunto',    load:loadProdAssunto},
-  'prod-eficiencia':   {title:'Eficiência',             path:'/produtividade/eficiencia',     load:loadEficiencia},
+  'prod-eficiencia':   {title:'Análise de Eficiência',  path:'/produtividade/eficiencia',     load:loadEficiencia},
+  'prod-efic-op':      {title:'Eficiência Operacional', path:'/produtividade/eficiencia-op',   load:loadEficOp},
   'prod-auditoria':    {title:'Auditoria Individual',  path:'/auditoria/individual',         load:loadAuditoriaIndividual},
+  'audit-estoque':     {title:'Estoque Técnico',       path:'/auditoria/estoque',            load:loadEstoqueTecnico},
   'audit-exec':        {title:'Auditoria Operacional',  path:'/auditoria/execucao',           load:loadAuditoria},
   'audit-tempo':       {title:'Auditoria de Tempo',     path:'/auditoria/tempo',              load:()=>loadAuditoriaTipo('tempo')},
   'audit-sla':         {title:'Auditoria de SLA',       path:'/auditoria/sla',                load:()=>loadAuditoriaTipo('sla')},
@@ -1193,7 +1231,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-eficiencia']
+  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-eficiencia','prod-efic-op','audit-estoque']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -2049,6 +2087,439 @@ async function loadAuditoriaIndividual(){
 // ═══════════════════════════════════════════════════
 // EFICIÊNCIA OPERACIONAL
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// EFICIÊNCIA OPERACIONAL — DECISÃO DO DIA
+// ═══════════════════════════════════════════════════
+async function loadEficOp(){
+  const el = document.getElementById('efic-op-content')
+  if(!el) return
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>'
+
+  const di = document.getElementById('f-data-inicio')?.value || ''
+  const df = document.getElementById('f-data-fim')?.value || ''
+  let url = '/api/sais/produtividade/eficiencia'
+  const p = []
+  if(di) p.push('data_inicio='+di)
+  if(df) p.push('data_fim='+df)
+  if(p.length) url += '?'+p.join('&')
+
+  try {
+    const d = await apiFetch(url)
+    const g = d.geral
+    const ass = d.por_assunto || []
+    const tecs = d.por_tecnico || []
+
+    const metaTempo = {'servico':90,'suporte':45,'infra':120,'retirada':30}
+
+    // Gargalos = OS com desvio > 50% e volume >= 1
+    const gargalos = ass
+      .filter(function(a){ return a.tempo_medio_min > 0 })
+      .map(function(a){
+        const meta = metaTempo[a.categoria]||60
+        const desvio = Math.round((a.tempo_medio_min-meta)/meta*100)
+        return Object.assign({},a,{meta:meta,desvio:desvio})
+      })
+      .filter(function(a){ return a.desvio > 50 })
+      .sort(function(a,b){ return b.desvio-a.desvio })
+
+    const score = Math.round((g.aproveitamento+g.qualidade)/2)
+    const corScore = score>=80?'var(--green)':score>=60?'var(--amber)':'var(--red)'
+    const statusTxt = score>=80?'Operação Normal':score>=60?'Atenção Necessária':'Atenção Máxima'
+
+    // Causa por categoria
+    function causa(cat){
+      return cat==='servico'?'Processo de instalação/ativação'
+           : cat==='suporte'?'Diagnóstico ou atendimento lento'
+           : cat==='infra'?'Complexidade da infraestrutura'
+           : 'Logística / processo de retirada'
+    }
+    function acao(cat){
+      return cat==='servico'?'Redistribuir técnicos experientes'
+           : cat==='suporte'?'Revisar processo de diagnóstico'
+           : cat==='infra'?'Avaliar equipe de infraestrutura'
+           : 'Otimizar rota de retiradas'
+    }
+
+    // Técnico mais lento
+    const tecLento = tecs.length ? tecs[tecs.length-1] : null
+    // Técnico mais rápido
+    const tecRapido = tecs.length ? tecs[0] : null
+
+    el.innerHTML =
+    // KPIs
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px">'
+    +'<div class="kpi" style="--ac:'+corScore+'"><div class="kpi-val">'+score+'%</div><div class="kpi-lbl">Score Geral</div></div>'
+    +'<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+g.total_os+'</div><div class="kpi-lbl">OS Finalizadas</div></div>'
+    +'<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+gargalos.length+'</div><div class="kpi-lbl">Gargalos</div></div>'
+    +'<div class="kpi" style="--ac:var(--green)"><div class="kpi-val">'+g.aproveitamento+'%</div><div class="kpi-lbl">Aproveitamento</div></div>'
+    +'<div class="kpi" style="--ac:var(--amber)"><div class="kpi-val">'+g.tempo_medio_min+'min</div><div class="kpi-lbl">Tempo Médio</div></div>'
+    +'</div>'
+
+    // Status do dia
+    +'<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;margin-bottom:16px">'
+    +'<div class="card" style="border-color:'+corScore+';background:rgba(0,0,0,.2)">'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:4px">STATUS DO PERÍODO</div>'
+    +'<div style="font-size:22px;font-weight:800;color:'+corScore+'">'+statusTxt+'</div>'
+    +'<div style="font-size:12px;color:var(--muted);margin-top:6px">'+gargalos.length+' gargalo(s) identificado(s)</div>'
+    +'</div>'
+    +'<div class="card">'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px">DESTAQUES</div>'
+    +(tecRapido?'<div style="font-size:12px;margin-bottom:4px">🏆 <strong>Mais rápido:</strong> '+tecRapido.nome+' ('+tecRapido.tempo_medio_min+'min/OS)</div>':'')
+    +(tecLento?'<div style="font-size:12px;margin-bottom:4px">🐢 <strong>Mais lento:</strong> '+tecLento.nome+' ('+tecLento.tempo_medio_min+'min/OS)</div>':'')
+    +'<div style="font-size:12px">📊 <strong>Qualidade:</strong> '+g.qualidade+'% OS sem pendências</div>'
+    +'</div>'
+    +'</div>'
+
+    // Gargalos com ações
+    +(gargalos.length>0
+      ? '<div class="card" style="margin-bottom:16px">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px">🚨 GARGALOS — AÇÃO IMEDIATA</div>'
+        +gargalos.map(function(a){
+          const cor = a.desvio>150?'var(--red)':'var(--amber)'
+          const bg  = a.desvio>150?'rgba(255,77,79,.06)':'rgba(245,158,11,.04)'
+          const brd = a.desvio>150?'rgba(255,77,79,.2)':'rgba(245,158,11,.2)'
+          return '<div style="border:1px solid '+brd+';background:'+bg+';border-radius:8px;padding:12px;margin-bottom:8px">'
+            +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">'
+            +'<div><div style="font-weight:700;font-size:13px">'+a.assunto+'</div>'
+            +'<div style="font-size:11px;color:var(--muted)">'+a.total_os+' OS · categoria: '+a.categoria+'</div></div>'
+            +'<div style="text-align:right">'
+            +'<div style="color:'+cor+';font-weight:700;font-size:14px">'+a.tempo_medio_min+'min</div>'
+            +'<div style="font-size:10px;color:var(--muted)">Meta: '+a.meta+'min</div>'
+            +'<div style="color:'+cor+';font-size:11px;font-weight:700">+'+a.desvio+'%</div>'
+            +'</div></div>'
+            +'<div style="font-size:12px;color:var(--muted);margin-bottom:8px">📌 Causa provável: '+causa(a.categoria)+'</div>'
+            +'<div style="font-size:12px;color:var(--cyan)">→ '+acao(a.categoria)+'</div>'
+            +'</div>'
+        }).join('')
+        +'</div>'
+      : '<div class="card" style="margin-bottom:16px;border-color:rgba(0,212,100,.2);background:rgba(0,212,100,.04)">'
+        +'<div style="color:var(--green);font-weight:700;font-size:14px">✅ Nenhum gargalo crítico no período</div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-top:4px">Todos os tipos de OS dentro do tempo esperado.</div>'
+        +'</div>'
+    )
+
+    // Técnicos com atenção
+    const tecsLentos = tecs.filter(function(t){ return t.tempo_medio_min > 120 })
+    const tecsLentosHtml = tecsLentos.length>0
+      ? '<div class="card">'
+        +'<div style="font-size:13px;font-weight:700;color:var(--amber);margin-bottom:12px">⚠️ TÉCNICOS — TEMPO ACIMA DO PADRÃO</div>'
+        +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">'
+        +tecsLentos.map(function(t){
+          return '<div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:10px">'
+            +'<div style="font-weight:700;margin-bottom:4px">'+t.nome+'</div>'
+            +'<div style="font-size:12px;color:var(--amber)">🕐 '+t.tempo_medio_min+'min/OS</div>'
+            +'<div style="font-size:11px;color:var(--muted)">'+t.total_os+' OS · '+t.pontos_total+' pts</div>'
+            +'</div>'
+        }).join('')
+        +'</div></div>'
+      : ''
+    el.innerHTML += tecsLentosHtml
+
+  } catch(e) {
+    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
+    console.error(e)
+  }
+}
+
+
+// ═══════════════════════════════════════════════════
+// AUDITORIA DE ESTOQUE TÉCNICO
+// ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// CADASTRO DE ESTOQUE TÉCNICO
+// ═══════════════════════════════════════════════════
+async function syncEstoqueIXC(){
+  const btn = event.target
+  btn.textContent = '⏳ Sincronizando...'
+  btn.disabled = true
+  try {
+    const d = await fetch('/api/sais/auditoria/estoque-sync', {method:'POST'})
+    const r = await d.json()
+    if(r.ok){
+      btn.textContent = '✅ '+r.sincronizados+' sincronizados'
+      setTimeout(function(){ loadEstoqueCadastro() }, 800)
+    } else {
+      btn.textContent = '❌ Erro'
+    }
+  } catch(e){
+    btn.textContent = '❌ Falha'
+  }
+  setTimeout(function(){ btn.textContent='🔄 Sync IXC'; btn.disabled=false }, 3000)
+}
+
+async function loadEstoqueCadastro(){
+  const el = document.getElementById('estoque-cad-content')
+  if(!el) return
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando estoque...</div>'
+
+  try {
+    const d = await apiFetch('/api/sais/auditoria/estoque-cadastro')
+    const k = d.kpis || {}
+    const resumo = d.resumo_tecnicos || []
+    const itens = d.itens || []
+
+    // Técnicos únicos para filtro
+    const tecs = {}
+    itens.forEach(function(i){ tecs[i.tecnico_id] = i.tecnico_nome })
+
+    let html = ''
+
+    // KPIs
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px">'
+    html += '<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+(k.tecnicos||0)+'</div><div class="kpi-lbl">Técnicos cadastrados</div></div>'
+    html += '<div class="kpi" style="--ac:var(--amber)"><div class="kpi-val">'+(k.total_itens||0)+'</div><div class="kpi-lbl">Produtos lançados</div></div>'
+    html += '<div class="kpi" style="--ac:'+(k.negativos>0?'var(--red)':'var(--green)')+'"><div class="kpi-val">'+(k.negativos||0)+'</div><div class="kpi-lbl">Saldos negativos</div></div>'
+    html += '<div class="kpi" style="--ac:var(--green)"><div class="kpi-val" style="font-size:14px">'+(k.ultima_sync||'—').substring(0,10)+'</div><div class="kpi-lbl">Última sincronização</div></div>'
+    html += '</div>'
+
+    // Cards por técnico
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:20px">'
+    resumo.forEach(function(t){
+      const cor = t.negativos>0?'var(--red)':t.total_itens>0?'var(--green)':'var(--muted)'
+      const prec = t.total_itens>0?Math.round((t.total_itens-t.negativos)/t.total_itens*100):100
+      html += '<div class="card" style="cursor:pointer;border-color:'+(t.negativos>0?'rgba(255,77,79,.2)':'var(--border)')+'" onclick="filtrarEstoqueTec('+t.tecnico_id+')">'
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      html += '<div><div style="font-weight:800;font-size:14px">'+t.nome+'</div>'
+      html += '<div style="font-size:11px;color:var(--muted)">'+t.total_itens+' produtos · sync '+( t.ultima_sync||'—').substring(0,10)+'</div></div>'
+      html += '<div style="text-align:right"><div style="font-size:22px;font-weight:800;color:'+cor+'">'+prec+'%</div>'
+      html += '<div style="font-size:10px;color:var(--muted)">precisão</div></div></div>'
+      html += '<div style="background:var(--border);border-radius:4px;height:4px">'
+      html += '<div style="background:'+cor+';width:'+prec+'%;height:4px;border-radius:4px"></div></div>'
+      if(t.negativos>0){
+        html += '<div style="margin-top:8px;font-size:11px;color:var(--red)">⚠️ '+t.negativos+' item(s) com saldo negativo</div>'
+      }
+      html += '</div>'
+    })
+    html += '</div>'
+
+    // Filtro + tabela
+    html += '<div class="card">'
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">'
+    html += '<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">PRODUTOS POR TÉCNICO</div>'
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    html += '<input id="est-busca" placeholder="Buscar produto..." oninput="filtrarEstoqueBusca()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;min-width:200px">'
+    html += '<select id="est-tec-filtro" onchange="filtrarEstoqueBusca()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px">'
+    html += '<option value="">Todos os técnicos</option>'
+    Object.entries(tecs).forEach(function(e){
+      html += '<option value="'+e[0]+'">'+e[1]+'</option>'
+    })
+    html += '</select>'
+    html += '<select id="est-status-filtro" onchange="filtrarEstoqueBusca()" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px">'
+    html += '<option value="">Todos</option><option value="neg">Negativos</option><option value="pos">Positivos</option>'
+    html += '</select>'
+    html += '</div></div>'
+
+    // Guarda itens globalmente para filtro
+    window._estItens = itens
+
+    html += '<div id="est-tabela" style="overflow-x:auto"></div>'
+    html += '</div>'
+
+    el.innerHTML = html
+    renderEstoqueTabela(itens)
+
+  } catch(e){
+    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
+    console.error(e)
+  }
+}
+
+function filtrarEstoqueTec(tecId){
+  const sel = document.getElementById('est-tec-filtro')
+  if(sel){ sel.value = tecId; filtrarEstoqueBusca() }
+}
+
+function filtrarEstoqueBusca(){
+  const busca  = (document.getElementById('est-busca')?.value||'').toLowerCase()
+  const tecId  = document.getElementById('est-tec-filtro')?.value||''
+  const status = document.getElementById('est-status-filtro')?.value||''
+  let lista = window._estItens||[]
+  if(busca)  lista = lista.filter(function(i){ return i.produto_nome.toLowerCase().includes(busca) })
+  if(tecId)  lista = lista.filter(function(i){ return String(i.tecnico_id)===tecId })
+  if(status==='neg') lista = lista.filter(function(i){ return i.saldo<0 })
+  if(status==='pos') lista = lista.filter(function(i){ return i.saldo>0 })
+  renderEstoqueTabela(lista)
+}
+
+function renderEstoqueTabela(lista){
+  const el = document.getElementById('est-tabela')
+  if(!el) return
+  if(!lista.length){
+    el.innerHTML = '<div style="color:var(--muted);padding:20px">Nenhum item encontrado.</div>'
+    return
+  }
+  let rows = ''
+  lista.forEach(function(i){
+    const corSaldo = i.saldo<0?'var(--red)':i.saldo>0?'var(--green)':'var(--muted)'
+    const badge = i.saldo<0?'<span class="badge red">Negativo</span>':i.saldo>0?'<span class="badge green">OK</span>':'<span class="badge" style="background:var(--border);color:var(--muted)">Zero</span>'
+    rows += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);'+(i.saldo<0?'background:rgba(255,77,79,.04)':'')+'">'
+    rows += '<td style="padding:8px 6px;font-weight:600">'+i.tecnico_nome+'</td>'
+    rows += '<td style="padding:8px 6px;color:var(--muted);font-family:monospace;font-size:11px">'+i.id_produto+'</td>'
+    rows += '<td style="padding:8px 6px;max-width:280px">'+i.produto_nome+'</td>'
+    rows += '<td style="padding:8px 6px;text-align:center;font-weight:700;color:'+corSaldo+'">'+i.saldo+'</td>'
+    rows += '<td style="padding:8px 6px;text-align:center;color:var(--muted);font-size:11px">'+i.unidade+'</td>'
+    rows += '<td style="padding:8px 6px;text-align:center">'+badge+'</td>'
+    rows += '<td style="padding:8px 6px;text-align:right">'
+    rows += '<button onclick="abrirAjusteEstoque('+i.tecnico_id+','+i.id_produto+',\''+i.produto_nome.replace(/'/g,"\\'")+'\','+i.saldo+')" '
+    rows += 'style="background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer">✏️ Ajustar</button>'
+    rows += '</td></tr>'
+  })
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
+    +'<th style="padding:8px 6px">Técnico</th>'
+    +'<th style="padding:8px 6px">ID</th>'
+    +'<th style="padding:8px 6px">Produto</th>'
+    +'<th style="padding:8px 6px;text-align:center">Saldo IXC</th>'
+    +'<th style="padding:8px 6px;text-align:center">Und.</th>'
+    +'<th style="padding:8px 6px;text-align:center">Status</th>'
+    +'<th style="padding:8px 6px;text-align:right">Ação</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>'
+}
+
+let _ajusteAtual = {}
+function abrirAjusteEstoque(tecId, prodId, prodNome, saldoAtual){
+  _ajusteAtual = {tecId:tecId, prodId:prodId}
+  document.getElementById('aj-tec').textContent = tecId
+  document.getElementById('aj-prod').textContent = prodNome
+  document.getElementById('aj-saldo-atual').textContent = saldoAtual
+  document.getElementById('aj-nova-qtd').value = saldoAtual
+  document.getElementById('modal-ajuste-estoque').style.display='flex'
+}
+
+async function salvarAjusteEstoque(){
+  const novaQtd = parseFloat(document.getElementById('aj-nova-qtd').value)
+  const tipo    = document.getElementById('aj-tipo').value
+  const obs     = document.getElementById('aj-obs').value
+  const por     = document.getElementById('aj-por').value
+
+  const url = '/api/sais/auditoria/estoque-ajuste?tecnico_id='+_ajusteAtual.tecId
+    +'&id_produto='+_ajusteAtual.prodId
+    +'&qtd_nova='+novaQtd
+    +'&tipo='+encodeURIComponent(tipo)
+    +'&obs='+encodeURIComponent(obs)
+    +'&criado_por='+encodeURIComponent(por)
+
+  try {
+    const r = await fetch(url, {method:'PATCH'})
+    const d = await r.json()
+    if(d.ok){
+      document.getElementById('modal-ajuste-estoque').style.display='none'
+      loadEstoqueCadastro()
+    } else {
+      alert('Erro: '+(d.erro||'Falha'))
+    }
+  } catch(e){ alert('Erro: '+e.message) }
+}
+
+async function loadEstoqueTecnico(){
+  const el = document.getElementById('estoque-content')
+  if(!el) return
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando estoque...</div>'
+
+  try {
+    const d = await apiFetch('/api/sais/auditoria/estoque')
+    const r = d.resumo || {}
+    const tecs = d.tecnicos || []
+
+    if(d.erro){
+      el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+d.erro+'</div>'
+      return
+    }
+
+    const corPrec = r.precisao_geral>=90?'var(--green)':r.precisao_geral>=70?'var(--amber)':'var(--red)'
+
+    let html = ''
+
+    // KPIs
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px">'
+    html += '<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+( r.tecnicos_com_divergencia||0)+'</div><div class="kpi-lbl">Técnicos c/ divergência</div></div>'
+    html += '<div class="kpi" style="--ac:var(--amber)"><div class="kpi-val">'+(r.itens_negativos||0)+'</div><div class="kpi-lbl">Itens com saldo negativo</div></div>'
+    html += '<div class="kpi" style="--ac:'+corPrec+'"><div class="kpi-val">'+(r.precisao_geral||100)+'%</div><div class="kpi-lbl">Precisão geral</div></div>'
+    html += '<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+(r.total_tecnicos||0)+'</div><div class="kpi-lbl">Técnicos auditados</div></div>'
+    html += '</div>'
+
+    // Cards por técnico
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:20px">'
+    tecs.forEach(function(t){
+      const cor = t.divergencias>0?'var(--red)':t.precisao>=90?'var(--green)':'var(--amber)'
+      const brd = t.divergencias>0?'rgba(255,77,79,.2)':'rgba(255,255,255,.06)'
+      html += '<div class="card" style="border-color:'+brd+'">'
+      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      html += '<div><div style="font-weight:700;font-size:14px">'+t.nome+'</div>'
+      html += '<div style="font-size:11px;color:var(--muted)">'+t.total_itens+' itens no estoque</div></div>'
+      html += '<div style="text-align:right"><div style="font-size:22px;font-weight:800;color:'+cor+'">'+t.divergencias+'</div>'
+      html += '<div style="font-size:10px;color:var(--muted)">divergências</div></div>'
+      html += '</div>'
+      // Barra de precisão
+      html += '<div style="margin-bottom:10px">'
+      html += '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">'
+      html += '<span>Precisão</span><span style="color:'+cor+'">'+t.precisao+'%</span></div>'
+      html += '<div style="background:var(--border);border-radius:4px;height:4px">'
+      html += '<div style="background:'+cor+';width:'+t.precisao+'%;height:4px;border-radius:4px"></div>'
+      html += '</div></div>'
+      // Itens negativos
+      if(t.itens_negativos && t.itens_negativos.length>0){
+        html += '<div style="background:rgba(255,77,79,.06);border:1px solid rgba(255,77,79,.15);border-radius:6px;padding:8px;margin-bottom:8px">'
+        html += '<div style="font-size:10px;color:var(--red);font-weight:700;margin-bottom:6px">⚠️ SALDO NEGATIVO</div>'
+        t.itens_negativos.forEach(function(item){
+          html += '<div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:3px">'
+          html += '<span style="color:var(--text)">'+item.produto.substring(0,35)+'</span>'
+          html += '<span style="color:var(--red);font-weight:700">'+item.saldo+'</span>'
+          html += '</div>'
+        })
+        html += '</div>'
+      }
+      // Movimentos recentes
+      if(t.movimentos_recentes && t.movimentos_recentes.length>0){
+        html += '<div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px">ÚLTIMAS MOVIMENTAÇÕES</div>'
+        t.movimentos_recentes.forEach(function(m){
+          const tipoCor = m.comodato==='E'?'var(--cyan)':m.comodato==='D'?'var(--amber)':'var(--muted)'
+          const tipoTxt = m.comodato==='E'?'Comodato':m.comodato==='D'?'Devolução':'Uso'
+          html += '<div style="font-size:11px;display:flex;justify-content:space-between;margin-bottom:3px;color:var(--muted)">'
+          html += '<span>OS#'+m.os_id+' · '+m.produto.substring(0,25)+'</span>'
+          html += '<span style="color:'+tipoCor+'">-'+m.qtde_saida+' ('+tipoTxt+')</span>'
+          html += '</div>'
+        })
+      }
+      html += '</div>'
+    })
+    html += '</div>'
+
+    // Tabela detalhada de divergências
+    const comDiverg = tecs.filter(function(t){ return t.divergencias>0 })
+    if(comDiverg.length>0){
+      html += '<div class="card">'
+      html += '<div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:12px">🚨 DIVERGÊNCIAS — AÇÃO NECESSÁRIA</div>'
+      html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+      html += '<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
+      html += '<th style="padding:8px 6px">Técnico</th>'
+      html += '<th style="padding:8px 6px">Produto</th>'
+      html += '<th style="padding:8px 6px;text-align:center">Saldo</th>'
+      html += '<th style="padding:8px 6px">Status</th>'
+      html += '</tr></thead><tbody>'
+      comDiverg.forEach(function(t){
+        t.itens_negativos.forEach(function(item){
+          html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:rgba(255,77,79,.04)">'
+          html += '<td style="padding:7px 6px;font-weight:600">'+t.nome+'</td>'
+          html += '<td style="padding:7px 6px">'+item.produto+'</td>'
+          html += '<td style="padding:7px 6px;text-align:center;color:var(--red);font-weight:700">'+item.saldo+'</td>'
+          html += '<td style="padding:7px 6px"><span class="badge red">Saldo negativo</span></td>'
+          html += '</tr>'
+        })
+      })
+      html += '</tbody></table></div></div>'
+    }
+
+    el.innerHTML = html
+
+  } catch(e){
+    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
+    console.error(e)
+  }
+}
+
 async function loadEficiencia(){
   const el = document.getElementById('efic-content')
   if(!el) return
@@ -2128,29 +2599,113 @@ async function loadEficiencia(){
     }).join('')
     +'</tbody></table></div></div>'
 
-    // ── Eficiência por Tipo de OS ─────────────────────
-    +'<div class="card">'
-    +'<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--cyan)">📋 Eficiência por Tipo de OS</div>'
-    +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
-    +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
-    +'<th style="padding:8px 6px">Assunto</th>'
-    +'<th style="padding:8px 6px">Categoria</th>'
-    +'<th style="padding:8px 6px;text-align:center">Total OS</th>'
-    +'<th style="padding:8px 6px;text-align:center">Tempo Médio</th>'
-    +'<th style="padding:8px 6px;text-align:center">Status</th>'
-    +'</tr></thead><tbody>'
+    // Metas de tempo por categoria
+    const metaTempo = {'servico':90,'suporte':45,'infra':120,'retirada':30}
+
+    // ── Top 3 Gargalos ────────────────────────────────
+    const criticos = ass.filter(function(a){return (a.tempo_medio_min||0)>60}).sort(function(a,b){return b.tempo_medio_min-a.tempo_medio_min}).slice(0,3)
+    const top3Html = criticos.length>0
+      ? '<div style="margin-bottom:16px;padding:12px;background:rgba(255,77,79,.08);border:1px solid rgba(255,77,79,.2);border-radius:8px">'
+        +'<div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:10px;letter-spacing:.05em">🔥 TOP GARGALOS DO PERÍODO</div>'
+        +'<div style="display:flex;gap:10px;flex-wrap:wrap">'
+        +criticos.map(function(a,i){
+          const meta = metaTempo[a.categoria]||60
+          const desvio = Math.round((a.tempo_medio_min-meta)/meta*100)
+          return '<div style="flex:1;min-width:200px;background:rgba(0,0,0,.3);border-radius:8px;padding:10px">'
+            +'<div style="font-size:10px;color:var(--muted);margin-bottom:4px">'+(i+1)+'º LUGAR</div>'
+            +'<div style="font-weight:700;font-size:13px;margin-bottom:6px">'+a.assunto+'</div>'
+            +'<div style="display:flex;justify-content:space-between;font-size:11px">'
+            +'<span style="color:var(--red)">🕐 '+a.tempo_medio_min+'min</span>'
+            +'<span style="color:var(--muted)">Meta: '+meta+'min</span>'
+            +'<span style="color:var(--red);font-weight:700">+'+desvio+'%</span>'
+            +'</div>'
+            +'<div style="font-size:10px;color:var(--muted);margin-top:4px">'+a.total_os+' OS · '+a.categoria+'</div>'
+            +'</div>'
+        }).join('')
+        +'</div></div>'
+      : ''
+
+    // ── Recomendações automáticas ─────────────────────
+    const recs = []
+    ass.forEach(function(a){
+      const meta = metaTempo[a.categoria]||60
+      const tMin = a.tempo_medio_min||0
+      const desvio = Math.round((tMin-meta)/meta*100)
+      if(desvio>100 && a.total_os>=2) recs.push({assunto:a.assunto, desvio:desvio, categoria:a.categoria, total:a.total_os, tMin:tMin})
+    })
+    const recsHtml = recs.length>0
+      ? '<div style="margin-bottom:16px;padding:12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:8px">'
+        +'<div style="font-size:11px;color:var(--amber);font-weight:700;margin-bottom:10px;letter-spacing:.05em">🧠 RECOMENDAÇÕES AUTOMÁTICAS</div>'
+        +'<div style="display:flex;flex-direction:column;gap:6px">'
+        +recs.map(function(r){
+          const acao = r.categoria==='servico'?'Revisar processo de instalação/ativação'
+                     : r.categoria==='suporte'?'Verificar técnicos designados para suporte'
+                     : r.categoria==='infra'?'Avaliar complexidade das OS de infraestrutura'
+                     : 'Revisar processo operacional'
+          return '<div style="display:flex;align-items:center;gap:8px;font-size:12px">'
+            +'<span style="color:var(--red);font-size:16px">⚠️</span>'
+            +'<div><strong>'+r.assunto+'</strong>: '+r.tMin+'min (meta '+( metaTempo[r.categoria]||60)+'min, desvio +'+r.desvio+'%)'
+            +'<div style="font-size:11px;color:var(--muted)">→ '+acao+'</div></div>'
+            +'</div>'
+        }).join('')
+        +'</div></div>'
+      : ''
+
+    // ── Agrupamento por categoria ─────────────────────
+    const porCat = {}
+    ass.forEach(function(a){
+      const cat = a.categoria||'outros'
+      if(!porCat[cat]) porCat[cat]={total:0,tempo_sum:0,count:0}
+      porCat[cat].total += a.total_os
+      if(a.tempo_medio_min){ porCat[cat].tempo_sum+=a.tempo_medio_min; porCat[cat].count++ }
+    })
+    const catRows = Object.entries(porCat).map(function(e){
+      const cat=e[0], v=e[1]
+      const tMed = v.count>0?Math.round(v.tempo_sum/v.count):0
+      const catCor=cat==='servico'?'green':cat==='suporte'?'amber':cat==='infra'?'blue':'red'
+      const meta = metaTempo[cat]||60
+      return '<tr style="border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.03);font-weight:700">'
+        +'<td style="padding:8px 6px" colspan="2"><span class="badge '+catCor+'" style="font-size:10px">'+cat.toUpperCase()+'</span></td>'
+        +'<td style="padding:8px 6px;text-align:center;color:var(--cyan)">'+v.total+'</td>'
+        +'<td style="padding:8px 6px;text-align:center;color:'+corTempo(tMed)+'">'+icTempo(tMed)+' '+tMed+'min</td>'
+        +'<td style="padding:8px 6px;text-align:center;color:var(--muted);font-size:11px">Meta: '+meta+'min</td>'
+        +'<td style="padding:8px 6px;text-align:center"></td>'
+        +'</tr>'
+    }).join('')
+
+    // ── Tabela por Tipo de OS ─────────────────────────
+    const tabelaAssHtml = '<div class="card">'
+      +top3Html
+      +recsHtml
+      +'<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--cyan)">📋 Eficiência por Tipo de OS</div>'
+      +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+      +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted);text-align:left">'
+      +'<th style="padding:8px 6px">Assunto</th>'
+      +'<th style="padding:8px 6px">Cat.</th>'
+      +'<th style="padding:8px 6px;text-align:center">OS</th>'
+      +'<th style="padding:8px 6px;text-align:center">Tempo Médio</th>'
+      +'<th style="padding:8px 6px;text-align:center">Meta</th>'
+      +'<th style="padding:8px 6px;text-align:center">Desvio</th>'
+      +'</tr></thead><tbody>'
+      +catRows
     +ass.map(function(a){
       const catCor = a.categoria==='servico'?'green':a.categoria==='suporte'?'amber':a.categoria==='infra'?'blue':'red'
-      const tMin = a.tempo_medio_min || 0
-      return '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
-        +'<td style="padding:7px 6px;font-weight:600;max-width:200px">'+a.assunto+'</td>'
+      const tMin = a.tempo_medio_min||0
+      const meta = metaTempo[a.categoria]||60
+      const desvio = Math.round((tMin-meta)/meta*100)
+      const bgRow = tMin>120?'rgba(255,77,79,.06)':tMin>60?'rgba(245,158,11,.04)':''
+      const confianca = a.total_os>=5?'':a.total_os>=2?'<span style="font-size:9px;color:var(--muted)"> ~</span>':'<span style="font-size:9px;color:var(--muted)"> ?</span>'
+      return '<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:'+bgRow+'">'
+        +'<td style="padding:7px 6px;font-weight:600;max-width:200px">'+a.assunto+confianca+'</td>'
         +'<td style="padding:7px 6px"><span class="badge '+catCor+'" style="font-size:9px">'+a.categoria+'</span></td>'
         +'<td style="padding:7px 6px;text-align:center;color:var(--cyan)">'+a.total_os+'</td>'
         +'<td style="padding:7px 6px;text-align:center;color:'+corTempo(tMin)+'">'+icTempo(tMin)+' '+tMin+'min</td>'
-        +'<td style="padding:7px 6px;text-align:center;font-size:11px;color:'+corTempo(tMin)+'">'+( tMin<=60?'Normal':tMin<=120?'Atenção':'Crítico')+'</td>'
+        +'<td style="padding:7px 6px;text-align:center;color:var(--muted);font-size:11px">'+meta+'min</td>'
+        +'<td style="padding:7px 6px;text-align:center;font-size:11px;font-weight:700;color:'+(desvio>0?'var(--red)':'var(--green)')+'">'+( desvio>0?'+':'')+desvio+'%</td>'
         +'</tr>'
     }).join('')
-    +'</tbody></table></div></div>'
+      +'</tbody></table></div></div>'
+    el.innerHTML = el.innerHTML + tabelaAssHtml
 
   } catch(e) {
     el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
