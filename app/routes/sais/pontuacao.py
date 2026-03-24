@@ -130,56 +130,71 @@ async def get_pontuacao_tecnico(
 
 
 @router.get("/ranking")
-async def get_ranking_pontuacao(data: Optional[str] = Query(None)):
-    """Ranking de técnicos por pontuação real (com regras aplicadas)."""
+async def get_ranking_pontuacao(
+    data:        Optional[str] = Query(None),
+    data_inicio: Optional[str] = Query(None),
+    data_fim:    Optional[str] = Query(None),
+):
+    """Ranking de técnicos por pontuação real — suporta período."""
+    import calendar as _cal
+    from datetime import date as _date, timedelta as _td
     db = get_db()
-    data = data or hoje_brt()
-
+    hoje = hoje_brt()
+    di = str(data_inicio) if data_inicio else (str(data) if data else hoje)
+    df = str(data_fim)    if data_fim    else (str(data) if data else hoje)
+    try:
+        _d1 = _date.fromisoformat(di)
+        _d2 = _date.fromisoformat(df)
+        _mes_inicio = _date(_d1.year, _d1.month, 1)
+        _mes_fim    = _date(_d1.year, _d1.month, _cal.monthrange(_d1.year, _d1.month)[1])
+        _mes_inteiro = (_d1 == _mes_inicio and _d2 == _mes_fim)
+        dias_uteis = sum(1 for i in range((_d2-_d1).days+1) if (_d1+_td(i)).weekday()!=6)
+        dias_uteis = max(dias_uteis, 1)
+    except:
+        _mes_inteiro = False
+        dias_uteis = 1
     rows = db.execute("""
         SELECT
             p.tecnico_id,
             t.nome,
+            t.meta_dia,
+            t.meta_mes,
             SUM(p.pontos_final) AS total_pontos,
             SUM(p.pontos_base)  AS pontos_max,
             COUNT(p.os_id)      AS total_os,
             SUM(CASE WHEN p.pendencias = '' THEN 1 ELSE 0 END) AS os_perfeitas,
-            SUM(CASE WHEN p.aprovada = 1 THEN 1 ELSE 0 END)    AS aprovadas
+            SUM(CASE WHEN p.aprovada = 1 THEN 1 ELSE 0 END)      AS aprovadas
         FROM sais_os_pontuacao p
         LEFT JOIN prod_tecnicos t ON t.ixc_funcionario_id = p.tecnico_id
         LEFT JOIN prod_os_cache o ON o.ixc_os_id = p.os_id
-        WHERE DATE(o.data_fechamento, '+3 hours') = ?
+        WHERE DATE(o.data_fechamento, '+3 hours') BETWEEN ? AND ?
         GROUP BY p.tecnico_id
         ORDER BY total_pontos DESC
-    """, (data,)).fetchall()
-
+    """, (di, df)).fetchall()
     ranking = []
     for i, r in enumerate(rows):
-        total_os = r["total_os"] or 1
-        meta_row = db.execute("""
-            SELECT valor FROM prod_metas
-            WHERE tecnico_id=? AND tipo='pontos_dia' AND vigente=1 LIMIT 1
-        """, (r["tecnico_id"],)).fetchone()
-        meta = int(meta_row["valor"]) if meta_row else 80
-
-        pts     = r["total_pontos"] or 0
-        pts_max = r["pontos_max"]   or 1
+        total_os     = r["total_os"] or 1
+        meta_dia     = r["meta_dia"] or 80
+        meta_mes     = r["meta_mes"] or 1760
+        meta_periodo = meta_mes if _mes_inteiro else dias_uteis * meta_dia
+        pts          = r["total_pontos"] or 0
+        pts_max      = r["pontos_max"] or 1
         ranking.append({
-            "posicao":       i + 1,
-            "tecnico_id":    r["tecnico_id"],
-            "nome":          r["nome"] or "—",
-            "total_os":      r["total_os"],
-            "total_pontos":  pts,
-            "pontos_max":    pts_max,
-            "aproveitamento":round(pts / pts_max * 100) if pts_max > 0 else 0,
-            "os_perfeitas":  r["os_perfeitas"],
-            "pct_qualidade": round(r["os_perfeitas"] / total_os * 100),
-            "meta_dia":      meta,
-            "pct_meta":      round(pts / meta * 100, 1) if meta > 0 else 0,
+            "posicao":        i + 1,
+            "tecnico_id":     r["tecnico_id"],
+            "nome":           r["nome"] or "—",
+            "total_os":       r["total_os"],
+            "total_pontos":   pts,
+            "pontos_max":     pts_max,
+            "aproveitamento": round(pts / pts_max * 100) if pts_max > 0 else 0,
+            "os_perfeitas":   r["os_perfeitas"],
+            "pct_qualidade":  round(r["os_perfeitas"] / total_os * 100),
+            "meta_dia":       meta_dia,
+            "meta_periodo":   meta_periodo,
+            "pct_meta":       round(pts / meta_periodo * 100, 1) if meta_periodo > 0 else 0,
         })
-
     db.close()
-    return {"data": data, "ranking": ranking}
-
+    return {"data_inicio": di, "data_fim": df, "ranking": ranking}
 
 @router.get("/resumo-dia")
 async def get_resumo_dia(data: Optional[str] = Query(None)):
