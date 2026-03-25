@@ -5,7 +5,7 @@ Endpoints para o dashboard principal.
 import sqlite3
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, BackgroundTasks, Query
 
 router = APIRouter()
 DB_PATH = "/opt/automacoes/cliquedf/operacional/prod_local.db"
@@ -750,3 +750,18 @@ async def get_modal_os(os_id: int):
         "sla": sla,
         "auditorias": [dict(r) for r in auditorias],
     }
+
+
+@router.post("/sync")
+async def sync_manual(background_tasks: BackgroundTasks):
+    """Executa sync completo: OS + pontuação do dia."""
+    import subprocess, sys
+    try:
+        venv_python = sys.executable
+        subprocess.Popen(
+            [venv_python, "-m", "app.bootstrap.cron_sync_ixc", "--full"],
+            cwd="/opt/automacoes/cliquedf/operacional"
+        )
+        return {"ok": True, "msg": "Sync iniciado em background"}
+    except Exception as e:
+        return {"ok": False, "erro": str(e)}
