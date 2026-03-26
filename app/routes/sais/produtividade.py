@@ -455,3 +455,65 @@ async def get_eficiencia(
         "por_tecnico": resultado_tecs,
         "por_assunto": [dict(r) for r in assuntos],
     }
+
+
+@router.get("/destaques")
+async def get_destaques(
+    data_inicio: Optional[str] = Query(None),
+    data_fim:    Optional[str] = Query(None),
+):
+    """Ranking de destaques por pontualidade — usa sais_destaques (gravado diariamente)."""
+    db = get_db()
+    hoje = hoje_brt()
+    di = str(data_inicio) if data_inicio else hoje
+    df = str(data_fim)    if data_fim    else hoje
+
+    # Busca destaques do banco por período
+    rows = db.execute("""
+        SELECT
+            d.tecnico_id,
+            d.tecnico_nome AS nome,
+            COUNT(d.data) AS dias_destaque,
+            SUM(d.bonus_pts) AS bonus_pts,
+            SUM(d.os_pontuais) AS os_pontuais,
+            SUM(d.total_os) AS total_os
+        FROM sais_destaques d
+        WHERE d.data BETWEEN ? AND ?
+        GROUP BY d.tecnico_id
+        ORDER BY bonus_pts DESC, dias_destaque DESC
+    """, (di, df)).fetchall()
+
+    # Busca produção separado (pontuação no período)
+    prods = db.execute("""
+        SELECT p.tecnico_id, COALESCE(SUM(p.pontos_final),0) AS pontos
+        FROM sais_os_pontuacao p
+        JOIN prod_os_cache o ON o.ixc_os_id = p.os_id
+        WHERE DATE(o.data_fechamento,'+3 hours') BETWEEN ? AND ?
+          AND o.data_fechamento NOT LIKE '0000%%'
+        GROUP BY p.tecnico_id
+    """, (di, df)).fetchall()
+    prod_map = {r["tecnico_id"]: r["pontos"] for r in prods}
+
+    db.close()
+
+    ranking = []
+    for i, r in enumerate(rows):
+        bonus = r["bonus_pts"] or 0
+        ranking.append({
+            "posicao":         i + 1,
+            "nome":            r["nome"],
+            "tecnico_id":      r["tecnico_id"],
+            "dias_destaque":   r["dias_destaque"],
+            "os_pontuais":     r["os_pontuais"] or 0,
+            "total_os":        r["total_os"] or 0,
+            "pontos_producao": prod_map.get(r["tecnico_id"], 0),
+            "bonus_pts":       bonus,
+            "pontos_total":    prod_map.get(r["tecnico_id"], 0) + bonus,
+        })
+
+    return {
+        "periodo":       {"data_inicio": di, "data_fim": df},
+        "ranking":       ranking,
+        "total_bonus":   sum(r["bonus_pts"] for r in ranking),
+        "total_tecnicos": len(ranking),
+    }

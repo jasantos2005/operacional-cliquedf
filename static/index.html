@@ -447,6 +447,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       <div class="sb-sub" id="grp-produtividade">
         <div class="sb-item" onclick="nav('ranking','produtividade')"><span class="dot"></span> Ranking Técnicos</div>
         <div class="sb-item" onclick="nav('prod-assunto','produtividade')"><span class="dot"></span> Por Tipo de OS</div>
+        <div class="sb-item" onclick="nav('prod-destaques','produtividade')"><span class="dot"></span> 🏆 Destaques</div>
         <div class="sb-item" onclick="nav('prod-eficiencia','produtividade')"><span class="dot"></span> Análise de Eficiência</div>
         <div class="sb-item" onclick="nav('prod-efic-op','produtividade')"><span class="dot"></span> Eficiência Operacional</div>
       </div>
@@ -693,6 +694,16 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
           Selecione 1 <strong style="color:var(--text)">técnico</strong> no filtro do topo e clique em <strong style="color:var(--cyan)">Aplicar</strong>.
         </div>
       </div>
+    </div>
+
+    <div class="page" id="page-prod-destaques">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">🏆 Ranking de <span>Destaques</span></div>
+          <div class="pg-sub">Bônus por pontualidade · OS finalizada na data agendada · +15pts por OS</div>
+        </div>
+      </div>
+      <div id="destaques-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
     <div class="page" id="page-prod-eficiencia">
@@ -1014,6 +1025,7 @@ const PAGES_CFG = {
   'reagendamentos':    {title:'Reagendamentos',         path:'/agenda/reagendamentos',        load:loadReagendamentos},
   'ranking':           {title:'Ranking Técnicos',       path:'/produtividade/ranking',        load:()=>loadRanking(null)},
   'prod-assunto':      {title:'Produtividade por Tipo', path:'/produtividade/por-assunto',    load:loadProdAssunto},
+  'prod-destaques':    {title:'Ranking Destaques',     path:'/produtividade/destaques',      load:loadDestaques},
   'prod-eficiencia':   {title:'Análise de Eficiência',  path:'/produtividade/eficiencia',     load:loadEficiencia},
   'prod-efic-op':      {title:'Eficiência Operacional', path:'/produtividade/eficiencia-op',   load:loadEficOp},
   'prod-auditoria':    {title:'Auditoria Individual',  path:'/auditoria/individual',         load:loadAuditoriaIndividual},
@@ -1232,7 +1244,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
+  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-destaques','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -2504,6 +2516,84 @@ async function loadEstoqueTecnico(){
       html += '</tbody></table></div></div>'
     }
 
+    el.innerHTML = html
+
+  } catch(e){
+    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
+    console.error(e)
+  }
+}
+
+
+// ═══════════════════════════════════════════════════
+// RANKING DE DESTAQUES — BÔNUS PONTUALIDADE
+// ═══════════════════════════════════════════════════
+async function loadDestaques(){
+  const el = document.getElementById('destaques-content')
+  if(!el) return
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando destaques...</div>'
+
+  const di = document.getElementById('f-data-inicio')?.value || ''
+  const df = document.getElementById('f-data-fim')?.value || ''
+  let url = '/api/sais/produtividade/destaques'
+  const p = []
+  if(di) p.push('data_inicio='+di)
+  if(df) p.push('data_fim='+df)
+  if(p.length) url += '?'+p.join('&')
+
+  try {
+    const d = await apiFetch(url)
+    const ranking = d.ranking || []
+    const per = d.periodo || {}
+
+    const medalhas = ['🥇','🥈','🥉']
+    const bordas = ['gold','silver','#cd7f32']
+
+    let html = ''
+
+    // KPIs
+    const totalBonus = ranking.reduce(function(s,r){ return s+r.bonus_pts }, 0)
+    const melhor = ranking[0] || {}
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">'
+    html += '<div class="kpi" style="--ac:gold"><div class="kpi-val">'+( melhor.os_pontuais||0)+'</div><div class="kpi-lbl">Maior pontualidade</div><div style="font-size:11px;color:var(--muted)">'+(melhor.nome||'—')+'</div></div>'
+    html += '<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+totalBonus+'</div><div class="kpi-lbl">Total bônus pts</div></div>'
+    html += '<div class="kpi" style="--ac:var(--green)"><div class="kpi-val">+15</div><div class="kpi-lbl">Pts por OS pontual</div></div>'
+    html += '<div class="kpi" style="--ac:var(--amber)"><div class="kpi-val">'+ranking.length+'</div><div class="kpi-lbl">Técnicos no período</div></div>'
+    html += '</div>'
+
+    // Cards de ranking
+    html += '<div style="display:flex;flex-direction:column;gap:10px;max-width:800px;margin:0 auto">'
+
+    ranking.forEach(function(r, i){
+      const borda = i<3 ? bordas[i] : 'rgba(255,255,255,.08)'
+      const medal = i<3 ? medalhas[i] : ''
+      const pctCor = r.pct_pontual>=80?'var(--green)':r.pct_pontual>=50?'var(--amber)':'var(--red)'
+
+      html += '<div style="background:#161b22;border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;border:1px solid #30363d;border-left:6px solid '+borda+'">'
+
+      // Esquerda
+      html += '<div style="display:flex;align-items:center;gap:14px">'
+      html += '<div style="font-size:28px;min-width:36px;text-align:center">'+(medal||'<span style="font-size:16px;color:var(--muted)">'+(i+1)+'º</span>')+'</div>'
+      html += '<div>'
+      html += '<div style="font-size:16px;font-weight:800">'+r.nome+'</div>'
+      html += '<div style="font-size:11px;color:var(--muted);margin-top:3px">'+r.os_pontuais+' OS pontuais · '+r.dias_destaque+' dias destaque</div>'
+      // Barra de pontualidade
+      html += '<div style="margin-top:6px;background:var(--border);border-radius:4px;height:3px;width:180px">'
+      const pctD = Math.min(r.dias_destaque*5,100)
+      html += '<div style="background:gold;width:'+pctD+'%;height:3px;border-radius:4px"></div></div>'
+      html += '</div></div>'
+
+      // Direita
+      html += '<div style="text-align:right">'
+      html += '<div style="font-size:22px;font-weight:800;color:#2ecc71">'+r.pontos_total+' pts</div>'
+      html += '<div style="font-size:11px;background:#21262d;padding:4px 10px;border-radius:6px;margin-top:4px;display:inline-block">'
+      html += r.dias_destaque+' dias destaque · <span style="color:gold">+'+r.bonus_pts+' bônus pts</span></div>'
+      html += '<div style="font-size:11px;color:var(--muted);margin-top:3px">produção: '+r.pontos_producao+' pts</div>'
+      html += '</div>'
+      html += '</div>'
+    })
+
+    html += '</div>'
     el.innerHTML = html
 
   } catch(e){
