@@ -63,3 +63,39 @@ async def health():
         "operacao": os.getenv("OPERACAO"),
         "versao": "2.0.0"
     }
+
+@app.get("/api/logs")
+async def get_logs():
+    """Lê os logs dos crons e retorna as últimas linhas."""
+    import os
+    LOGS = {
+        "sync":      "/var/log/sais_sync.log",
+        "sync_full": "/var/log/sais_sync_full.log",
+        "estoque":   "/var/log/sais_estoque.log",
+        "auditoria": "/var/log/sais_auditoria.log",
+        "destaques": "/var/log/sais_destaques.log",
+    }
+    resultado = {}
+    for nome, path in LOGS.items():
+        try:
+            if os.path.exists(path):
+                with open(path, "r") as f:
+                    linhas = f.readlines()
+                # Últimas 30 linhas
+                ultimas = [l.rstrip() for l in linhas[-30:] if l.strip()]
+                # Info do arquivo
+                stat = os.stat(path)
+                from datetime import datetime
+                modificado = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+                resultado[nome] = {
+                    "linhas": ultimas,
+                    "total_linhas": len(linhas),
+                    "modificado": modificado,
+                    "tamanho": stat.st_size,
+                    "ok": True,
+                }
+            else:
+                resultado[nome] = {"ok": False, "linhas": [], "modificado": "—"}
+        except Exception as e:
+            resultado[nome] = {"ok": False, "erro": str(e), "linhas": []}
+    return resultado

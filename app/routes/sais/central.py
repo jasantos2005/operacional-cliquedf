@@ -365,3 +365,119 @@ async def get_instalacao_com_suporte():
         print(f"ERRO instalacao-com-suporte IXC: {e}")
         import traceback; traceback.print_exc()
         return {"casos": [], "total": 0, "erro": str(e)}
+
+@router.get("/sla")
+async def get_sla_dashboard():
+    """Dashboard de SLA: já estouradas + prestes a estourar + ranking técnicos."""
+    import os as _os, pymysql
+    from datetime import datetime as _dt, timedelta as _td
+    from dotenv import load_dotenv
+    load_dotenv("/opt/automacoes/cliquedf/operacional/.env")
+
+    TECS_IDS = "13,17,11,38,47,50,35,56,55,46,19"
+
+    # Mapa de categoria por assunto (do banco local)
+    import sqlite3
+    db = sqlite3.connect("/opt/automacoes/cliquedf/operacional/prod_local.db")
+    db.row_factory = sqlite3.Row
+    cat_map = {}
+    for r in db.execute("SELECT ixc_os_id, categoria FROM prod_os_cache").fetchall():
+        cat_map[r["ixc_os_id"]] = r["categoria"]
+    db.close()
+
+    try:
+        ixc = pymysql.connect(
+            host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT",3306)),
+            user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
+            database=_os.getenv("DB_NAME"),
+            cursorclass=pymysql.cursors.DictCursor, connect_timeout=10
+        )
+
+        with ixc.cursor() as cur:
+            # Já estouradas
+            cur.execute(f"""
+                SELECT c.id, f.funcionario AS tecnico, f.id AS func_id,
+                       a.assunto, c.status, c.status_sla,
+                       c.data_abertura, c.data_prazo_limite,
+                       TIMESTAMPDIFF(HOUR, c.data_prazo_limite, NOW()) AS horas_atraso,
+                       TIMESTAMPDIFF(DAY, c.data_abertura, NOW()) AS dias_aberto,
+                       (SELECT COUNT(*) FROM su_oss_chamado_mensagem m WHERE m.id_chamado=c.id) AS interacoes
+                FROM su_oss_chamado c
+                LEFT JOIN funcionarios f ON f.id=c.id_tecnico
+                LEFT JOIN su_oss_assunto a ON a.id=c.id_assunto
+                WHERE c.id_tecnico IN ({TECS_IDS})
+                  AND c.status NOT IN ('F','C')
+                  AND c.data_prazo_limite < NOW()
+                  AND c.data_prazo_limite > '2020-01-01'
+                ORDER BY c.data_prazo_limite ASC
+                LIMIT 50
+            """)
+            estouradas = cur.fetchall()
+
+            # Prestes a estourar (próximas 4h)
+            cur.execute(f"""
+                SELECT c.id, f.funcionario AS tecnico, f.id AS func_id,
+                       a.assunto, c.status, c.data_abertura, c.data_prazo_limite,
+                       TIMESTAMPDIFF(MINUTE, NOW(), c.data_prazo_limite) AS min_restantes,
+                       TIMESTAMPDIFF(DAY, c.data_abertura, NOW()) AS dias_aberto,
+                       (SELECT COUNT(*) FROM su_oss_chamado_mensagem m WHERE m.id_chamado=c.id) AS interacoes
+                FROM su_oss_chamado c
+                LEFT JOIN funcionarios f ON f.id=c.id_tecnico
+                LEFT JOIN su_oss_assunto a ON a.id=c.id_assunto
+                WHERE c.id_tecnico IN ({TECS_IDS})
+                  AND c.status NOT IN ('F','C')
+                  AND c.data_prazo_limite > NOW()
+                  AND c.data_prazo_limite <= DATE_ADD(NOW(), INTERVAL 4 HOUR)
+                ORDER BY c.data_prazo_limite ASC
+                LIMIT 20
+            """)
+            prestes = cur.fetchall()
+
+        ixc.close()
+
+        # Ranking de técnicos com mais estouros
+        ranking_tec = {}
+        for r in estouradas:
+            tec = r["tecnico"] or "Desconhecido"
+            if tec not in ranking_tec:
+                ranking_tec[tec] = {"nome": tec, "total": 0, "critico": 0}
+            ranking_tec[tec]["total"] += 1
+            if int(r["horas_atraso"] or 0) >= 24:
+                ranking_tec[tec]["critico"] += 1
+
+        ranking_final = sorted(ranking_tec.values(), key=lambda x: -x["total"])
+
+        def fmt_os(r, tipo="estourada"):
+            cat = cat_map.get(r["id"], "outros")
+            base = {
+                "os_id":     r["id"],
+                "tecnico":   r["tecnico"] or "—",
+                "assunto":   r["assunto"] or "—",
+                "status":    r["status"] or "—",
+                "categoria": cat,
+                "abertura":  str(r["data_abertura"])[:16] if r["data_abertura"] else "—",
+                "prazo":     str(r["data_prazo_limite"])[:16] if r["data_prazo_limite"] else "—",
+                "interacoes": int(r.get("interacoes") or 0),
+            }
+            if tipo == "estourada":
+                base["horas_atraso"] = int(r["horas_atraso"] or 0)
+                base["dias_aberto"]  = int(r["dias_aberto"] or 0)
+            else:
+                base["min_restantes"] = int(r["min_restantes"] or 0)
+            return base
+
+        return {
+            "resumo": {
+                "total_estouradas": len(estouradas),
+                "total_prestes":    len(prestes),
+                "criticas":         sum(1 for r in estouradas if int(r["horas_atraso"] or 0) >= 24),
+            },
+            "estouradas": [fmt_os(r, "estourada") for r in estouradas],
+            "prestes":    [fmt_os(r, "prestes")   for r in prestes],
+            "ranking":    ranking_final,
+        }
+
+    except Exception as e:
+        print(f"ERRO sla: {e}")
+        import traceback; traceback.print_exc()
+        return {"erro": str(e), "estouradas": [], "prestes": [], "ranking": []}

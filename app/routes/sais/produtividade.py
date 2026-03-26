@@ -517,3 +517,168 @@ async def get_destaques(
         "total_bonus":   sum(r["bonus_pts"] for r in ranking),
         "total_tecnicos": len(ranking),
     }
+
+
+@router.get("/comportamento")
+async def get_comportamento(
+    data_inicio: Optional[str] = Query(None),
+    data_fim:    Optional[str] = Query(None),
+):
+    """Score de comportamento por técnico."""
+    import os as _os, pymysql
+    from datetime import datetime as _dt, timedelta as _td
+    from dotenv import load_dotenv
+    load_dotenv("/opt/automacoes/cliquedf/operacional/.env")
+
+    hoje = (_dt.now() + _td(hours=-3)).strftime("%Y-%m-%d")
+    di = data_inicio or hoje[:7] + "-01"
+    df = data_fim    or hoje
+
+    db = get_db()
+    TECS_IDS = "13,17,11,38,47,50,35,56,55,46,19"
+
+    # Dados do banco local
+    tecs = db.execute("""
+        SELECT t.id, t.nome, t.ixc_funcionario_id,
+               -- Pontualidade: dias destaque
+               (SELECT COUNT(*) FROM sais_destaques d
+                WHERE d.tecnico_id=t.id AND d.data BETWEEN ? AND ?) AS dias_destaque,
+               -- Qualidade: % sem pendências
+               (SELECT ROUND(SUM(CASE WHEN p.pendencias='' THEN 1.0 ELSE 0 END)*100/COUNT(*),1)
+                FROM sais_os_pontuacao p
+                JOIN prod_os_cache o ON o.ixc_os_id=p.os_id
+                WHERE p.tecnico_id=t.ixc_funcionario_id
+                  AND DATE(o.data_fechamento,'+3 hours') BETWEEN ? AND ?) AS qualidade_pct,
+               -- Pontuação total
+               (SELECT COALESCE(SUM(p.pontos_final),0)
+                FROM sais_os_pontuacao p
+                JOIN prod_os_cache o ON o.ixc_os_id=p.os_id
+                WHERE p.tecnico_id=t.ixc_funcionario_id
+                  AND DATE(o.data_fechamento,'+3 hours') BETWEEN ? AND ?) AS pontos_total,
+               -- Total OS
+               (SELECT COUNT(*) FROM prod_os_cache o
+                WHERE o.tecnico_id=t.id AND o.status='finalizada'
+                  AND DATE(o.data_fechamento,'+3 hours') BETWEEN ? AND ?) AS total_os,
+               -- Nota supervisor (média)
+               (SELECT ROUND(AVG(n.estrelas),1) FROM sais_comportamento_notas n
+                WHERE n.tecnico_id=t.id AND n.data BETWEEN ? AND ?) AS nota_supervisor,
+               (SELECT COUNT(*) FROM sais_comportamento_notas n
+                WHERE n.tecnico_id=t.id AND n.data BETWEEN ? AND ?) AS qtd_avaliacoes
+        FROM prod_tecnicos t
+        ORDER BY t.nome
+    """, (di,df, di,df, di,df, di,df, di,df, di,df)).fetchall()
+
+    db.close()
+
+    # Busca SLA estouradas por técnico do IXC
+    sla_por_tec = {}
+    try:
+        ixc = pymysql.connect(
+            host=_os.getenv("DB_HOST"), port=int(_os.getenv("DB_PORT",3306)),
+            user=_os.getenv("DB_USER"), password=_os.getenv("DB_PASS"),
+            database=_os.getenv("DB_NAME"),
+            cursorclass=pymysql.cursors.DictCursor, connect_timeout=8
+        )
+        with ixc.cursor() as cur:
+            cur.execute(f"""
+                SELECT f.id AS func_id, COUNT(*) AS sla_estourado
+                FROM su_oss_chamado c
+                JOIN funcionarios f ON f.id=c.id_tecnico
+                WHERE c.id_tecnico IN ({TECS_IDS})
+                  AND c.status NOT IN ('F','C')
+                  AND c.data_prazo_limite < NOW()
+                  AND c.data_prazo_limite > '2020-01-01'
+                GROUP BY f.id
+            """)
+            for r in cur.fetchall():
+                sla_por_tec[r["func_id"]] = r["sla_estourado"]
+        ixc.close()
+    except:
+        pass
+
+    resultado = []
+    for t in tecs:
+        d = dict(t)
+        qual  = float(d["qualidade_pct"] or 0)
+        dest  = int(d["dias_destaque"] or 0)
+        pontos = int(d["pontos_total"] or 0)
+        total_os = int(d["total_os"] or 0)
+        nota_sup = float(d["nota_supervisor"] or 0)
+        sla_est  = sla_por_tec.get(d["ixc_funcionario_id"], 0)
+
+        if total_os == 0:
+            continue
+
+        # Score composto (0-100)
+        # Qualidade: 30%
+        score_qual = qual * 0.30
+        # Pontualidade: 25% (baseado em destaques vs dias trabalhados, max 20 dias)
+        pct_pont = min(dest / 20 * 100, 100)
+        score_pont = pct_pont * 0.25
+        # Retrabalho: 20% (sem dados diretos, usa qualidade como proxy)
+        score_ret = qual * 0.20
+        # SLA: 15% (penaliza por SLA estourado)
+        sla_pen = min(sla_est * 5, 100)
+        score_sla = (100 - sla_pen) * 0.15
+        # Nota supervisor: 10%
+        score_sup = (nota_sup / 5 * 100) * 0.10 if nota_sup > 0 else 5.0  # neutro se sem nota
+
+        score_total = round(score_qual + score_pont + score_ret + score_sla + score_sup, 1)
+        conceito = "EXCELENTE" if score_total>=85 else "BOM" if score_total>=70 else "REGULAR" if score_total>=55 else "ATENÇÃO"
+        cor = "#00e5a0" if score_total>=85 else "#00d4ff" if score_total>=70 else "#ffb83f" if score_total>=55 else "#ff4d6a"
+
+        resultado.append({
+            "tecnico_id":     d["id"],
+            "nome":           d["nome"],
+            "score":          score_total,
+            "conceito":       conceito,
+            "cor":            cor,
+            "qualidade_pct":  qual,
+            "dias_destaque":  dest,
+            "pct_pontualidade": round(pct_pont, 1),
+            "pontos_total":   pontos,
+            "total_os":       total_os,
+            "sla_estourado":  sla_est,
+            "nota_supervisor": nota_sup,
+            "qtd_avaliacoes": int(d["qtd_avaliacoes"] or 0),
+            "detalhes": {
+                "score_qualidade":    round(score_qual, 1),
+                "score_pontualidade": round(score_pont, 1),
+                "score_sla":          round(score_sla, 1),
+                "score_supervisor":   round(score_sup, 1),
+            }
+        })
+
+    resultado.sort(key=lambda x: -x["score"])
+    for i, r in enumerate(resultado):
+        r["posicao"] = i + 1
+
+    return {
+        "periodo": {"data_inicio": di, "data_fim": df},
+        "ranking": resultado,
+    }
+
+
+@router.post("/comportamento/nota")
+async def salvar_nota_comportamento(
+    tecnico_id: int   = Query(...),
+    data:       str   = Query(...),
+    estrelas:   int   = Query(...),
+    obs:        Optional[str] = Query(None),
+    supervisor: Optional[str] = Query(None),
+):
+    """Salva nota do supervisor para um técnico."""
+    if not 1 <= estrelas <= 5:
+        return {"erro": "Estrelas deve ser entre 1 e 5"}
+    db = get_db()
+    db.execute("""
+        INSERT INTO sais_comportamento_notas (tecnico_id,data,estrelas,obs,supervisor)
+        VALUES (?,?,?,?,?)
+        ON CONFLICT(tecnico_id,data) DO UPDATE SET
+          estrelas=excluded.estrelas, obs=excluded.obs,
+          supervisor=excluded.supervisor,
+          criado_em=datetime('now','-3 hours')
+    """, (tecnico_id, data, estrelas, obs, supervisor))
+    db.commit()
+    db.close()
+    return {"ok": True}
