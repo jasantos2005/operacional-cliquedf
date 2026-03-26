@@ -66,7 +66,7 @@ def rodar():
                       total_os=excluded.total_os,
                       os_pontuais=excluded.os_pontuais,
                       bonus_pts=15
-                """, (hoje, row["id"], row["nome"], total, fins))
+                """, (hoje, row["id"], row["nome"], int(total), int(fins)))
                 salvos += 1
                 print(f"  ⭐ {row['nome']} — {fins}/{total} OS → +15 pts")
 
