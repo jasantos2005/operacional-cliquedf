@@ -448,6 +448,7 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
         <div class="sb-item" onclick="nav('ranking','produtividade')"><span class="dot"></span> Ranking Técnicos</div>
         <div class="sb-item" onclick="nav('prod-assunto','produtividade')"><span class="dot"></span> Por Tipo de OS</div>
         <div class="sb-item" onclick="nav('prod-destaques','produtividade')"><span class="dot"></span> 🏆 Destaques</div>
+        <div class="sb-item" onclick="nav('prod-premiacao','produtividade')"><span class="dot"></span> 🥇 Premiação</div>
         <div class="sb-item" onclick="nav('prod-eficiencia','produtividade')"><span class="dot"></span> Análise de Eficiência</div>
         <div class="sb-item" onclick="nav('prod-efic-op','produtividade')"><span class="dot"></span> Eficiência Operacional</div>
       </div>
@@ -694,6 +695,16 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
           Selecione 1 <strong style="color:var(--text)">técnico</strong> no filtro do topo e clique em <strong style="color:var(--cyan)">Aplicar</strong>.
         </div>
       </div>
+    </div>
+
+    <div class="page" id="page-prod-premiacao">
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">🥇 <span>Premiação</span></div>
+          <div class="pg-sub">Pódio do período · pontuação + bônus de pontualidade</div>
+        </div>
+      </div>
+      <div id="premiacao-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
     <div class="page" id="page-prod-destaques">
@@ -1025,6 +1036,7 @@ const PAGES_CFG = {
   'reagendamentos':    {title:'Reagendamentos',         path:'/agenda/reagendamentos',        load:loadReagendamentos},
   'ranking':           {title:'Ranking Técnicos',       path:'/produtividade/ranking',        load:()=>loadRanking(null)},
   'prod-assunto':      {title:'Produtividade por Tipo', path:'/produtividade/por-assunto',    load:loadProdAssunto},
+  'prod-premiacao':    {title:'Premiação',             path:'/produtividade/premiacao',      load:loadPremiacao},
   'prod-destaques':    {title:'Ranking Destaques',     path:'/produtividade/destaques',      load:loadDestaques},
   'prod-eficiencia':   {title:'Análise de Eficiência',  path:'/produtividade/eficiencia',     load:loadEficiencia},
   'prod-efic-op':      {title:'Eficiência Operacional', path:'/produtividade/eficiencia-op',   load:loadEficOp},
@@ -1244,7 +1256,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-destaques','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
+  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-destaques','prod-premiacao','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -2528,6 +2540,134 @@ async function loadEstoqueTecnico(){
 // ═══════════════════════════════════════════════════
 // RANKING DE DESTAQUES — BÔNUS PONTUALIDADE
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// PREMIAÇÃO — PÓDIO TOP 3
+// ═══════════════════════════════════════════════════
+const FOTOS_TECS = {"ALEXANDRE": "/static/fotos/alexandre.jpeg", "DENISON": "/static/fotos/denison.jpeg", "JONATHAN": "/static/fotos/jose marconde.jpeg", "JOSEILTON": "/static/fotos/Joseilton.jpeg", "LEANDRO": "/static/fotos/leandro.jpeg", "RICARDO - ILHA": "/static/fotos/Ricardo.jpeg", "RODRIGO SANTOS": "/static/fotos/rodrigo.jpeg", "ROGERIO": "/static/fotos/Richardson.jpeg", "VICTOR FERREIRA DA SILVA": "/static/fotos/Victor.jpeg", "WELLINGTON PIAÇABUÇU": "/static/fotos/Wellington.jpeg", "JOSE MARCONDES": "/static/fotos/jose marconde.jpeg"}
+
+async function loadPremiacao(){
+  const el = document.getElementById('premiacao-content')
+  if(!el) return
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando premiação...</div>'
+
+  const di = document.getElementById('f-data-inicio')?.value || ''
+  const df = document.getElementById('f-data-fim')?.value || ''
+
+  try {
+    // Busca ranking de pontuação + destaques
+    let urlRank = '/api/sais/pontuacao/ranking'
+    let urlDest = '/api/sais/produtividade/destaques'
+    const p = []
+    if(di) p.push('data_inicio='+di)
+    if(df) p.push('data_fim='+df)
+    if(p.length){ urlRank+='?'+p.join('&'); urlDest+='?'+p.join('&') }
+
+    const [rank, dest] = await Promise.all([apiFetch(urlRank), apiFetch(urlDest)])
+
+    // Mescla pontuação + bônus
+    const rankMap = {}
+    ;(rank.ranking||[]).forEach(function(r){
+      rankMap[r.nome] = r.total_pontos || 0
+    })
+    const destMap = {}
+    ;(dest.ranking||[]).forEach(function(r){
+      destMap[r.nome] = r.bonus_pts || 0
+    })
+
+    // Une todos os técnicos
+    const todos = {}
+    Object.keys(rankMap).forEach(function(n){
+      todos[n] = (todos[n]||0) + rankMap[n]
+    })
+    Object.keys(destMap).forEach(function(n){
+      todos[n] = (todos[n]||0) + destMap[n]
+    })
+
+    // Ordena por total
+    const sorted = Object.entries(todos)
+      .map(function(e){ return {nome:e[0], total:e[1], producao:rankMap[e[0]]||0, bonus:destMap[e[0]]||0} })
+      .sort(function(a,b){ return b.total-a.total })
+
+    const top3 = sorted.slice(0,3)
+    const resto = sorted.slice(3)
+
+    // Mês do período
+    const mesNome = di ? new Date(di+'T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}) : 'Período selecionado'
+
+    let html = ''
+
+    // Título
+    html += '<div style="text-align:center;margin-bottom:32px">'
+    html += '<div style="font-size:28px;font-weight:800;letter-spacing:-.02em">🏆 Destaque de <span style="color:gold">'+mesNome.charAt(0).toUpperCase()+mesNome.slice(1)+'</span></div>'
+    html += '<div style="font-size:13px;color:var(--muted);margin-top:6px">Pontuação de produção + bônus de pontualidade</div>'
+    html += '</div>'
+
+    // PÓDIO — estilo translateY
+    const ordemPodio = [1, 0, 2] // 2º, 1º, 3º (visualmente)
+    const bordas = ['silver', 'gold', '#cd7f32']
+    const emojis = ['🥇','🥈','🥉']
+    const translates = ['translateY(-20px)', 'translateY(-60px) scale(1.08)', 'translateY(20px)']
+
+    html += '<div style="display:flex;justify-content:center;align-items:flex-end;gap:40px;margin-bottom:40px;padding-top:80px;flex-wrap:wrap">'
+
+    ordemPodio.forEach(function(idx){
+      const t = top3[idx]
+      if(!t) return
+      const foto = FOTOS_TECS[t.nome] || ''
+      const cor = bordas[idx]
+      const tr = translates[idx]
+      const emoji = emojis[idx]
+
+      html += '<div style="text-align:center;transform:'+tr+';transition:.3s">'
+
+      // Foto
+      if(foto){
+        html += '<img src="'+foto+'" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid '+cor+';box-shadow:0 0 24px '+cor+'66;display:block;margin:0 auto">'
+      } else {
+        html += '<div style="width:120px;height:120px;border-radius:50%;background:var(--s2);border:4px solid '+cor+';display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto">👤</div>'
+      }
+
+      html += '<div style="font-size:22px;margin-top:8px">'+emoji+'</div>'
+      html += '<div style="font-weight:800;font-size:14px;margin-top:4px;letter-spacing:.05em">'+t.nome.split(' ')[0]+'</div>'
+      html += '<div style="font-size:24px;font-weight:800;color:#2ecc71;margin-top:4px">'+t.total+'</div>'
+      if(t.bonus>0){
+        html += '<div style="background:#111;border-radius:6px;padding:4px 8px;font-size:12px;margin-top:5px;display:inline-block;color:gold">+'+t.bonus+' bônus</div>'
+      }
+      html += '</div>'
+    })
+
+    html += '</div>'
+
+    // Resto do ranking
+    if(resto.length>0){
+      html += '<div style="max-width:600px;margin:0 auto">'
+      html += '<div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;text-align:center">CLASSIFICAÇÃO GERAL</div>'
+      resto.forEach(function(t,i){
+        const foto = FOTOS_TECS[t.nome] || ''
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--card);border-radius:10px;margin-bottom:8px;border:1px solid var(--border)">'
+        html += '<div style="font-size:14px;font-weight:700;color:var(--muted);min-width:28px;text-align:center">'+(i+4)+'º</div>'
+        if(foto){
+          html += '<img src="'+foto+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border)">'
+        } else {
+          html += '<div style="width:40px;height:40px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>'
+        }
+        html += '<div style="flex:1"><div style="font-weight:700">'+t.nome+'</div>'
+        html += '<div style="font-size:11px;color:var(--muted)">produção: '+t.producao+' pts'+(t.bonus>0?' · bônus: +'+t.bonus+' pts':'')+'</div></div>'
+        html += '<div style="font-size:18px;font-weight:800;color:var(--cyan)">'+t.total+'</div>'
+        html += '</div>'
+      })
+      html += '</div>'
+    }
+
+    el.innerHTML = html
+
+  } catch(e){
+    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
+    console.error(e)
+  }
+}
+
 async function loadDestaques(){
   const el = document.getElementById('destaques-content')
   if(!el) return
