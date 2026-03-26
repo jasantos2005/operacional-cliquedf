@@ -2075,11 +2075,16 @@ async function loadLogs(){
       if(info.linhas && info.linhas.length > 0){
         html += '<div style="background:var(--bg);border-radius:6px;padding:10px;font-family:monospace;font-size:11px;max-height:160px;overflow-y:auto">'
         info.linhas.slice(-10).forEach(function(linha){
-          const corLinha = linha.includes('ERRO')||linha.includes('ERROR')?'var(--red)'
+          // Converte timestamps UTC para BRT nas linhas de log
+      const linhaConv = linha.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):(\d{2})/g, function(m,d,h,mi,s){
+        const dt = new Date(d+'T'+h+':'+mi+':'+s+'Z')
+        return dt.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).replace(',','')
+      })
+      const corLinha = linhaConv.includes('ERRO')||linhaConv.includes('ERROR')?'var(--red)'
             : linha.includes('✅')||linha.includes('concluído')||linha.includes('salvas')?'var(--green)'
             : linha.includes('⚠️')||linha.includes('WARN')?'var(--amber)'
             : 'var(--muted)'
-          html += '<div style="color:'+corLinha+';margin-bottom:2px">'+linha+'</div>'
+          html += '<div style="color:'+corLinha+';margin-bottom:2px">'+linhaConv+'</div>'
         })
         html += '</div>'
       } else {

@@ -13,6 +13,12 @@ sys.path.insert(0, "/opt/automacoes/cliquedf/operacional")
 from app.engines.audit_engine import rodar_auditoria
 from app.engines.event_engine import detectar_e_registrar
 import logging
+import logging, datetime as _dtmod
+class _BRTFormatter(logging.Formatter):
+    def converter(self, ts):
+        return (_dtmod.datetime.utcfromtimestamp(ts) + _dtmod.timedelta(hours=-3)).timetuple()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logging.getLogger().handlers[0].formatter = _BRTFormatter('%(asctime)s %(message)s', '%Y-%m-%d %H:%M:%S')
 
 log = logging.getLogger("CRON_AUDIT")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [CRON] %(message)s",

@@ -1,3 +1,9 @@
+import logging, datetime as _dtmod
+class _BRTFormatter(logging.Formatter):
+    def converter(self, ts):
+        return (_dtmod.datetime.utcfromtimestamp(ts) + _dtmod.timedelta(hours=-3)).timetuple()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+logging.getLogger().handlers[0].formatter = _BRTFormatter('%(asctime)s %(message)s', '%Y-%m-%d %H:%M:%S')
 #!/usr/bin/env python3
 """
 cron_destaques.py

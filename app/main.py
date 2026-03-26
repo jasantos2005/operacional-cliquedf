@@ -86,7 +86,9 @@ async def get_logs():
                 # Info do arquivo
                 stat = os.stat(path)
                 from datetime import datetime
-                modificado = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+                from datetime import timezone, timedelta
+                brt = timezone(timedelta(hours=-3))
+                modificado = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).astimezone(brt).strftime("%Y-%m-%d %H:%M:%S")
                 resultado[nome] = {
                     "linhas": ultimas,
                     "total_linhas": len(linhas),
