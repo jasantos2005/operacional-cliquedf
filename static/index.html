@@ -433,6 +433,9 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
         <span class="ic">📅</span> Agenda Inteligente <span class="arrow">›</span>
       </div>
       <div class="sb-sub" id="grp-agenda">
+        <div class="sb-item" onclick="nav('agenda-monitor','agenda')"><span class="dot"></span> 📡 Monitor ao Vivo</div>
+        <div class="sb-item" onclick="nav('agenda-reincid','agenda')"><span class="dot"></span> 🔁 Reincidências</div>
+        <div class="sb-item" onclick="nav('agenda-qualidade','agenda')"><span class="dot"></span> 🔬 Qualidade Pós-Inst.</div>
         <div class="sb-item" onclick="nav('agenda-dia','agenda')"><span class="dot"></span> Agenda do dia</div>
         <div class="sb-item" onclick="nav('agenda-futura','agenda')"><span class="dot"></span> Agenda futura</div>
         <div class="sb-item" onclick="nav('reagendamentos','agenda')"><span class="dot"></span> Reagendamentos</div>
@@ -635,6 +638,21 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     </div>
 
     <!-- ══ AGENDA DO DIA ════════════════════════ -->
+    <div class="page" id="page-agenda-monitor">
+      <div class="pg-hd"><div><div class="pg-title">📡 Monitor <span>ao Vivo</span></div><div class="pg-sub">Acompanhamento em tempo real do cumprimento da agenda</div></div><div id="monitor-agora" style="font-size:13px;color:var(--cyan);font-weight:700"></div></div>
+      <div id="monitor-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <div class="page" id="page-agenda-reincid">
+      <div class="pg-hd"><div><div class="pg-title">🔁 <span>Reincidências</span></div><div class="pg-sub">Clientes com OS abertas que tiveram problemas recentes · risco de cancelamento</div></div></div>
+      <div id="reincid-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
+    <div class="page" id="page-agenda-qualidade">
+      <div class="pg-hd"><div><div class="pg-title">🔬 Qualidade <span>Pós-Instalação</span></div><div class="pg-sub">Clientes instalados nos últimos 60 dias que abriram OS de suporte</div></div></div>
+      <div id="qualidade-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+    </div>
+
     <div class="page" id="page-agenda-dia">
       <div class="pg-hd">
         <div><div class="pg-title">Agenda <span>do Dia</span></div><div class="pg-sub" id="agenda-dia-sub">Carregando...</div></div>
@@ -1031,6 +1049,9 @@ const PAGES_CFG = {
   'sla-risco':         {title:'Risco de SLA',           path:'/central/sla-risco',            load:loadSlaRisco},
   'tecnicos-ociosos':  {title:'Técnicos Ociosos',       path:'/central/tecnicos-ociosos',     load:loadOciosos},
   'alertas':           {title:'Central de Alertas',     path:'/central/alertas',              load:loadAlertasFull},
+  'agenda-monitor':    {title:'Monitor ao Vivo',         path:'/agenda/monitor',              load:loadMonitorAgenda},
+  'agenda-reincid':    {title:'Reincidencias',            path:'/agenda/reincidencias',         load:loadReincidencias},
+  'agenda-qualidade':  {title:'Qualidade Pos-Instalacao', path:'/agenda/qualidade',             load:loadQualidadeInst},
   'agenda-dia':        {title:'Agenda do Dia',          path:'/agenda/dia',                   load:()=>loadAgendaDia(0)},
   'agenda-futura':     {title:'Agenda Futura',          path:'/agenda/futura',                load:loadAgendaFutura},
   'reagendamentos':    {title:'Reagendamentos',         path:'/agenda/reagendamentos',        load:loadReagendamentos},
@@ -1150,14 +1171,20 @@ conectarWS()
 // ═══════════════════════════════════════════════════
 async function syncAgora(){
   const btn=document.querySelector('.btn-sync')
+  if(!btn) return
   btn.textContent='↻ Sincronizando...'
   btn.disabled=true
-  await fetch('/api/sync',{method:'POST'}).catch(()=>{})
-  setTimeout(()=>{
-    btn.textContent='↻ Sync IXC'
-    btn.disabled=false
-    if(PAGES_CFG[currentPage]?.load) PAGES_CFG[currentPage].load()
-  },1500)
+  try {
+    btn.textContent='↻ Buscando OS...'
+    await fetch('/api/sais/visao-geral/sync',{method:'POST'}).catch(()=>{})
+    btn.textContent='↻ Sync estoque...'
+    await fetch('/api/sais/auditoria/estoque-sync',{method:'POST'}).catch(()=>{})
+    btn.textContent='↻ Atualizando...'
+    if(currentPage==='agenda-monitor' && typeof _renderMonitor==='function') await _renderMonitor()
+    if(PAGES_CFG[currentPage]?.load) await PAGES_CFG[currentPage].load()
+    btn.textContent='✅ Sincronizado!'
+  } catch(e){ btn.textContent='❌ Erro' }
+  setTimeout(function(){ btn.textContent='↻ Sync IXC'; btn.disabled=false }, 2000)
 }
 
 // ═══════════════════════════════════════════════════
@@ -1256,7 +1283,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-destaques','prod-premiacao','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
+  const paginasReativas = ['dashboard','ranking','agenda-monitor','agenda-reincid','agenda-qualidade','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-destaques','prod-premiacao','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -1910,6 +1937,304 @@ async function loadReagendamentos(){
 // ═══════════════════════════════════════════════════
 // RANKING / PRODUTIVIDADE
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════
+// MONITOR DE AGENDA AO VIVO
+// ═══════════════════════════════════════════════════
+let _monitorInterval = null
+async function loadMonitorAgenda(){
+  const el = document.getElementById('monitor-content')
+  if(!el) return
+  if(_monitorInterval) clearInterval(_monitorInterval)
+  _monitorInterval = setInterval(function(){ if(currentPage==='agenda-monitor') _renderMonitor() }, 900000) // 15 minutos
+  await _renderMonitor()
+}
+async function _renderMonitor(){
+  const el = document.getElementById('monitor-content')
+  if(!el) return
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando...</div>'
+  const di = document.getElementById('f-data-inicio')?.value || ''
+  const url = '/api/sais/agenda/monitor' + (di ? '?data='+di : '')
+  try {
+    const d = await apiFetch(url)
+    if(d.erro){ el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+d.erro+'</div>'; return }
+    const agora = d.agora || '--:--'
+    const agoraEl = document.getElementById('monitor-agora')
+    if(agoraEl) agoraEl.textContent = 'Atualizado: '+agora+' · '+d.data
+    const tecs = d.tecnicos || []
+    const totOS=tecs.reduce(function(s,t){return s+t.total},0)
+    const totFin=tecs.reduce(function(s,t){return s+t.finalizadas},0)
+    const totExec=tecs.reduce(function(s,t){return s+t.execucao},0)
+    const totAtr=tecs.reduce(function(s,t){return s+t.atrasadas},0)
+    const pctG=totOS>0?Math.round(totFin/totOS*100):0
+    const corG=pctG>=80?'var(--green)':pctG>=50?'var(--amber)':'var(--red)'
+    let html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px">'
+    html+='<div class="kpi" style="--ac:'+corG+'"><div class="kpi-val">'+pctG+'%</div><div class="kpi-lbl">Cumprimento geral</div></div>'
+    html+='<div class="kpi" style="--ac:var(--green)"><div class="kpi-val">'+totFin+'</div><div class="kpi-lbl">Finalizadas</div></div>'
+    html+='<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+totExec+'</div><div class="kpi-lbl">Em execução</div></div>'
+    html+='<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+totAtr+'</div><div class="kpi-lbl">Atrasadas</div></div>'
+    html+='<div class="kpi" style="--ac:var(--muted)"><div class="kpi-val">'+totOS+'</div><div class="kpi-lbl">Total agenda</div></div>'
+    html+='</div>'
+    tecs.forEach(function(t){
+      const corPct=t.pct>=80?'var(--green)':t.pct>=50?'var(--amber)':'var(--red)'
+      const icoPrev=t.previsao==='FINALIZADO'?'🏁':t.previsao==='NO PRAZO'?'✅':'⚠️'
+      html+='<div class="card" style="margin-bottom:12px">'
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      html+='<div style="font-weight:800;font-size:14px">'+t.tecnico.split(' ')[0]+'</div>'
+      html+='<div style="text-align:right"><div style="font-size:20px;font-weight:800;color:'+corPct+'">'+t.pct+'%</div>'
+      html+='<div style="font-size:11px;color:'+corPct+'">'+icoPrev+' '+t.previsao+'</div></div></div>'
+      html+='<div style="background:var(--border);border-radius:4px;height:5px;margin-bottom:10px">'
+      html+='<div style="background:'+corPct+';width:'+t.pct+'%;height:5px;border-radius:4px"></div></div>'
+      html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">'
+      html+='<thead><tr style="color:var(--muted);border-bottom:1px solid var(--border)">'
+      html+='<th style="padding:5px 4px">Prazo</th><th style="padding:5px 4px">Serviço</th><th style="padding:5px 4px">Cliente</th>'
+      html+='<th style="padding:5px 4px;text-align:center">Assumiu</th><th style="padding:5px 4px;text-align:center">Fechou</th><th style="padding:5px 4px;text-align:center">Status</th>'
+      html+='</tr></thead><tbody>'
+      const stMap={finalizada:{cor:'var(--green)',ico:'✅'},execucao:{cor:'var(--cyan)',ico:'⚙️'},assumida:{cor:'var(--amber)',ico:'👋'},atrasada:{cor:'var(--red)',ico:'⚠️'},agendada:{cor:'var(--muted)',ico:'🗓️'}}
+      t.os.forEach(function(o){
+        const st=stMap[o.status]||stMap.agendada
+        html+='<tr style="border-bottom:1px solid rgba(255,255,255,.03)">'
+        html+='<td style="padding:5px 4px;font-weight:700">'+o.prazo+'</td>'
+        html+='<td style="padding:5px 4px;max-width:130px">'+o.servico.substring(0,20)+'</td>'
+        html+='<td style="padding:5px 4px;color:var(--muted)">'+o.cliente.substring(0,16)+'</td>'
+        html+='<td style="padding:5px 4px;text-align:center;color:var(--muted)">'+o.assumido+'</td>'
+        html+='<td style="padding:5px 4px;text-align:center;color:var(--muted)">'+o.fechamento+'</td>'
+        html+='<td style="padding:5px 4px;text-align:center;color:'+st.cor+';font-weight:700">'+st.ico+' '+o.status+'</td>'
+        html+='</tr>'
+      })
+      html+='</tbody></table></div></div>'
+    })
+    if(!tecs.length) html+='<div class="empty"><div class="empty-icon">📅</div>Nenhuma OS agendada</div>'
+    el.innerHTML=html
+  } catch(e){ el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>' }
+}
+
+// ═══════════════════════════════════════════════════
+// REINCIDÊNCIAS
+// ═══════════════════════════════════════════════════
+async function loadReincidencias(){
+  const el=document.getElementById('reincid-content')
+  if(!el) return
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Verificando reincidências...</div>'
+  const di=document.getElementById('f-data-inicio')?.value||''
+  const url='/api/sais/agenda/reincidencias?dias=45'+(di?'&data='+di:'')
+  try {
+    const d=await apiFetch(url)
+    if(d.erro){el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+d.erro+'</div>';return}
+    const lista=d.reincidencias||[]
+    let html=''
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px">'
+    html+='<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+(d.alto_risco||0)+'</div><div class="kpi-lbl">Alto risco</div></div>'
+    html+='<div class="kpi" style="--ac:var(--amber)"><div class="kpi-val">'+(d.medio_risco||0)+'</div><div class="kpi-lbl">Médio risco</div></div>'
+    html+='<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+(d.total||0)+'</div><div class="kpi-lbl">Total</div></div>'
+    html+='<div class="kpi" style="--ac:var(--muted)"><div class="kpi-val">45</div><div class="kpi-lbl">Dias verificados</div></div>'
+    html+='</div>'
+    if(!lista.length){
+      html+='<div class="card" style="text-align:center;padding:40px"><div style="font-size:40px">✅</div><div style="font-weight:700;font-size:16px;margin-top:12px">Nenhuma reincidência</div></div>'
+      el.innerHTML=html; return
+    }
+    html+='<div class="card"><div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px">Clientes com histórico de problemas</div>'
+    html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+    html+='<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted)">'
+    html+='<th style="padding:8px 6px">Risco</th><th style="padding:8px 6px">OS</th><th style="padding:8px 6px">Contrato</th>'
+    html+='<th style="padding:8px 6px">Cliente</th><th style="padding:8px 6px">Técnico</th><th style="padding:8px 6px">Serviço</th>'
+    html+='<th style="padding:8px 6px;text-align:center">Abertura</th><th style="padding:8px 6px;text-align:center">Dias</th>'
+    html+='<th style="padding:8px 6px;text-align:center">SLA</th><th style="padding:8px 6px;text-align:center">Inter.</th>'
+    html+='<th style="padding:8px 6px;text-align:center">Ocorr.</th><th style="padding:8px 6px;text-align:center">Ações</th>'
+    html+='</tr></thead><tbody>'
+    window._reincidLista=lista
+    lista.forEach(function(r,idx){
+      const bg=r.risco==='ALTO'?'rgba(255,77,79,.04)':r.risco==='MÉDIO'?'rgba(255,184,63,.03)':''
+      const corSla=r.status_sla==='ESTOURADO'?'var(--red)':'var(--muted)'
+      const corDias=r.dias_aberto>30?'var(--red)':r.dias_aberto>15?'var(--amber)':'var(--muted)'
+      html+='<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:'+bg+'">'
+      html+='<td style="padding:8px 6px"><span style="color:'+r.risco_cor+';font-weight:800;font-size:11px">'+(r.risco==='ALTO'?'🔴':r.risco==='MÉDIO'?'🟡':'🔵')+' '+r.risco+'</span></td>'
+      html+='<td style="padding:8px 6px;font-family:monospace;font-size:11px"><span style="cursor:pointer;color:var(--cyan);text-decoration:underline" onclick="verDetalhesOS('+r.os_id+')">#'+r.os_id+'</span><span onclick="navigator.clipboard.writeText(\''+r.os_id+'\')" style="cursor:pointer;margin-left:4px;font-size:10px">📋</span></td>'
+      html+='<td style="padding:8px 6px;color:var(--muted);font-size:11px">'+r.id_contrato+'</td>'
+      html+='<td style="padding:8px 6px;font-weight:700;max-width:150px">'+r.cliente.substring(0,22)+'</td>'
+      html+='<td style="padding:8px 6px;color:var(--cyan)">'+r.tecnico.split(' ')[0]+'</td>'
+      html+='<td style="padding:8px 6px;color:var(--muted);font-size:11px">'+r.servico.substring(0,18)+'</td>'
+      html+='<td style="padding:8px 6px;text-align:center;font-size:11px;color:var(--muted)">'+r.abertura+'</td>'
+      html+='<td style="padding:8px 6px;text-align:center;font-weight:700;color:'+corDias+'">'+r.dias_aberto+'d</td>'
+      html+='<td style="padding:8px 6px;text-align:center;font-size:11px;color:'+corSla+'">'+(r.status_sla||'—')+'</td>'
+      html+='<td style="padding:8px 6px;text-align:center;color:var(--amber);font-weight:700">'+r.interacoes+'</td>'
+      html+='<td style="padding:8px 6px;text-align:center"><span style="color:'+r.risco_cor+';font-weight:800">'+r.qtd_historico+'x</span></td>'
+      html+='<td style="padding:8px 6px;text-align:center;display:flex;gap:4px">'
+      html+='<button onclick="verDetalhesOS('+r.os_id+')" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--cyan);border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700">OS</button>'
+      html+='<button onclick="verHistoricoReincid('+idx+')" style="background:rgba(255,184,63,.1);border:1px solid rgba(255,184,63,.2);color:var(--amber);border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700">Hist.</button>'
+      html+='</td></tr>'
+    })
+    html+='</tbody></table></div></div>'
+    el.innerHTML=html
+  } catch(e){ el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>' }
+}
+
+function verHistoricoReincid(idx){
+  const r=(window._reincidLista||[])[idx]||{}
+  const hist=r.historico||[]
+  const corRisco=r.risco==='ALTO'?'var(--red)':'var(--amber)'
+  let body='<div style="display:flex;flex-direction:column;gap:12px">'
+  body+='<div style="padding:12px;background:rgba(255,255,255,.04);border-radius:8px"><div style="font-size:15px;font-weight:800">'+r.cliente+'</div>'
+  body+='<div style="font-size:12px;color:var(--muted);margin-top:4px">OS #'+r.os_id+' · '+r.tecnico+' · prazo: '+r.prazo+'</div></div>'
+  body+='<div style="padding:10px 14px;background:rgba(255,77,79,.08);border:1px solid rgba(255,77,79,.2);border-radius:8px;font-size:12px">'
+  body+='<strong style="color:'+corRisco+'">⚠️ Risco de Cancelamento: '+r.risco+'</strong><br>'
+  body+='<span style="color:var(--muted)">'+r.qtd_historico+' ocorrência(s) nos últimos 45 dias.</span></div>'
+  body+='<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Histórico</div>'
+  hist.forEach(function(h){
+    body+='<div style="background:var(--bg);border-radius:8px;padding:12px;border:1px solid var(--border)">'
+    body+='<div style="display:flex;justify-content:space-between;margin-bottom:6px"><strong style="color:var(--amber)">'+h.servico+'</strong><span style="font-size:11px;color:var(--muted)">'+h.abertura+'</span></div>'
+    body+='<div style="font-size:12px;color:var(--cyan)">Técnico: '+h.tecnico+'</div>'
+    body+='<div style="font-size:12px;color:var(--muted);margin-top:4px">Solução: <span style="color:var(--text)">'+h.solucao+'</span></div>'
+    body+='</div>'
+  })
+  body+='</div>'
+  document.getElementById('modal-reincid-body').innerHTML=body
+  document.getElementById('modal-reincid-title').textContent='Histórico — '+r.cliente
+  document.getElementById('modal-reincid').style.display='flex'
+}
+
+async function verDetalhesOS(osId){
+  if(!document.getElementById('modal-reincid')) return
+  document.getElementById('modal-reincid-body').innerHTML='<div class="loading"><div class="spinner"></div>Carregando...</div>'
+  document.getElementById('modal-reincid-title').textContent='OS #'+osId
+  document.getElementById('modal-reincid').style.display='flex'
+  const d=await apiFetch('/api/sais/agenda/os-detalhe/'+osId)
+  if(d.erro){document.getElementById('modal-reincid-body').innerHTML='<div style="color:var(--red)">Erro: '+d.erro+'</div>';return}
+  const os=d.os||{}
+  const ints=d.interacoes||[]
+  const corSla=os.status_sla==='ESTOURADO'?'var(--red)':'var(--amber)'
+  let body='<div style="display:flex;flex-direction:column;gap:12px">'
+  body+='<div style="padding:12px;background:rgba(255,255,255,.04);border-radius:8px"><div style="display:flex;justify-content:space-between">'
+  body+='<div><div style="font-size:15px;font-weight:800">OS #'+os.id+'</div><div style="font-size:12px;color:var(--muted)">'+os.assunto+'</div></div>'
+  body+=(os.status_sla?'<span style="color:'+corSla+';font-weight:700;font-size:11px;background:rgba(255,77,79,.1);padding:4px 8px;border-radius:6px">SLA: '+os.status_sla+'</span>':'')
+  body+='</div></div>'
+  body+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+  const infos=[['Cliente',os.cliente],['Técnico',os.tecnico],['Protocolo',os.protocolo],['Contrato',os.id_contrato],['Abertura',os.abertura],['Prazo',os.prazo],['Fechamento',os.fechamento],['Status',os.status]]
+  infos.forEach(function(i){body+='<div style="background:var(--bg);border-radius:6px;padding:8px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:2px">'+i[0]+'</div><div style="font-size:12px;font-weight:700">'+i[1]+'</div></div>'})
+  body+='</div>'
+  if(os.solucao&&os.solucao!=='Sem solução registrada'){
+    body+='<div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.15);border-radius:8px;padding:10px">'
+    body+='<div style="font-size:10px;color:var(--green);font-weight:700;margin-bottom:4px">SOLUÇÃO</div>'
+    body+='<div style="font-size:12px">'+os.solucao+'</div></div>'
+  }
+  body+='<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Interações ('+ints.length+')</div>'
+  ints.forEach(function(m){
+    body+='<div style="background:var(--bg);border-radius:6px;padding:8px;border-left:3px solid var(--border)">'
+    body+='<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--cyan);font-size:11px;font-weight:700">'+m.status+'</span><span style="color:var(--muted);font-size:10px">'+m.data+' · '+m.operador+'</span></div>'
+    body+='<div style="font-size:12px">'+m.mensagem+'</div></div>'
+  })
+  body+='</div>'
+  document.getElementById('modal-reincid-body').innerHTML=body
+}
+
+// ═══════════════════════════════════════════════════
+// QUALIDADE PÓS-INSTALAÇÃO
+// ═══════════════════════════════════════════════════
+async function loadQualidadeInst(){
+  const el=document.getElementById('qualidade-content')
+  if(!el) return
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Analisando qualidade...</div>'
+  try {
+    const d=await apiFetch('/api/sais/agenda/qualidade-instalacao?dias=60')
+    if(d.erro){el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+d.erro+'</div>';return}
+    window._qualData=d
+    _renderQualidade(null)
+  } catch(e){ el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>' }
+}
+
+function _renderQualidade(filtroTec){
+  const el=document.getElementById('qualidade-content')
+  const d=window._qualData
+  if(!d) return
+  const META=5
+  const retornos=d.retornos||[]
+  const ranking=d.ranking_tecnicos||[]
+  const retFilt=filtroTec?retornos.filter(function(r){return r.tecnico_inst.includes(filtroTec)}):retornos
+  const rankFilt=filtroTec?ranking.filter(function(t){return t.nome.includes(filtroTec)}):ranking
+  const taxaRetorno=d.total_instalacoes>0?Math.round(d.total/d.total_instalacoes*100):0
+  const corTaxa=taxaRetorno<=5?'var(--green)':taxaRetorno<=8?'var(--amber)':'var(--red)'
+  const statusTaxa=taxaRetorno<=5?'IDEAL':taxaRetorno<=8?'ACEITAVEL':'CRITICO'
+  let html=''
+  // Filtros por técnico
+  const tecNomes=[...new Set(ranking.map(function(t){return t.nome.split(' ')[0]}))]
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">'
+  html+='<span style="font-size:12px;color:var(--muted)">Filtrar:</span>'
+  html+='<button onclick="_renderQualidade(null)" style="background:'+(filtroTec?'var(--s2)':'rgba(0,212,255,.15)')+';border:1px solid '+(filtroTec?'var(--border)':'rgba(0,212,255,.3)')+';color:'+(filtroTec?'var(--muted)':'var(--cyan)')+';border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">Todos</button>'
+  tecNomes.forEach(function(n){
+    const a=filtroTec&&filtroTec===n
+    html+='<button onclick="_renderQualidade(\''+n+'\')" style="background:'+(a?'rgba(255,77,79,.15)':'var(--s2)')+';border:1px solid '+(a?'rgba(255,77,79,.3)':'var(--border)')+';color:'+(a?'var(--red)':'var(--muted)')+';border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:700">'+n+'</button>'
+  })
+  html+='</div>'
+  // KPIs
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px">'
+  html+='<div class="kpi" style="--ac:'+corTaxa+'"><div class="kpi-val">'+taxaRetorno+'%</div><div class="kpi-lbl">Taxa retorno</div><div style="font-size:10px;color:'+corTaxa+';margin-top:4px">'+statusTaxa+'</div></div>'
+  html+='<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+d.total_instalacoes+'</div><div class="kpi-lbl">Instalações (60d)</div></div>'
+  html+='<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+d.total+'</div><div class="kpi-lbl">Retornos</div></div>'
+  html+='<div class="kpi" style="--ac:var(--green)"><div class="kpi-val">'+META+'%</div><div class="kpi-lbl">Meta ideal</div></div>'
+  html+='</div>'
+  // Ranking
+  if(rankFilt.length>0){
+    html+='<div class="card" style="margin-bottom:16px"><div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Ranking por técnico</div>'
+    html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+    html+='<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted)">'
+    html+='<th style="padding:8px 6px">#</th><th style="padding:8px 6px">Técnico</th>'
+    html+='<th style="padding:8px 6px;text-align:center">Instalações</th>'
+    html+='<th style="padding:8px 6px;text-align:center">Retornos</th>'
+    html+='<th style="padding:8px 6px;text-align:center">Taxa %</th>'
+    html+='<th style="padding:8px 6px">Barra</th>'
+    html+='<th style="padding:8px 6px;text-align:center">Alerta</th>'
+    html+='</tr></thead><tbody>'
+    const maxR=rankFilt[0]?.total||1
+    rankFilt.forEach(function(t,i){
+      const cor=i===0?'var(--red)':i===1?'var(--amber)':i===2?'var(--orange)':'var(--muted)'
+      const pct=Math.round(t.total/maxR*100)
+      const taxa=t.taxa||0
+      const corT=taxa<=5?'var(--green)':taxa<=10?'var(--amber)':'var(--red)'
+      const alerta=taxa>=15?'CRITICO':taxa>=10?'ALTO':taxa>=5?'MEDIO':'OK'
+      html+='<tr style="border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer" onclick="_renderQualidade(\''+t.nome.split(' ')[0]+'\')">'
+      html+='<td style="padding:8px 6px;color:var(--muted)">'+(i+1)+'</td>'
+      html+='<td style="padding:8px 6px;font-weight:700">'+t.nome.split(' ')[0]+'</td>'
+      html+='<td style="padding:8px 6px;text-align:center;color:var(--cyan);font-weight:700">'+(t.instalacoes||0)+'</td>'
+      html+='<td style="padding:8px 6px;text-align:center;font-weight:800;color:'+cor+'">'+t.total+'</td>'
+      html+='<td style="padding:8px 6px;text-align:center;font-weight:800;color:'+corT+'">'+taxa+'%</td>'
+      html+='<td style="padding:8px 6px;min-width:80px"><div style="background:var(--border);border-radius:4px;height:6px"><div style="background:'+cor+';width:'+pct+'%;height:6px;border-radius:4px"></div></div></td>'
+      html+='<td style="padding:8px 6px;text-align:center;font-size:11px;color:'+corT+'">'+alerta+'</td>'
+      html+='</tr>'
+    })
+    html+='</tbody></table></div><div style="font-size:11px;color:var(--muted);margin-top:8px">Clique no técnico para filtrar</div></div>'
+  }
+  // Tabela
+  html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
+  html+='<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase">Retornos · '+retFilt.length+(filtroTec?' ('+filtroTec+')':'')+'</div>'
+  html+=(filtroTec?'<button onclick="_renderQualidade(null)" style="background:var(--s2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">Limpar filtro</button>':'')
+  html+='</div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
+  html+='<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted)">'
+  html+='<th style="padding:6px">OS</th><th style="padding:6px">Contrato</th><th style="padding:6px">Cliente</th>'
+  html+='<th style="padding:6px">Instalou</th><th style="padding:6px">Suporte</th><th style="padding:6px">Problema</th>'
+  html+='<th style="padding:6px;text-align:center">Instalação</th><th style="padding:6px;text-align:center">Retornou em</th>'
+  html+='<th style="padding:6px;text-align:center">Dias ab.</th><th style="padding:6px;text-align:center">Inter.</th>'
+  html+='<th style="padding:6px;text-align:center">Ação</th></tr></thead><tbody>'
+  retFilt.forEach(function(r){
+    const corD=r.dias_apos<=7?'var(--red)':r.dias_apos<=30?'var(--amber)':'var(--muted)'
+    const bg=r.dias_apos<=7?'rgba(255,77,79,.04)':''
+    html+='<tr style="border-bottom:1px solid rgba(255,255,255,.03);background:'+bg+'">'
+    html+='<td style="padding:6px;font-family:monospace;font-size:11px"><span style="cursor:pointer;color:var(--cyan);text-decoration:underline" onclick="verDetalhesOS('+r.os_id+')">#'+r.os_id+'</span><span onclick="navigator.clipboard.writeText(\''+r.os_id+'\')" style="cursor:pointer;margin-left:4px;font-size:10px">📋</span></td>'
+    html+='<td style="padding:6px;color:var(--muted);font-size:11px">'+r.id_contrato+'</td>'
+    html+='<td style="padding:6px;font-weight:600;max-width:120px">'+r.cliente.substring(0,16)+'</td>'
+    html+='<td style="padding:6px;color:var(--red);font-weight:700">'+r.tecnico_inst.split(' ')[0]+'</td>'
+    html+='<td style="padding:6px;color:var(--cyan)">'+r.tecnico_sup.split(' ')[0]+'</td>'
+    html+='<td style="padding:6px;color:var(--muted);font-size:11px">'+r.servico_sup.substring(0,16)+'</td>'
+    html+='<td style="padding:6px;text-align:center;font-size:11px;color:var(--muted)">'+r.data_inst+'</td>'
+    html+='<td style="padding:6px;text-align:center;font-weight:700;color:'+corD+'">'+r.dias_apos+'d</td>'
+    html+='<td style="padding:6px;text-align:center;font-weight:700;color:'+(r.dias_aberto>15?'var(--red)':'var(--muted)')+'">'+r.dias_aberto+'d</td>'
+    html+='<td style="padding:6px;text-align:center;color:var(--amber);font-weight:700">'+r.interacoes+'</td>'
+    html+='<td style="padding:6px;text-align:center"><button onclick="verDetalhesOS('+r.os_id+')" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--cyan);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-weight:700">Ver OS</button></td>'
+    html+='</tr>'
+  })
+  html+='</tbody></table></div></div>'
+  el.innerHTML=html
+}
+
 async function loadRanking(data,btn=null){
   if(btn){document.querySelectorAll('#page-ranking .period-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active')}
   // Usa filtros globais de data se não vier data específica
@@ -3879,5 +4204,15 @@ loadDashboard()
     </div>
   </div>
 
+
+  <div id="modal-reincid" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+    <div style="background:#0d1117;border:1px solid #1e2731;border-radius:14px;padding:24px;width:620px;max-width:95vw;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div style="font-size:16px;font-weight:800" id="modal-reincid-title">Detalhes</div>
+        <button onclick="document.getElementById('modal-reincid').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">x</button>
+      </div>
+      <div id="modal-reincid-body"></div>
+    </div>
+  </div>
 </body>
 </html>
