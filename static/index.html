@@ -423,6 +423,34 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 .period-tab:hover:not(.active){color:var(--text)}
 
 @media(max-width:1100px){.kpi-grid.c5{grid-template-columns:repeat(3,1fr)}.card-grid.c3{grid-template-columns:1fr 1fr}}
+
+      /* ── Sidebar footer / botão sair ── */
+      .sb-footer {
+        padding: 12px 16px;
+        border-top: 1px solid rgba(255,255,255,0.07);
+        margin-top: auto;
+      }
+      #btn-logout-sidebar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        background: rgba(255,80,80,0.08);
+        border: 1px solid rgba(255,80,80,0.2);
+        color: #ff6b6b;
+        border-radius: 8px;
+        padding: 9px 14px;
+        font-size: 13px;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 0.2s, border-color 0.2s;
+      }
+      #btn-logout-sidebar:hover {
+        background: rgba(255,80,80,0.18);
+        border-color: rgba(255,80,80,0.5);
+      }
+      #btn-logout-sidebar span { font-size: 16px; }
+
 </style>
 </head>
 <body>
@@ -548,12 +576,15 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       </div>
       <div class="sb-sub" id="grp-admin">
         <div class="sb-item" onclick="nav('usuarios','admin')"><span class="dot"></span> Usuários</div>
-        <div class="sb-item" onclick="nav('permissoes','admin')"><span class="dot"></span> Permissões</div>
+        <div class="sb-item" onclick="nav('admin-grupos','admin')"><span class="dot"></span> Perm. Grupos</div>
       </div>
     </div>
   </div>
 
   <div class="sb-footer">
+    <button onclick="saisLogout()" style="display:flex;align-items:center;gap:8px;width:100%;background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.2);color:#ff6b6b;border-radius:8px;padding:9px 14px;font-size:13px;font-family:inherit;cursor:pointer;margin-bottom:10px" title="Sair do sistema">
+      <span style="font-size:16px">⏻</span> Sair
+    </button>
     <div class="sb-user">
       <div class="sb-av">🛠️</div>
       <div>
@@ -1242,6 +1273,7 @@ const PAGES_CFG = {
   'auto-logs':         {title:'Logs Automações',        path:'/automacoes/logs',              load:loadAutoLogs},
   'usuarios':          {title:'Usuários',               path:'/admin/usuarios',               load:loadUsuarios},
   'permissoes':        {title:'Permissões',             path:'/admin/permissoes',             load:loadPermissoes},
+  'admin-grupos':      {title:'Grupos',                  path:'/admin/grupos',                 load:()=>setTimeout(carregarGrupos,200)},
 };
 
 // ═══════════════════════════════════════════════════
@@ -4627,5 +4659,30 @@ loadDashboard()
       <div id="modal-reincid-body"></div>
     </div>
   </div>
-</body>
-</html>
+
+        <!-- ══════════════════ PÁGINA: PERMISSÕES DE GRUPOS ══════════════════ -->
+    <div id="page-admin-grupos" class="page" style="display:none">
+      <div class="page-header" style="margin-bottom:24px">
+        <h1 style="font-size:26px;font-weight:700;margin:0">
+          🔐 Permissões por <span style="color:var(--cyan)">Grupo</span>
+        </h1>
+        <p style="color:#8892a4;margin:4px 0 0;font-size:13px">Configure quais menus cada grupo pode acessar</p>
+      </div>
+
+      <!-- Abas de grupos -->
+      <div id="pg-grupos-tabs" style="display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap"></div>
+
+      <!-- Aviso grupo builtin -->
+      <div id="pg-aviso-builtin" style="display:none;padding:10px 16px;background:rgba(240,160,0,0.08);border:1px solid rgba(240,160,0,0.2);border-radius:8px;font-size:12px;color:#f0a000;margin-bottom:16px">
+        ⚠️ Este é um grupo pré-definido. Apenas o grupo <strong>Desenvolvimento</strong> pode editar suas permissões.
+      </div>
+
+      <!-- Cards de módulos -->
+      <div id="pg-grupos-modulos" style="display:grid;gap:12px"></div>
+
+      <button id="pg-btn-salvar" onclick="salvarPermissoesGrupo()"
+        style="margin-top:20px;padding:12px 28px;border-radius:8px;background:var(--cyan);color:#000;border:none;font-size:14px;font-weight:700;cursor:pointer;width:100%">
+        ✓ Salvar Permissões
+      </button>
+    </div>
+
