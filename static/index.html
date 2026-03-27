@@ -1,6 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script id="sais_jwt_guard">
+(function(){
+  var token = localStorage.getItem('sais_token');
+  function parseJWT(t){
+    try{
+      var b64 = t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+      return JSON.parse(atob(b64));
+    }catch(e){return null;}
+  }
+  function logout(){
+    ['sais_token','sais_user','sais_nivel','sais_grupo'].forEach(function(k){localStorage.removeItem(k);});
+    document.documentElement.style.visibility='hidden';
+    location.replace('/login');
+  }
+  if(!token){ document.documentElement.style.visibility='hidden'; location.replace('/login'); return; }
+  var p = parseJWT(token);
+  if(!p){ logout(); return; }
+  var now = Math.floor(Date.now()/1000);
+  if(p.exp && p.exp < now){ logout(); return; }
+  window._saisUser = { nome: p.nome || localStorage.getItem('sais_user') || 'Usuário', nivel: p.nivel || 1, grupo: p.grupo || '', sub: p.sub || '' };
+  document.addEventListener('DOMContentLoaded', function(){
+    var uname = document.querySelector('.sb-uname');
+    var urole = document.querySelector('.sb-role');
+    var av    = document.querySelector('.sb-av');
+    var GRUPOS = { supervisao_tecnica:'Sup. Técnica', rh:'RH', agendamento:'Agendamento', desenvolvimento:'Dev', admin:'Admin' };
+    var u = window._saisUser;
+    if(uname) uname.textContent = u.nome;
+    if(urole){ var lbl = GRUPOS[u.grupo]||u.grupo; urole.innerHTML = '<span class="live"></span>'+lbl+' · Online'; }
+    if(av)   av.textContent = (u.nome||'?')[0].toUpperCase();
+    var logoutBtn = document.getElementById('btn-logout');
+    if(logoutBtn) logoutBtn.addEventListener('click', function(){ ['sais_token','sais_user','sais_nivel','sais_grupo'].forEach(function(k){localStorage.removeItem(k);}); location.replace('/login'); });
+  });
+})();
+</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>HubProdutividade</title>
@@ -804,9 +838,149 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
     </div>
 
     <!-- ══ USUÁRIOS ══════════════════════════════ -->
+    <!-- sais-admin-v2 -->
     <div class="page" id="page-usuarios">
-      <div class="pg-hd"><div><div class="pg-title">Gestão de <span>Usuários</span></div><div class="pg-sub">Controle de acesso</div></div></div>
-      <div class="card"><div class="tbl-wrap"><table><thead><tr><th>Login</th><th>Nome</th><th class="r">Nível</th><th class="r">Status</th></tr></thead><tbody id="usr-table"></tbody></table></div></div>
+      <div class="pg-hd">
+        <div>
+          <div class="pg-title">Gestão de <span>Usuários</span></div>
+          <div class="pg-sub">Aprovações, grupos e controle de acesso</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="badge-pendentes" style="display:none;background:rgba(255,184,63,.12);border:1px solid rgba(255,184,63,.3);color:#ffb83f;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer" onclick="filtrarStatus('pendente')">
+            ⏳ <span id="num-pendentes">0</span> pendente(s)
+          </div>
+          <button class="tf-btn" onclick="filtrarStatus('')" id="btn-todos" style="color:var(--cyan);border-color:var(--cyan)">Todos</button>
+          <button class="tf-btn" onclick="abrirModalNovoUsuario()">+ Novo Usuário</button>
+        </div>
+      </div>
+
+      <!-- Filtro rápido por grupo -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="tf-btn btn-grp ativo" data-g="" onclick="filtrarGrupo(this,'')">Todos os grupos</button>
+        <button class="tf-btn btn-grp" data-g="supervisao_tecnica" onclick="filtrarGrupo(this,'supervisao_tecnica')">Sup. Técnica</button>
+        <button class="tf-btn btn-grp" data-g="rh" onclick="filtrarGrupo(this,'rh')">RH</button>
+        <button class="tf-btn btn-grp" data-g="agendamento" onclick="filtrarGrupo(this,'agendamento')">Agendamento</button>
+        <button class="tf-btn btn-grp" data-g="desenvolvimento" onclick="filtrarGrupo(this,'desenvolvimento')">Desenvolvimento</button>
+        <button class="tf-btn btn-grp" data-g="admin" onclick="filtrarGrupo(this,'admin')">Admin</button>
+      </div>
+
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Login</th>
+                <th>Nome</th>
+                <th>Grupo</th>
+                <th class="r">Nível</th>
+                <th class="r">Status</th>
+                <th>Último Acesso</th>
+                <th class="r">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="usr-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL EDITAR USUÁRIO ══════════════════════════════ -->
+    <div class="modal-overlay" id="modal-edit-usr" onclick="overlayClick(event,'modal-edit-usr')">
+      <div class="modal" style="max-width:480px">
+        <div class="modal-hd">
+          <div><div class="modal-title" id="edit-usr-title">Editar Usuário</div></div>
+          <button class="modal-close" onclick="fecharModal('modal-edit-usr')">×</button>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+          <input type="hidden" id="edit-usr-id">
+
+          <div>
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Nome</label>
+            <input id="edit-usr-nome" type="text" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
+          </div>
+
+          <div>
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Grupo</label>
+            <select id="edit-usr-grupo" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
+              <option value="supervisao_tecnica">Supervisão Técnica</option>
+              <option value="rh">RH</option>
+              <option value="agendamento">Agendamento</option>
+              <option value="desenvolvimento">Desenvolvimento</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Status</label>
+            <select id="edit-usr-status" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
+              <option value="ativo">Ativo</option>
+              <option value="pendente">Pendente</option>
+              <option value="bloqueado">Bloqueado</option>
+            </select>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="tf-btn" onclick="fecharModal('modal-edit-usr')" style="flex:1">Cancelar</button>
+            <button onclick="salvarEdicaoUsuario()" style="flex:2;background:linear-gradient(135deg,#4f9cf9,#63b3ed);border:none;color:#fff;padding:10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.05em">💾 Salvar</button>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:14px">
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:8px">⚠ Redefinir Senha</label>
+            <div style="display:flex;gap:8px">
+              <input id="edit-usr-nova-senha" type="password" placeholder="Nova senha (mín. 8 chars)" style="flex:1;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
+              <button onclick="salvarNovaSenha()" style="background:rgba(255,184,63,.12);border:1px solid rgba(255,184,63,.3);color:#ffb83f;padding:9px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Alterar</button>
+            </div>
+          </div>
+
+          <div id="edit-usr-msg" style="display:none;padding:8px 12px;border-radius:7px;font-size:12px;text-align:center"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODAL NOVO USUÁRIO ════════════════════════════════ -->
+    <div class="modal-overlay" id="modal-novo-usr" onclick="overlayClick(event,'modal-novo-usr')">
+      <div class="modal" style="max-width:480px">
+        <div class="modal-hd">
+          <div><div class="modal-title">Novo Usuário</div></div>
+          <button class="modal-close" onclick="fecharModal('modal-novo-usr')">×</button>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Nome</label>
+              <input id="novo-usr-nome" type="text" placeholder="Nome completo" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Login</label>
+              <input id="novo-usr-login" type="text" placeholder="ex: joao.silva" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Senha</label>
+            <input id="novo-usr-senha" type="password" placeholder="mínimo 8 caracteres" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
+          </div>
+
+          <div>
+            <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:5px">Grupo</label>
+            <select id="novo-usr-grupo" style="width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:7px;font-size:13px;font-family:inherit;outline:none">
+              <option value="supervisao_tecnica">Supervisão Técnica</option>
+              <option value="rh">RH</option>
+              <option value="agendamento">Agendamento</option>
+              <option value="desenvolvimento">Desenvolvimento</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+
+          <div id="novo-usr-msg" style="display:none;padding:8px 12px;border-radius:7px;font-size:12px;text-align:center"></div>
+
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="tf-btn" onclick="fecharModal('modal-novo-usr')" style="flex:1">Cancelar</button>
+            <button onclick="criarNovoUsuario()" style="flex:2;background:linear-gradient(135deg,#00e5a0,#00b37d);border:none;color:#0a0d14;padding:10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.05em">+ Criar Usuário</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ══ PERMISSÕES ════════════════════════════ -->
@@ -3372,15 +3546,183 @@ async function loadAutoLogs(){
 // ADMIN
 // ═══════════════════════════════════════════════════
 async function loadUsuarios(){
-  const d=await apiFetch('/api/admin/usuarios/')
-  document.getElementById('usr-table').innerHTML=(d||[]).map(u=>`
+  const d = await apiFetch('/api/sais/auth/admin/usuarios')
+  window._usrData   = (d && d.usuarios) || []
+  window._usrStatus = ''
+  window._usrGrupo  = ''
+  renderUsuarios()
+  // Badge de pendentes
+  const pend = window._usrData.filter(u => u.status === 'pendente')
+  const badge = document.getElementById('badge-pendentes')
+  if (badge) {
+    document.getElementById('num-pendentes').textContent = pend.length
+    badge.style.display = pend.length > 0 ? 'block' : 'none'
+  }
+}
+
+function renderUsuarios() {
+  const GRUPOS_LABEL = { supervisao_tecnica:'Sup. Técnica', rh:'RH', agendamento:'Agendamento', desenvolvimento:'Dev', admin:'Admin' }
+  let lista = window._usrData || []
+  if (window._usrStatus) lista = lista.filter(u => u.status === window._usrStatus)
+  if (window._usrGrupo)  lista = lista.filter(u => u.grupo  === window._usrGrupo)
+  const statusBadge = s => s==='ativo' ? '<span class="badge green">Ativo</span>'
+    : s==='pendente' ? '<span class="badge amber" style="background:rgba(255,184,63,.12);border-color:rgba(255,184,63,.3);color:#ffb83f">⏳ Pendente</span>'
+    : '<span class="badge red">Bloqueado</span>'
+  const grupoBadge = g => `<span class="badge cyan" style="font-size:10px">${GRUPOS_LABEL[g]||g}</span>`
+  const acoes = u => u.status === 'pendente'
+    ? `<div style="display:flex;gap:5px;justify-content:flex-end">
+        <button onclick="aprovarUsuario(${u.id},true,'${u.grupo}')" style="background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);color:var(--green);padding:4px 10px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✓ Aprovar</button>
+        <button onclick="aprovarUsuario(${u.id},false,'')" style="background:rgba(255,77,106,.1);border:1px solid rgba(255,77,106,.25);color:var(--red);padding:4px 10px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✕ Rejeitar</button>
+       </div>`
+    : `<button onclick="abrirModalEditarUsuario(${u.id})" style="background:var(--s3);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit">✏ Editar</button>`
+  document.getElementById('usr-table').innerHTML = lista.length ? lista.map(u => `
     <tr>
       <td style="font-family:'DM Mono',monospace;color:var(--cyan)">${u.login}</td>
       <td><strong>${u.nome}</strong></td>
-      <td class="r"><span class="badge cyan">${nivelLabel(u.nivel)}</span></td>
-      <td class="r"><span class="badge ${u.ativo?'green':'red'}">${u.ativo?'Ativo':'Inativo'}</span></td>
-    </tr>
-  `).join('')
+      <td>${grupoBadge(u.grupo)}</td>
+      <td class="r"><span class="badge cyan">${u.nivel}</span></td>
+      <td class="r">${statusBadge(u.status)}</td>
+      <td style="font-size:11px;color:var(--muted)">${u.ultimo_acesso ? u.ultimo_acesso.substring(0,16) : '—'}</td>
+      <td class="r">${acoes(u)}</td>
+    </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Nenhum usuário encontrado</td></tr>'
+}
+
+function filtrarStatus(s) {
+  window._usrStatus = s
+  renderUsuarios()
+}
+
+function filtrarGrupo(btn, g) {
+  window._usrGrupo = g
+  document.querySelectorAll('.btn-grp').forEach(b => b.classList.remove('ativo'))
+  btn.classList.add('ativo')
+  renderUsuarios()
+}
+
+async function aprovarUsuario(id, aprovado, grupo) {
+  const token = localStorage.getItem('sais_token')
+  const r = await fetch('/api/sais/auth/admin/aprovar', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({ usuario_id: id, aprovado, grupo })
+  })
+  if (r.ok) { loadUsuarios() }
+  else { const e = await r.json(); alert(e.detail || 'Erro ao processar.') }
+}
+
+function abrirModalEditarUsuario(id) {
+  const u = (window._usrData || []).find(x => x.id === id)
+  if (!u) return
+  document.getElementById('edit-usr-id').value    = u.id
+  document.getElementById('edit-usr-title').textContent = `Editar: ${u.login}`
+  document.getElementById('edit-usr-nome').value  = u.nome
+  document.getElementById('edit-usr-grupo').value = u.grupo
+  document.getElementById('edit-usr-status').value = u.status
+  document.getElementById('edit-usr-nova-senha').value = ''
+  const msg = document.getElementById('edit-usr-msg')
+  msg.style.display = 'none'
+  abrirModal('modal-edit-usr')
+}
+
+async function salvarEdicaoUsuario() {
+  const token = localStorage.getItem('sais_token')
+  const id    = parseInt(document.getElementById('edit-usr-id').value)
+  const msg   = document.getElementById('edit-usr-msg')
+  const body  = {
+    usuario_id: id,
+    nome:   document.getElementById('edit-usr-nome').value.trim(),
+    grupo:  document.getElementById('edit-usr-grupo').value,
+    status: document.getElementById('edit-usr-status').value,
+  }
+  const r = await fetch('/api/sais/auth/admin/editar', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify(body)
+  })
+  if (r.ok) {
+    msg.style.cssText = 'display:block;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:var(--green);padding:8px 12px;border-radius:7px;font-size:12px;text-align:center'
+    msg.textContent = '✓ Salvo com sucesso!'
+    setTimeout(() => { fecharModal('modal-edit-usr'); loadUsuarios() }, 900)
+  } else {
+    const e = await r.json()
+    msg.style.cssText = 'display:block;background:rgba(255,77,106,.1);border:1px solid rgba(255,77,106,.25);color:var(--red);padding:8px 12px;border-radius:7px;font-size:12px;text-align:center'
+    msg.textContent = e.detail || 'Erro ao salvar.'
+  }
+}
+
+async function salvarNovaSenha() {
+  const token = localStorage.getItem('sais_token')
+  const id    = parseInt(document.getElementById('edit-usr-id').value)
+  const nova  = document.getElementById('edit-usr-nova-senha').value
+  const msg   = document.getElementById('edit-usr-msg')
+  if (nova.length < 8) {
+    msg.style.cssText = 'display:block;background:rgba(255,77,106,.1);border:1px solid rgba(255,77,106,.25);color:var(--red);padding:8px 12px;border-radius:7px;font-size:12px;text-align:center'
+    msg.textContent = 'Senha deve ter pelo menos 8 caracteres.'
+    return
+  }
+  const r = await fetch('/api/sais/auth/admin/alterar-senha', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({ usuario_id: id, nova_senha: nova })
+  })
+  if (r.ok) {
+    msg.style.cssText = 'display:block;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:var(--green);padding:8px 12px;border-radius:7px;font-size:12px;text-align:center'
+    msg.textContent = '✓ Senha alterada!'
+    document.getElementById('edit-usr-nova-senha').value = ''
+  } else {
+    const e = await r.json()
+    msg.style.cssText = 'display:block;background:rgba(255,77,106,.1);border:1px solid rgba(255,77,106,.25);color:var(--red);padding:8px 12px;border-radius:7px;font-size:12px;text-align:center'
+    msg.textContent = e.detail || 'Erro ao alterar senha.'
+  }
+}
+
+function abrirModalNovoUsuario() {
+  ['novo-usr-nome','novo-usr-login','novo-usr-senha'].forEach(id => document.getElementById(id).value = '')
+  document.getElementById('novo-usr-grupo').value = 'agendamento'
+  const msg = document.getElementById('novo-usr-msg')
+  msg.style.display = 'none'
+  abrirModal('modal-novo-usr')
+}
+
+async function criarNovoUsuario() {
+  const token = localStorage.getItem('sais_token')
+  const msg   = document.getElementById('novo-usr-msg')
+  const nome  = document.getElementById('novo-usr-nome').value.trim()
+  const login = document.getElementById('novo-usr-login').value.trim()
+  const senha = document.getElementById('novo-usr-senha').value
+  const grupo = document.getElementById('novo-usr-grupo').value
+  if (!nome || !login || !senha) {
+    msg.style.cssText = 'display:block;background:rgba(255,77,106,.1);border:1px solid rgba(255,77,106,.25);color:var(--red);padding:8px 12px;border-radius:7px;font-size:12px;text-align:center'
+    msg.textContent = 'Preencha todos os campos.'
+    return
+  }
+  // Cria via registro e aprova automaticamente
+  const r1 = await fetch('/api/sais/auth/registro', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ nome, login, senha, grupo, motivo: 'Criado pelo administrador' })
+  })
+  const e1 = await r1.json()
+  if (!r1.ok) {
+    msg.style.cssText = 'display:block;background:rgba(255,77,106,.1);border:1px solid rgba(255,77,106,.25);color:var(--red);padding:8px 12px;border-radius:7px;font-size:12px;text-align:center'
+    msg.textContent = e1.detail || 'Erro ao criar usuário.'
+    return
+  }
+  // Busca o ID do novo usuário e aprova
+  await loadUsuarios()
+  const novo = (window._usrData || []).find(u => u.login === login.toLowerCase())
+  if (novo) {
+    await fetch('/api/sais/auth/admin/aprovar', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({ usuario_id: novo.id, aprovado: true, grupo })
+    })
+    await loadUsuarios()
+  }
+  msg.style.cssText = 'display:block;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.25);color:var(--green);padding:8px 12px;border-radius:7px;font-size:12px;text-align:center'
+  msg.textContent = `✓ Usuário "${login}" criado e aprovado!`
+  setTimeout(() => fecharModal('modal-novo-usr'), 1200)
 }
 
 async function loadPermissoes(){

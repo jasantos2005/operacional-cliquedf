@@ -10,7 +10,7 @@ from app.routes import dashboard, ranking, os_tipos, metas, tecnicos, telegram, 
 from app.routes import dashboard_v2
 
 # SAIS — novos módulos
-from app.routes.sais import visao_geral, central, agenda, produtividade, auditoria, tv, pontuacao
+from app.routes.sais import visao_geral, central, agenda, produtividade, auditoria, tv, pontuacao, auth as sais_auth
 from app.core.websocket import ws_router
 
 app = FastAPI(title="SAIS — HubProdutividade", version="2.0.0")
@@ -41,6 +41,7 @@ app.include_router(produtividade.router, prefix="/api/sais/produtividade", tags=
 app.include_router(auditoria.router,  prefix="/api/sais/auditoria",      tags=["SAIS Auditoria"])
 app.include_router(tv.router,         prefix="/api/sais/tv",             tags=["SAIS TV"])
 app.include_router(pontuacao.router,  prefix="/api/sais/pontuacao",       tags=["SAIS Pontuação"])
+app.include_router(sais_auth.router,  prefix="/api/sais/auth",            tags=["SAIS Auth"])
 
 # ── WebSocket ──────────────────────────────────────────
 app.include_router(ws_router)
@@ -49,11 +50,28 @@ app.include_router(ws_router)
 app.mount("/static", StaticFiles(directory="/opt/automacoes/cliquedf/operacional/static"), name="static")
 
 
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    with open("/opt/automacoes/cliquedf/operacional/static/login.html") as f:
+        return f.read()
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     with open("/opt/automacoes/cliquedf/operacional/static/index.html") as f:
         return f.read()
 
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Inicializa schemas e configs na startup."""
+    try:
+        from app.routes.sais.auth import init_schema
+        init_schema()
+        print("[SAIS] Schema de autenticação verificado ✓")
+    except Exception as e:
+        print(f"[SAIS] Aviso na init do auth: {e}")
 
 @app.get("/health")
 async def health():

@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>HubProducao — Acesso ao Sistema</title>
+
+<!-- Anti-DevTools / Anti-Copy fingerprint -->
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+  /* ── PROTEÇÃO ANTI-PRINT ────────────────────────── */
+  @media print {
+    html, body { display: none !important; visibility: hidden !important; }
+  }
+
+  /* ── VARIÁVEIS ──────────────────────────────────── */
+  :root {
+    --bg:        #0a0d14;
+    --bg2:       #0f1320;
+    --bg3:       #161c2e;
+    --border:    rgba(99,179,237,0.12);
+    --border2:   rgba(99,179,237,0.25);
+    --accent:    #4f9cf9;
+    --accent2:   #63b3ed;
+    --green:     #48bb78;
+    --red:       #fc8181;
+    --amber:     #f6ad55;
+    --text:      #e2e8f0;
+    --muted:     #718096;
+    --card:      rgba(15,19,32,0.95);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── ANTI-SELECT / ANTI-COPY ────────────────────── */
+  body {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── OVERLAY ANTI-SCREENSHOT (blur quando perde foco) */
+  #blur-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    backdrop-filter: blur(40px) brightness(0.2);
+    -webkit-backdrop-filter: blur(40px) brightness(0.2);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    background: rgba(10,13,20,0.8);
+  }
+  #blur-overlay.active { display: flex; }
+  #blur-overlay p { color: var(--muted); font-size: 13px; letter-spacing: 0.1em; }
+  #blur-overlay svg { opacity: 0.3; }
+
+  /* ── FUNDO ANIMADO ──────────────────────────────── */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(79,156,249,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(79,156,249,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bg-glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79,156,249,0.08) 0%, transparent 70%);
+    top: -200px; left: -200px;
+    pointer-events: none;
+    z-index: 0;
+    animation: glow-drift 8s ease-in-out infinite alternate;
+  }
+  .bg-glow-2 {
+    position: fixed;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(72,187,120,0.05) 0%, transparent 70%);
+    bottom: -100px; right: -100px;
+    pointer-events: none;
+    z-index: 0;
+    animation: glow-drift 10s ease-in-out infinite alternate-reverse;
+  }
+  @keyframes glow-drift {
+    from { transform: translate(0,0); }
+    to   { transform: translate(60px, 40px); }
+  }
+
+  /* ── CONTAINER ──────────────────────────────────── */
+  .page {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  /* ── CARD ───────────────────────────────────────── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px;
+    width: 100%;
+    max-width: 440px;
+    backdrop-filter: blur(20px);
+    box-shadow:
+      0 0 0 1px rgba(79,156,249,0.05),
+      0 40px 80px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.04);
+    animation: card-in 0.5s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ── LOGO ───────────────────────────────────────── */
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, #4f9cf9 0%, #63b3ed 100%);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: #fff;
+    letter-spacing: -1px;
+    box-shadow: 0 4px 20px rgba(79,156,249,0.4);
+  }
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  /* ── TABS ───────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    background: var(--bg3);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 32px;
+    border: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(79,156,249,0.35);
+  }
+
+  /* ── FORMS ──────────────────────────────────────── */
+  .form-section { display: none; }
+  .form-section.active { display: block; }
+
+  .form-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: -0.03em;
+  }
+  .form-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+  .field input,
+  .field select {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
+  }
+  .field input:focus,
+  .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(79,156,249,0.12);
+  }
+  .field select option { background: var(--bg2); }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── BOTÃO ──────────────────────────────────────── */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    margin-top: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #4f9cf9, #63b3ed);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(79,156,249,0.3);
+  }
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 28px rgba(79,156,249,0.45);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ── ALERT ──────────────────────────────────────── */
+  .alert {
+    display: none;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-top: 14px;
+    line-height: 1.5;
+    animation: fade-in 0.2s ease;
+  }
+  @keyframes fade-in { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+  .alert.show { display: block; }
+  .alert-error   { background: rgba(252,129,129,0.1); border: 1px solid rgba(252,129,129,0.25); color: var(--red); }
+  .alert-success { background: rgba(72,187,120,0.1);  border: 1px solid rgba(72,187,120,0.25);  color: var(--green); }
+  .alert-warn    { background: rgba(246,173,85,0.1);  border: 1px solid rgba(246,173,85,0.25);  color: var(--amber); }
+
+  /* ── SPINNER ────────────────────────────────────── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── PENDING BADGE ──────────────────────────────── */
+  .pending-box {
+    margin-top: 24px;
+    padding: 16px;
+    background: rgba(246,173,85,0.06);
+    border: 1px solid rgba(246,173,85,0.2);
+    border-radius: 10px;
+    text-align: center;
+  }
+  .pending-box .icon { font-size: 28px; margin-bottom: 8px; }
+  .pending-box h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--amber);
+    margin-bottom: 4px;
+  }
+  .pending-box p { font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+  /* ── FOOTER ─────────────────────────────────────── */
+  .footer {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 10px;
+    color: rgba(113,128,150,0.4);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* ── WATERMARK (dificulta print útil) ───────────── */
+  .watermark {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .watermark-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 72px;
+    font-weight: 800;
+    color: rgba(79,156,249,0.04);
+    transform: rotate(-35deg);
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+    user-select: none;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- Anti-print watermark dinâmico -->
+<div class="watermark" id="watermark">
+  <div class="watermark-text" id="watermark-text">HubProducao — ACESSO RESTRITO</div>
+</div>
+
+<!-- Overlay blur quando perde foco -->
+<div id="blur-overlay">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#63b3ed" stroke-width="1.5">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+  <p>Clique para continuar</p>
+</div>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow-2"></div>
+
+<div class="page">
+  <div class="card">
+
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-icon">H</div>
+      <div>
+        <div class="logo-text">HubProducao</div>
+        <div class="logo-sub">Desenvolvido por Iatch · 2026</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('login')">Entrar</div>
+      <div class="tab" onclick="switchTab('register')">Solicitar Acesso</div>
+    </div>
+
+    <!-- ═══════════════ LOGIN ═══════════════ -->
+    <div class="form-section active" id="section-login">
+      <div class="form-title">Bem-vindo de volta</div>
+      <div class="form-subtitle">Acesso restrito a colaboradores autorizados.</div>
+
+      <div class="field">
+        <label>Login</label>
+        <input type="text" id="login-user" placeholder="seu.login" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <button class="btn btn-primary" id="btn-login" onclick="doLogin()">Entrar no Sistema</button>
+
+      <div class="alert alert-error" id="login-error"></div>
+    </div>
+
+    <!-- ═══════════════ REGISTRO ═══════════════ -->
+    <div class="form-section" id="section-register">
+      <div class="form-title">Solicitar Acesso</div>
+      <div class="form-subtitle">Preencha os dados. Um administrador irá aprovar sua solicitação.</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Nome</label>
+          <input type="text" id="reg-nome" placeholder="Primeiro nome">
+        </div>
+        <div class="field">
+          <label>Sobrenome</label>
+          <input type="text" id="reg-sobrenome" placeholder="Sobrenome">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Login desejado</label>
+        <input type="text" id="reg-login" placeholder="ex: joao.silva">
+      </div>
+
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="reg-pass" placeholder="mínimo 8 caracteres">
+      </div>
+
+      <div class="field">
+        <label>Setor / Grupo solicitado</label>
+        <select id="reg-grupo">
+          <option value="">Selecione seu setor...</option>
+          <option value="supervisao_tecnica">Supervisão Técnica</option>
+          <option value="rh">RH</option>
+          <option value="agendamento">Agendamento</option>
+          <option value="desenvolvimento">Desenvolvimento</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Motivo / Justificativa</label>
+        <input type="text" id="reg-motivo" placeholder="Ex: preciso acessar agenda de OS">
+      </div>
+
+      <button class="btn btn-primary" id="btn-register" onclick="doRegister()">Enviar Solicitação</button>
+
+      <div class="alert alert-error"   id="reg-error"></div>
+      <div class="alert alert-success" id="reg-success"></div>
+
+      <div class="pending-box" id="pending-box" style="display:none">
+        <div class="icon">⏳</div>
+        <h3>Solicitação Enviada</h3>
+        <p>Aguarde a aprovação de um administrador.<br>Você será notificado quando seu acesso for liberado.</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">HubProducao v2.0 · Desenvolvido por Iatch@2026 · Acesso Monitorado</div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   PROTEÇÕES DE SEGURANÇA
+══════════════════════════════════════════════ */
+
+// 1. Desabilitar clique direito
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// 2. Desabilitar atalhos de teclado perigosos
+document.addEventListener('keydown', e => {
+  const key = e.key.toLowerCase();
+  const ctrl = e.ctrlKey || e.metaKey;
+  // Bloqueia: F12, Ctrl+U, Ctrl+S, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+P, Print Screen
+  if (
+    e.key === 'F12' ||
+    (ctrl && key === 'u') ||
+    (ctrl && key === 's') ||
+    (ctrl && e.shiftKey && ['i','j','c'].includes(key)) ||
+    (ctrl && key === 'p') ||
+    e.key === 'PrintScreen' ||
+    (e.key === 'F5' && ctrl)
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+});
+
+// 3. Bloquear cópia de texto
+document.addEventListener('copy',  e => { e.preventDefault(); return false; });
+document.addEventListener('cut',   e => { e.preventDefault(); return false; });
+
+// 4. Blur quando muda de aba/janela (anti-screenshot com Alt+Tab)
+document.addEventListener('visibilitychange', () => {
+  const overlay = document.getElementById('blur-overlay');
+  if (document.hidden) {
+    overlay.classList.add('active');
+  }
+});
+document.addEventListener('click', () => {
+  document.getElementById('blur-overlay').classList.remove('active');
+});
+
+// 5. Watermark dinâmica com usuário (dificulta print útil)
+function setWatermark(user) {
+  const wm = document.getElementById('watermark');
+  document.getElementById('watermark-text').textContent =
+    `HubProducao · ${user || 'ACESSO RESTRITO'} · ${new Date().toLocaleDateString('pt-BR')}`;
+  wm.style.opacity = '1';
+}
+
+// 6. Detectar DevTools aberto (heurística de tamanho)
+(function detectDevTools() {
+  const threshold = 160;
+  setInterval(() => {
+    if (
+      window.outerWidth - window.innerWidth > threshold ||
+      window.outerHeight - window.innerHeight > threshold
+    ) {
+      document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;height:100vh;
+          background:#0a0d14;color:#fc8181;font-family:monospace;font-size:13px;
+          text-align:center;padding:40px">
+          <div>
+            <div style="font-size:48px;margin-bottom:16px">🔒</div>
+            <div>Acesso bloqueado.<br>Feche as ferramentas de desenvolvedor e recarregue a página.</div>
+          </div>
+        </div>`;
+    }
+  }, 1000);
+})();
+
+/* ══════════════════════════════════════════════
+   NAVEGAÇÃO DE TABS
+══════════════════════════════════════════════ */
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+  document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`section-${tab}`).classList.add('active');
+  clearAlerts();
+}
+
+function clearAlerts() {
+  document.querySelectorAll('.alert').forEach(a => a.classList.remove('show'));
+}
+
+function showAlert(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+/* ══════════════════════════════════════════════
+   LOGIN
+══════════════════════════════════════════════ */
+async function doLogin() {
+  const btn  = document.getElementById('btn-login');
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+
+  clearAlerts();
+
+  if (!user || !pass) {
+    showAlert('login-error', 'Preencha login e senha.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Autenticando...';
+
+  try {
+    const resp = await fetch('/api/sais/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login: user, senha: pass })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      showAlert('login-error', data.detail || 'Credenciais inválidas.');
+      return;
+    }
+
+    // Salvar token
+    localStorage.setItem('sais_token', data.access_token);
+    localStorage.setItem('sais_user',  data.nome);
+    localStorage.setItem('sais_nivel', data.nivel);
+    localStorage.setItem('sais_grupo', data.grupo);
+
+    // Watermark com nome do usuário
+    setWatermark(data.nome);
+
+    btn.innerHTML = '✓ Redirecionando...';
+    btn.style.background = 'linear-gradient(135deg,#48bb78,#38a169)';
+
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 800);
+
+  } catch (err) {
+    showAlert('login-error', 'Erro de conexão. Tente novamente.');
+  } finally {
+    if (btn.disabled) {
+      btn.disabled = false;
+      if (!btn.textContent.includes('Redirecionando')) {
+        btn.innerHTML = 'Entrar no Sistema';
+      }
+    }
+  }
+}
+
+// Enter para login
+document.addEventListener('DOMContentLoaded', () => {
+  ['login-user', 'login-pass'].forEach(id => {
+    document.getElementById(id).addEventListener('keypress', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+});
+
+/* ══════════════════════════════════════════════
+   REGISTRO
+══════════════════════════════════════════════ */
+async function doRegister() {
+  const btn    = document.getElementById('btn-register');
+  const nome   = (document.getElementById('reg-nome').value.trim() + ' ' +
+                  document.getElementById('reg-sobrenome').value.trim()).trim();
+  const login  = document.getElementById('reg-login').value.trim().toLowerCase().replace(/[^a-z0-9._]/g,'');
+  const pass   = document.getElementById('reg-pass').value;
+  const grupo  = document.getElementById('reg-grupo').value;
+  const motivo = document.getElementById('reg-motivo').value.trim();
+
+  clearAlerts();
+
+  if (!nome || !login || !pass || !grupo) {
+    showAlert('reg-error', 'Preencha todos os campos obrigatórios.');
+    return;
+  }
+  if (pass.length < 8) {
+    showAlert('reg-error', 'A senha deve ter pelo menos 8 caracteres.');
+    return;
+  }
+  if (login.length < 3) {
+    showAlert('reg-error', 'O login deve ter pelo menos 3 caracteres.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Enviando...';
+
+  try {
+    const resp = await fetch('/api/sais/auth/registro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, login, senha: pass, grupo, motivo })
+    });
+
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      showAlert('reg-error', data.detail || 'Erro ao enviar solicitação.');
+      return;
+    }
+
+    // Esconde form, mostra pending
+    document.getElementById('pending-box').style.display = 'block';
+    btn.style.display = 'none';
+    document.querySelectorAll('#section-register .field, #section-register .field-row').forEach(f => {
+      f.style.opacity = '0.3';
+      f.style.pointerEvents = 'none';
+    });
+
+  } catch (err) {
+    showAlert('reg-error', 'Erro de conexão. Tente novamente.');
+  } finally {
+    btn.disabled = false;
+    if (btn.style.display !== 'none') btn.innerHTML = 'Enviar Solicitação';
+  }
+}
+</script>
+</body>
+</html>
