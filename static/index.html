@@ -326,8 +326,9 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 /* ══ MODO TV ════════════════════════════════════════ */
 #tv-overlay{
   position:fixed;inset:0;background:var(--bg);z-index:9999;
-  display:none;flex-direction:column;padding:24px;
+  display:none;flex-direction:column;padding:0;
   font-family:'Bricolage Grotesque',sans-serif;
+  overflow:hidden;
 }
 #tv-overlay.active{display:flex}
 .tv-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
@@ -467,10 +468,22 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
         <div class="sb-item" onclick="nav('audit-estoque','auditoria')"><span class="dot"></span> Auditoria de Estoque</div>
         <div class="sb-item" onclick="nav('audit-exec','auditoria')"><span class="dot"></span> Execução</div>
         <div class="sb-item" onclick="nav('audit-tempo','auditoria')"><span class="dot"></span> Tempo</div>
+        <div class="sb-item" onclick="nav('audit-sla','auditoria')"><span class="dot"></span> SLA</div>
+        <div class="sb-item" onclick="nav('audit-comportamento','auditoria')"><span class="dot"></span> Comportamento</div>
       </div>
     </div>
 
-
+    <!-- 6. INDICADORES -->
+    <div class="sb-group">
+      <div class="sb-group-header" onclick="toggleGroup(this,'indicadores')">
+        <span class="ic">📉</span> Indicadores <span class="arrow">›</span>
+      </div>
+      <div class="sb-sub" id="grp-indicadores">
+        <div class="sb-item" onclick="nav('ind-sla','indicadores')"><span class="dot"></span> SLA</div>
+        <div class="sb-item" onclick="nav('ind-produtividade','indicadores')"><span class="dot"></span> Produtividade</div>
+        <div class="sb-item" onclick="nav('ind-tendencias','indicadores')"><span class="dot"></span> Tendências</div>
+      </div>
+    </div>
 
     <!-- 7. TÉCNICOS -->
     <div class="sb-group">
@@ -480,7 +493,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       <div class="sb-sub" id="grp-tecnicos">
         <div class="sb-item" onclick="nav('tec-status','tecnicos')"><span class="dot"></span> Status atual</div>
         <div class="sb-item" onclick="nav('tec-performance','tecnicos')"><span class="dot"></span> Performance</div>
-        <div class="sb-item" onclick="nav('prod-comportamento','tecnicos')"><span class="dot"></span> 👨‍🔧 Comportamento</div>
         <div class="sb-item" onclick="nav('audit-estoque-cad','tecnicos')"><span class="dot"></span> Cadastro de Estoque</div>
       </div>
     </div>
@@ -714,16 +726,6 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
       <div id="premiacao-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
 
-    <div class="page" id="page-prod-comportamento">
-      <div class="pg-hd">
-        <div>
-          <div class="pg-title">👨‍🔧 Comportamento <span>Técnico</span></div>
-          <div class="pg-sub">Score composto: qualidade + pontualidade + SLA + nota do supervisor</div>
-        </div>
-      </div>
-      <div id="comportamento-content"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
-    </div>
-
     <div class="page" id="page-prod-destaques">
       <div class="pg-hd">
         <div>
@@ -927,35 +929,26 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 
 <!-- ══ MODO TV ══════════════════════════════════════ -->
 <div id="tv-overlay">
-  <button class="tv-btn-close" onclick="fecharTV()">✕ Fechar TV</button>
-  <div class="tv-header">
-    <div class="tv-logo">📡 HubProdutividade</div>
-    <div style="text-align:right">
-      <div class="tv-clock" id="tv-clock">--:--:--</div>
-      <div class="tv-date" id="tv-date"></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">📡</span>
+      <div>
+        <div style="font-size:16px;font-weight:800">HubProdutividade</div>
+        <div style="font-size:11px;color:var(--muted)" id="tv-slide-label">Carregando...</div>
+      </div>
     </div>
+    <div style="text-align:center;flex:1">
+      <div style="font-family:DM Mono,monospace;font-size:26px;font-weight:700;color:var(--cyan)" id="tv-clock">--:--:--</div>
+      <div style="font-size:11px;color:var(--muted)" id="tv-date"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-right:12px" id="tv-dots"></div>
+    <button onclick="fecharTV()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--muted);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700">x Fechar</button>
   </div>
-  <div class="tv-body">
-    <div class="tv-left">
-      <div class="tv-kpis" id="tv-kpis"></div>
-      <div class="tv-section" style="flex:none">
-        <div class="tv-section-title">🏆 TOP TÉCNICOS</div>
-        <div id="tv-ranking"></div>
-      </div>
-    </div>
-    <div class="tv-right">
-      <div class="tv-section">
-        <div class="tv-section-title">⚡ ÚLTIMAS FINALIZAÇÕES</div>
-        <div id="tv-recentes"></div>
-      </div>
-      <div class="tv-section" style="flex:none">
-        <div class="tv-section-title">🚨 ALERTAS ATIVOS</div>
-        <div id="tv-alertas"></div>
-      </div>
-    </div>
+  <div id="tv-slides-area" style="flex:1;overflow:hidden;position:relative;padding:0"></div>
+  <div style="padding:8px 24px;background:rgba(0,0,0,.5);border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;overflow:hidden">
+    <div id="tv-marquee" style="white-space:nowrap;font-size:12px;color:var(--muted);display:inline-block;animation:marquee 40s linear infinite">Carregando...</div>
   </div>
 </div>
-
 <!-- TV Popup container -->
 <div id="tv-popup-container"></div>
 
@@ -1057,7 +1050,6 @@ const PAGES_CFG = {
   'ranking':           {title:'Ranking Técnicos',       path:'/produtividade/ranking',        load:()=>loadRanking(null)},
   'prod-assunto':      {title:'Produtividade por Tipo', path:'/produtividade/por-assunto',    load:loadProdAssunto},
   'prod-premiacao':    {title:'Premiação',             path:'/produtividade/premiacao',      load:loadPremiacao},
-  'prod-comportamento': {title:'Comportamento Tecnico',  path:'/tecnicos/comportamento',        load:loadComportamento},
   'prod-destaques':    {title:'Ranking Destaques',     path:'/produtividade/destaques',      load:loadDestaques},
   'prod-eficiencia':   {title:'Análise de Eficiência',  path:'/produtividade/eficiencia',     load:loadEficiencia},
   'prod-efic-op':      {title:'Eficiência Operacional', path:'/produtividade/eficiencia-op',   load:loadEficOp},
@@ -1180,13 +1172,8 @@ async function syncAgora(){
     btn.textContent='↻ Sync estoque...'
     await fetch('/api/sais/auditoria/estoque-sync',{method:'POST'}).catch(()=>{})
     btn.textContent='↻ Atualizando...'
-    // Aguarda 1s para o sync processar antes de recarregar
-    await new Promise(function(r){ setTimeout(r, 1000) })
-    if(currentPage==='agenda-monitor' && typeof _renderMonitor==='function'){
-      await _renderMonitor()
-    } else if(PAGES_CFG[currentPage]?.load){
-      await PAGES_CFG[currentPage].load()
-    }
+    if(currentPage==='agenda-monitor' && typeof _renderMonitor==='function') await _renderMonitor()
+    if(PAGES_CFG[currentPage]?.load) await PAGES_CFG[currentPage].load()
     btn.textContent='✅ Sincronizado!'
   } catch(e){ btn.textContent='❌ Erro' }
   setTimeout(function(){ btn.textContent='↻ Sync IXC'; btn.disabled=false }, 2000)
@@ -1288,7 +1275,7 @@ function globalFiltroChange(){
   // Invalida cache de opções quando período muda
   if(_filtroOpcoes) _filtroOpcoes._chave = null
   atualizarBotoesFiltro()
-  const paginasReativas = ['dashboard','ranking','agenda-monitor','agenda-reincid','agenda-qualidade','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-comportamento','prod-destaques','prod-premiacao','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
+  const paginasReativas = ['dashboard','ranking','agenda-monitor','agenda-reincid','agenda-qualidade','agenda-dia','auditoria','os-atrasadas','tecnicos-ociosos','ultimas-os','prod-assunto','prod-auditoria','prod-destaques','prod-premiacao','prod-eficiencia','prod-efic-op','audit-estoque','audit-estoque-cad']
   if(paginasReativas.includes(currentPage)){
     const cfg = PAGES_CFG[currentPage]
     if(cfg?.load) cfg.load()
@@ -1790,56 +1777,20 @@ function renderEventos(){
 // ═══════════════════════════════════════════════════
 async function loadUltimasOS(){
   const fp = getFiltrosParams()
-  const url = fp ? SAIS+'/visao-geral/eventos-recentes?limit=100&'+fp : SAIS+'/visao-geral/eventos-recentes?limit=100'
-  const d = await apiFetch(url)
-  const el = document.getElementById('ultimas-os-list')
-  const eventos = d.eventos || []
-  if(!eventos.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>Nenhuma OS hoje</div>'; return }
-
-  // Separa por categoria
-  const grupos = {
-    servico:  {titulo:'SERVIÇO',  icone:'⚡', cor:'var(--cyan)',  itens:[]},
-    suporte:  {titulo:'SUPORTE',  icone:'🔧', cor:'var(--amber)', itens:[]},
-    infra:    {titulo:'INFRA',    icone:'🏗️', cor:'var(--purple)',itens:[]},
-    retirada: {titulo:'RETIRADA', icone:'📦', cor:'var(--muted)', itens:[]},
-    outros:   {titulo:'OUTROS',   icone:'📋', cor:'var(--muted)', itens:[]},
-  }
-
-  eventos.forEach(function(o){
-    const cat = o.categoria || 'outros'
-    if(grupos[cat]) grupos[cat].itens.push(o)
-    else grupos.outros.itens.push(o)
-  })
-
-  // KPIs
-  let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:16px">'
-  Object.values(grupos).forEach(function(g){
-    if(!g.itens.length) return
-    html += '<div class="kpi" style="--ac:'+g.cor+'"><div class="kpi-val">'+g.itens.length+'</div><div class="kpi-lbl">'+g.icone+' '+g.titulo+'</div></div>'
-  })
-  html += '</div>'
-
-  // Grupos
-  Object.values(grupos).forEach(function(g){
-    if(!g.itens.length) return
-    html += '<div style="margin-bottom:20px">'
-    html += '<div style="font-size:12px;font-weight:800;color:'+g.cor+';margin-bottom:8px;display:flex;align-items:center;gap:6px">'
-      +g.icone+' '+g.titulo
-      +'<span style="background:var(--border);border-radius:10px;padding:2px 8px;font-size:11px;color:var(--muted)">'+g.itens.length+'</span></div>'
-    g.itens.forEach(function(o){
-      html += '<div class="os-row" onclick="abrirModalOS('+o.ixc_os_id+')">'
-        +'<div class="os-id">#'+o.ixc_os_id+'</div>'
-        +'<div class="os-info">'
-        +'<div class="os-assunto">'+(o.assunto||'—')+'</div>'
-        +'<div class="os-meta"><span>'+(o.tecnico||'—')+'</span><span>'+fmtData(o.data_fechamento||o.data_abertura)+'</span></div>'
-        +'</div>'
-        +'<span class="os-status-chip '+statusCls(o.status)+'">'+statusLabel(o.status)+'</span>'
-        +'</div>'
-    })
-    html += '</div>'
-  })
-
-  el.innerHTML = html
+  const url = fp ? `${SAIS}/visao-geral/eventos-recentes?limit=30&${fp}` : `${SAIS}/visao-geral/eventos-recentes?limit=30`
+  const d=await apiFetch(url)
+  const el=document.getElementById('ultimas-os-list')
+  if(!d.eventos?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div>Nenhuma OS hoje</div>`;return}
+  el.innerHTML=d.eventos.map(o=>`
+    <div class="os-row" onclick="abrirModalOS(${o.ixc_os_id})">
+      <div class="os-id">#${o.ixc_os_id}</div>
+      <div class="os-info">
+        <div class="os-assunto">${o.assunto||'—'}</div>
+        <div class="os-meta"><span>${o.tecnico||'—'}</span><span>${fmtData(o.data_fechamento||o.data_abertura)}</span></div>
+      </div>
+      <span class="os-status-chip ${statusCls(o.status)}">${statusLabel(o.status)}</span>
+    </div>
+  `).join('')
 }
 function fmtData(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}catch{return d}}
 
@@ -1848,175 +1799,23 @@ function fmtData(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-
 // ═══════════════════════════════════════════════════
 async function loadOsAtrasadas(){
   const _fp=getFiltrosParams()
-  const d=await apiFetch(_fp?SAIS+'/central/os-criticas?'+_fp:SAIS+'/central/os-criticas')
+  const d=await apiFetch(_fp?`${SAIS}/central/os-criticas?${_fp}`:`${SAIS}/central/os-criticas`)
   const el=document.getElementById('os-atrasadas-list')
-  const lista = d.os_criticas||[]
-  if(!lista.length){el.innerHTML='<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS parada</div>';return}
-
-  // Converte horas em dias e filtra suporte + servico
-  const suporte = lista.filter(function(o){ return o.categoria==='suporte' })
-  const servico  = lista.filter(function(o){ return o.categoria==='servico' })
-  const retirada = lista.filter(function(o){ return o.categoria==='retirada' })
-  const outros   = lista.filter(function(o){ return o.categoria!=='suporte'&&o.categoria!=='servico'&&o.categoria!=='retirada' })
-
-  function dias(h){ return Math.floor(h/24) }
-  function corDias(h){ return h>=168?'var(--red)':h>=72?'var(--amber)':'var(--cyan)' }
-
-  function renderGrupo(titulo, grupo, icone){
-    if(!grupo.length) return ''
-    let html='<div style="margin-bottom:20px">'
-    html+='<div style="font-size:12px;font-weight:800;color:var(--cyan);margin-bottom:10px;display:flex;align-items:center;gap:8px">'
-      +icone+' '+titulo+' <span style="background:var(--border);border-radius:10px;padding:2px 8px;font-size:11px;color:var(--muted)">'+grupo.length+'</span></div>'
-    html+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
-    html+='<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted)">'
-    html+='<th style="padding:7px 6px">OS</th>'
-    html+='<th style="padding:7px 6px">Assunto</th>'
-    html+='<th style="padding:7px 6px">Técnico</th>'
-    html+='<th style="padding:7px 6px;text-align:center">Abertura</th>'
-    html+='<th style="padding:7px 6px;text-align:center">Dias parada</th>'
-    html+='<th style="padding:7px 6px;text-align:center">Status</th>'
-    html+='</tr></thead><tbody>'
-    grupo.sort(function(a,b){return b.horas_abertas-a.horas_abertas}).forEach(function(o){
-      const d2=dias(o.horas_abertas)
-      const cor=corDias(o.horas_abertas)
-      const bg=o.horas_abertas>=168?'rgba(255,77,79,.04)':o.horas_abertas>=72?'rgba(255,184,63,.03)':''
-      html+='<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:'+bg+';cursor:pointer" onclick="abrirModalOS('+o.ixc_os_id+')">'
-      html+='<td style="padding:7px 6px;font-family:monospace;color:var(--cyan);font-size:11px">#'+o.ixc_os_id+'</td>'
-      html+='<td style="padding:7px 6px;max-width:180px">'+( o.assunto||'—').substring(0,25)+'</td>'
-      html+='<td style="padding:7px 6px;color:var(--text)">'+( o.tecnico||'—').split(' ')[0]+'</td>'
-      html+='<td style="padding:7px 6px;text-align:center;font-size:11px;color:var(--muted)">'+String(o.data_abertura||'').substring(0,10)+'</td>'
-      html+='<td style="padding:7px 6px;text-align:center;font-weight:800;color:'+cor+'">'+(d2>0?d2+'d':Math.round(o.horas_abertas)+'h')+'</td>'
-      html+='<td style="padding:7px 6px;text-align:center"><span class="badge '+(o.horas_abertas>=168?'red':o.horas_abertas>=72?'amber':'cyan')+'">'+( o.status||'aberta')+'</span></td>'
-      html+='</tr>'
-    })
-    html+='</tbody></table></div></div>'
-    return html
-  }
-
-  // KPIs
-  const totalDias = lista.reduce(function(s,o){return s+Math.floor(o.horas_abertas/24)},0)
-  const maisAntiga = lista.reduce(function(a,b){return a.horas_abertas>b.horas_abertas?a:b},{horas_abertas:0})
-  let html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px">'
-  html+='<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+lista.length+'</div><div class="kpi-lbl">Total paradas</div></div>'
-  html+='<div class="kpi" style="--ac:var(--amber)"><div class="kpi-val">'+suporte.length+'</div><div class="kpi-lbl">Suporte</div></div>'
-  html+='<div class="kpi" style="--ac:var(--cyan)"><div class="kpi-val">'+servico.length+'</div><div class="kpi-lbl">Serviço</div></div>'
-  html+='<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+Math.floor(maisAntiga.horas_abertas/24)+'d</div><div class="kpi-lbl">Mais antiga</div></div>'
-  html+='</div>'
-  html+='<div class="card">'
-  html+=renderGrupo('SUPORTE', suporte, '🔧')
-  html+=renderGrupo('SERVIÇO', servico, '⚡')
-  html+=renderGrupo('RETIRADA', retirada, '📦')
-  html+=renderGrupo('OUTROS', outros, '📋')
-  html+='</div>'
-  el.innerHTML=html
+  if(!d.os_criticas?.length){el.innerHTML=`<div class="empty"><div class="empty-icon">✅</div>Nenhuma OS atrasada</div>`;return}
+  el.innerHTML=d.os_criticas.map(o=>`
+    <div class="critico-card" onclick="abrirModalOS(${o.ixc_os_id})">
+      <div class="critico-icon">⏰</div>
+      <div class="critico-info">
+        <div class="critico-titulo">OS #${o.ixc_os_id} — ${o.assunto||'—'}</div>
+        <div class="critico-sub">${o.tecnico||'—'} · Aberta há ${o.horas_abertas}h · ${o.categoria||''}</div>
+      </div>
+      <span class="badge red">${o.horas_abertas}h</span>
+    </div>
+  `).join('')
 }
 
 async function loadSlaRisco(){
-  const el = document.getElementById('sla-risco-content')
-  if(!el) return
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando SLA...</div>'
-
-  try {
-    const d = await apiFetch(SAIS+'/central/sla')
-    if(d.erro){ el.innerHTML='<div style="color:var(--red);padding:20px">Erro: '+d.erro+'</div>'; return }
-
-    const est   = d.estouradas || []
-    const prest = d.prestes    || []
-    const rank  = d.ranking    || []
-    const res   = d.resumo     || {}
-
-    let html = ''
-
-    // KPIs
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px">'
-    html += '<div class="kpi" style="--ac:var(--red)"><div class="kpi-val">'+res.criticas+'</div><div class="kpi-lbl">Críticas (+24h)</div></div>'
-    html += '<div class="kpi" style="--ac:var(--amber)"><div class="kpi-val">'+res.total_estouradas+'</div><div class="kpi-lbl">Total estouradas</div></div>'
-    html += '<div class="kpi" style="--ac:var(--orange)"><div class="kpi-val">'+res.total_prestes+'</div><div class="kpi-lbl">Prestes a estourar</div></div>'
-    html += '</div>'
-
-    // Prestes a estourar
-    if(prest.length > 0){
-      html += '<div class="card" style="margin-bottom:16px;border-color:rgba(255,184,63,.2)">'
-        +'<div style="font-size:12px;font-weight:800;color:var(--amber);margin-bottom:12px">⚠️ PRESTES A ESTOURAR — próximas 4 horas</div>'
-        +'<div style="display:flex;flex-direction:column;gap:8px">'
-      prest.forEach(function(o){
-        const min = o.min_restantes
-        const cor = min<=60?'var(--red)':'var(--amber)'
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(255,184,63,.06);border:1px solid rgba(255,184,63,.15);border-radius:8px;cursor:pointer" onclick="abrirModalOS('+o.os_id+')">'
-          +'<div>'
-          +'<div style="font-weight:700;font-size:13px">OS #'+o.os_id+' — '+o.assunto.substring(0,25)+'</div>'
-          +'<div style="font-size:11px;color:var(--muted);margin-top:2px">'+o.tecnico+' · prazo: '+o.prazo.substring(11,16)+'</div>'
-          +'</div>'
-          +'<div style="text-align:right">'
-          +'<div style="font-size:18px;font-weight:800;color:'+cor+'">'+min+'min</div>'
-          +'<div style="font-size:10px;color:var(--muted)">restantes</div>'
-          +'</div></div>'
-      })
-      html += '</div></div>'
-    }
-
-    // Ranking técnicos
-    if(rank.length > 0){
-      html += '<div class="card" style="margin-bottom:16px">'
-        +'<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Ranking — Técnicos com mais SLA estourado</div>'
-        +'<div style="display:flex;flex-direction:column;gap:6px">'
-      const maxR = rank[0]?.total || 1
-      rank.forEach(function(t, i){
-        const cor = i===0?'var(--red)':i===1?'var(--amber)':'var(--muted)'
-        const pct = Math.round(t.total/maxR*100)
-        html += '<div style="display:flex;align-items:center;gap:10px">'
-          +'<div style="font-size:14px;min-width:24px">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':'  ')+'</div>'
-          +'<div style="font-weight:700;min-width:100px;font-size:13px">'+t.nome.split(' ')[0]+'</div>'
-          +'<div style="flex:1;background:var(--border);border-radius:4px;height:6px">'
-          +'<div style="background:'+cor+';width:'+pct+'%;height:6px;border-radius:4px"></div></div>'
-          +'<div style="font-weight:800;color:'+cor+';min-width:40px;text-align:right">'+t.total+'</div>'
-          +(t.critico>0?'<span class="badge red" style="font-size:9px">'+t.critico+' crit.</span>':'')
-          +'</div>'
-      })
-      html += '</div></div>'
-    }
-
-    // Tabela estouradas
-    if(est.length > 0){
-      html += '<div class="card">'
-        +'<div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">🚨 JÁ ESTOURADAS</div>'
-        +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
-        +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted)">'
-        +'<th style="padding:7px 6px">OS</th>'
-        +'<th style="padding:7px 6px">Assunto</th>'
-        +'<th style="padding:7px 6px">Técnico</th>'
-        +'<th style="padding:7px 6px">Categoria</th>'
-        +'<th style="padding:7px 6px;text-align:center">Prazo</th>'
-        +'<th style="padding:7px 6px;text-align:center">Atraso</th>'
-        +'<th style="padding:7px 6px;text-align:center">Dias aberto</th>'
-        +'<th style="padding:7px 6px;text-align:center">Inter.</th>'
-        +'</tr></thead><tbody>'
-
-      est.forEach(function(o){
-        const corAtr = o.horas_atraso>=168?'var(--red)':o.horas_atraso>=24?'var(--amber)':'var(--orange)'
-        const bgRow  = o.horas_atraso>=168?'rgba(255,77,79,.04)':o.horas_atraso>=24?'rgba(255,184,63,.03)':''
-        const catCor = o.categoria==='suporte'?'amber':o.categoria==='servico'?'cyan':o.categoria==='infra'?'green':'muted'
-        html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:'+bgRow+';cursor:pointer" onclick="abrirModalOS('+o.os_id+')">'
-          +'<td style="padding:7px 6px;font-family:monospace;color:var(--cyan);font-size:11px">#'+o.os_id+'</td>'
-          +'<td style="padding:7px 6px;max-width:160px">'+o.assunto.substring(0,22)+'</td>'
-          +'<td style="padding:7px 6px">'+o.tecnico.split(' ')[0]+'</td>'
-          +'<td style="padding:7px 6px"><span class="badge '+catCor+'" style="font-size:9px">'+o.categoria+'</span></td>'
-          +'<td style="padding:7px 6px;text-align:center;font-size:11px;color:var(--muted)">'+o.prazo.substring(0,16)+'</td>'
-          +'<td style="padding:7px 6px;text-align:center;font-weight:800;color:'+corAtr+'">'
-          +(o.horas_atraso>=24?Math.floor(o.horas_atraso/24)+'d':o.horas_atraso+'h')+'</td>'
-          +'<td style="padding:7px 6px;text-align:center;color:var(--muted)">'+o.dias_aberto+'d</td>'
-          +'<td style="padding:7px 6px;text-align:center;color:var(--amber);font-weight:700">'+o.interacoes+'</td>'
-          +'</tr>'
-      })
-      html += '</tbody></table></div></div>'
-    }
-
-    el.innerHTML = html
-
-  } catch(e){
-    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
-    console.error(e)
-  }
+  document.getElementById('sla-risco-content').innerHTML=`<div class="empty"><div class="empty-icon">📊</div>Motor de SLA em processamento — dados disponíveis após o próximo ciclo de auditoria (15 min)</div>`
 }
 
 async function loadOciosos(){
@@ -2036,70 +1835,6 @@ async function loadOciosos(){
   `).join('')
 }
 
-async function loadLogs(){
-  const el = document.getElementById('auto-logs-content') || document.getElementById('logs-content') || document.getElementById('auto-logs-list')
-  if(!el) return
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>Carregando logs...</div>'
-
-  try {
-    const d = await apiFetch('/api/logs')
-    const NOMES = {
-      sync:      {titulo:'Sync IXC (delta)',    icone:'🔄'},
-      sync_full: {titulo:'Sync IXC (full)',     icone:'🔄'},
-      estoque:   {titulo:'Sync Estoque',        icone:'📦'},
-      auditoria: {titulo:'Auditoria Engine',    icone:'🧾'},
-      destaques: {titulo:'Destaques do Dia',    icone:'⭐'},
-    }
-
-    let html = '<div style="display:flex;flex-direction:column;gap:16px">'
-    Object.entries(d).forEach(function(entry){
-      const nome = entry[0], info = entry[1]
-      const cfg = NOMES[nome] || {titulo:nome, icone:'📋'}
-      const corStatus = info.ok ? 'var(--green)' : 'var(--red)'
-
-      // Detecta erros nas linhas
-      const temErro = info.linhas && info.linhas.some(function(l){ return l.includes('ERRO') || l.includes('ERROR') || l.includes('Traceback') })
-      const corBorda = temErro ? 'rgba(255,77,79,.2)' : info.ok ? 'rgba(0,229,160,.1)' : 'var(--border)'
-
-      html += '<div class="card" style="border-color:'+corBorda+'">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-        +'<div style="display:flex;align-items:center;gap:8px">'
-        +'<span style="font-size:18px">'+cfg.icone+'</span>'
-        +'<div><div style="font-weight:800;font-size:13px">'+cfg.titulo+'</div>'
-        +'<div style="font-size:11px;color:var(--muted)">Última execução: '+info.modificado+'</div></div>'
-        +'</div>'
-        +'<div style="text-align:right">'
-        +(temErro ? '<span class="badge red" style="font-size:10px">⚠️ ERRO</span>' : '<span class="badge green" style="font-size:10px">✅ OK</span>')
-        +'</div></div>'
-
-      if(info.linhas && info.linhas.length > 0){
-        html += '<div style="background:var(--bg);border-radius:6px;padding:10px;font-family:monospace;font-size:11px;max-height:160px;overflow-y:auto">'
-        info.linhas.slice(-10).forEach(function(linha){
-          // Converte timestamps UTC para BRT nas linhas de log
-      const linhaConv = linha.replace(/(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):(\d{2})/g, function(m,d,h,mi,s){
-        const dt = new Date(d+'T'+h+':'+mi+':'+s+'Z')
-        return dt.toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).replace(',','')
-      })
-      const corLinha = linhaConv.includes('ERRO')||linhaConv.includes('ERROR')?'var(--red)'
-            : linha.includes('✅')||linha.includes('concluído')||linha.includes('salvas')?'var(--green)'
-            : linha.includes('⚠️')||linha.includes('WARN')?'var(--amber)'
-            : 'var(--muted)'
-          html += '<div style="color:'+corLinha+';margin-bottom:2px">'+linhaConv+'</div>'
-        })
-        html += '</div>'
-      } else {
-        html += '<div style="color:var(--muted);font-size:12px">Nenhum log disponível</div>'
-      }
-      html += '</div>'
-    })
-    html += '</div>'
-    el.innerHTML = html
-
-  } catch(e){
-    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
-  }
-}
-// _LOGS_PLACEHOLDER_
 async function loadAlertasFull(){
   const d=await apiFetch(`${SAIS}/visao-geral/alertas?limit=50`)
   const el=document.getElementById('alertas-full-list')
@@ -3250,149 +2985,6 @@ async function loadPremiacao(){
   }
 }
 
-
-// ═══════════════════════════════════════════════════
-// COMPORTAMENTO TÉCNICO
-// ═══════════════════════════════════════════════════
-async function loadComportamento(){
-  const el = document.getElementById('comportamento-content')
-  if(!el) return
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>Calculando scores...</div>'
-
-  const di = document.getElementById('f-data-inicio')?.value || ''
-  const df = document.getElementById('f-data-fim')?.value || ''
-  let url = '/api/sais/produtividade/comportamento'
-  const p = []
-  if(di) p.push('data_inicio='+di)
-  if(df) p.push('data_fim='+df)
-  if(p.length) url += '?'+p.join('&')
-
-  try {
-    const d = await apiFetch(url)
-    const ranking = d.ranking || []
-    if(!ranking.length){
-      el.innerHTML = '<div class="empty"><div class="empty-icon">📊</div>Sem dados no período</div>'
-      return
-    }
-
-    window._compRanking = ranking
-
-    let html = ''
-
-    // Top 3 resumo
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px">'
-    const FOTOS_COMP = {"ALEXANDRE":"/static/fotos/alexandre.jpeg","DENISON":"/static/fotos/denison.jpeg","JOSEILTON":"/static/fotos/Joseilton.jpeg","LEANDRO":"/static/fotos/leandro.jpeg","RICARDO":"/static/fotos/Ricardo.jpeg","RODRIGO":"/static/fotos/rodrigo.jpeg","ROGERIO":"/static/fotos/Richardson.jpeg","VICTOR":"/static/fotos/Victor.jpeg","WELLINGTON":"/static/fotos/Wellington.jpeg","JOSE":"/static/fotos/jose marconde.jpeg"}
-    ranking.slice(0,3).forEach(function(t, i){
-      const medal = i===0?'🥇':i===1?'🥈':'🥉'
-      const fotoT = Object.entries(FOTOS_COMP).find(function(e){ return t.nome.toUpperCase().includes(e[0]) })
-      const fotoUrlT = fotoT ? fotoT[1] : ''
-      html += '<div class="card" style="border-color:'+t.cor+'44;text-align:center;padding:20px">'
-        +(fotoUrlT?'<img src="'+fotoUrlT+'" style="width:70px;height:70px;border-radius:50%;object-fit:cover;border:3px solid '+t.cor+';margin:0 auto 10px;display:block" onerror="this.style.display=\'none\'">':'<div style="font-size:28px;margin-bottom:8px">'+medal+'</div>')
-        +'<div style="font-size:22px;margin-bottom:4px">'+medal+'</div>'
-        +'<div style="font-weight:800;font-size:15px;margin-bottom:6px">'+t.nome.split(' ')[0]+'</div>'
-        +'<div style="font-size:32px;font-weight:800;color:'+t.cor+'">'+t.score+'</div>'
-        +'<div style="font-size:12px;color:'+t.cor+';font-weight:700;margin-top:4px">'+t.conceito+'</div>'
-        +'<div style="font-size:11px;color:var(--muted);margin-top:8px">'
-        +t.total_os+' OS · '+t.qualidade_pct+'% qual. · '
-        +(t.nota_supervisor>0?'⭐'.repeat(Math.round(t.nota_supervisor)):'sem avaliação')
-        +'</div></div>'
-    })
-    html += '</div>'
-
-    // Tabela ranking completo
-    html += '<div class="card" style="margin-bottom:16px">'
-      +'<div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:14px">Score Completo de Comportamento</div>'
-      +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'
-      +'<thead><tr style="border-bottom:1px solid var(--border);color:var(--muted)">'
-      +'<th style="padding:8px 6px">#</th>'
-      +'<th style="padding:8px 6px">Técnico</th>'
-      +'<th style="padding:8px 6px;text-align:center">Score</th>'
-      +'<th style="padding:8px 6px;text-align:center">Conceito</th>'
-      +'<th style="padding:8px 6px;text-align:center">Qualidade</th>'
-      +'<th style="padding:8px 6px;text-align:center">Pontualidade</th>'
-      +'<th style="padding:8px 6px;text-align:center">SLA Est.</th>'
-      +'<th style="padding:8px 6px;text-align:center">Supervisor</th>'
-      +'<th style="padding:8px 6px;text-align:center">Ação</th>'
-      +'</tr></thead><tbody>'
-
-    ranking.forEach(function(t){
-      const corC = t.conceito==='EXCELENTE'?'green':t.conceito==='BOM'?'cyan':t.conceito==='REGULAR'?'amber':'red'
-      const estrelas = t.nota_supervisor>0 ? '⭐'.repeat(Math.round(t.nota_supervisor))+'<span style="color:var(--muted);font-size:10px"> ('+t.nota_supervisor+')</span>' : '<span style="color:var(--muted);font-size:11px">—</span>'
-      const fotoComp = Object.entries({"ALEXANDRE":"/static/fotos/alexandre.jpeg","DENISON":"/static/fotos/denison.jpeg","JOSEILTON":"/static/fotos/Joseilton.jpeg","LEANDRO":"/static/fotos/leandro.jpeg","RICARDO":"/static/fotos/Ricardo.jpeg","RODRIGO":"/static/fotos/rodrigo.jpeg","ROGERIO":"/static/fotos/Richardson.jpeg","VICTOR":"/static/fotos/Victor.jpeg","WELLINGTON":"/static/fotos/Wellington.jpeg","JOSE":"/static/fotos/jose marconde.jpeg"}).find(function(e){ return t.nome.toUpperCase().includes(e[0]) })
-      const fotoUrl = fotoComp ? fotoComp[1] : ''
-      html += '<tr style="border-bottom:1px solid rgba(255,255,255,.04)">'
-        +'<td style="padding:8px 6px;color:var(--muted);font-weight:700">'+t.posicao+'º</td>'
-        +'<td style="padding:8px 6px;font-weight:700;display:flex;align-items:center;gap:8px">'
-        +(fotoUrl?'<img src="'+fotoUrl+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid '+t.cor+'" onerror="this.style.display=\'none\'">':'')
-        +'<span>'+t.nome.split(' ')[0]+'</span></td>'
-        +'<td style="padding:8px 6px;text-align:center"><span style="font-size:18px;font-weight:800;color:'+t.cor+'">'+t.score+'</span></td>'
-        +'<td style="padding:8px 6px;text-align:center"><span class="badge '+corC+'" style="font-size:10px">'+t.conceito+'</span></td>'
-        +'<td style="padding:8px 6px;text-align:center;color:'+(t.qualidade_pct>=90?'var(--green)':t.qualidade_pct>=75?'var(--amber)':'var(--red)')+'">'+t.qualidade_pct+'%</td>'
-        +'<td style="padding:8px 6px;text-align:center;color:'+(t.pct_pontualidade>=80?'var(--green)':t.pct_pontualidade>=50?'var(--amber)':'var(--red)')+'">'+t.pct_pontualidade+'%</td>'
-        +'<td style="padding:8px 6px;text-align:center;color:'+(t.sla_estourado>5?'var(--red)':t.sla_estourado>0?'var(--amber)':'var(--green)')+'">'+t.sla_estourado+'</td>'
-        +'<td style="padding:8px 6px;text-align:center">'+estrelas+'</td>'
-        +'<td style="padding:8px 6px;text-align:center">'
-        +'<button onclick="abrirNotaSupervisor('+t.tecnico_id+',\''+t.nome+'\')" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:var(--cyan);border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:700">⭐ Avaliar</button>'
-        +'</td></tr>'
-    })
-
-    html += '</tbody></table></div></div>'
-
-    // Legenda do score
-    html += '<div class="card" style="font-size:12px;color:var(--muted)">'
-      +'<div style="font-weight:700;margin-bottom:8px;color:var(--text)">Como é calculado o score (0-100):</div>'
-      +'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px">'
-      +'<div>🏆 <strong>Qualidade</strong> (30%) — % OS sem pendências</div>'
-      +'<div>📅 <strong>Pontualidade</strong> (25%) — dias destaque / dias trabalhados</div>'
-      +'<div>📉 <strong>Retrabalho</strong> (20%) — proxy da qualidade</div>'
-      +'<div>⏱️ <strong>SLA</strong> (15%) — penaliza OS estouradas</div>'
-      +'<div>⭐ <strong>Supervisor</strong> (10%) — nota manual 1-5 estrelas</div>'
-      +'</div></div>'
-
-    el.innerHTML = html
-
-  } catch(e){
-    el.innerHTML = '<div style="color:var(--red);padding:20px">Erro: '+e.message+'</div>'
-    console.error(e)
-  }
-}
-
-let _notaTecId = null, _notaTecNome = ''
-function abrirNotaSupervisor(tecId, nome){
-  _notaTecId = tecId
-  _notaTecNome = nome
-  document.getElementById('nota-tec-nome').textContent = nome
-  document.getElementById('nota-estrelas').value = 5
-  document.getElementById('nota-obs').value = ''
-  document.getElementById('nota-supervisor-nome').value = ''
-  document.getElementById('modal-nota-sup').style.display = 'flex'
-}
-
-async function salvarNotaSupervisor(){
-  const estrelas = parseInt(document.getElementById('nota-estrelas').value)
-  const obs      = document.getElementById('nota-obs').value
-  const sup      = document.getElementById('nota-supervisor-nome').value
-  const hoje     = new Date().toISOString().substring(0,10)
-
-  const url = '/api/sais/produtividade/comportamento/nota'
-    +'?tecnico_id='+_notaTecId
-    +'&data='+hoje
-    +'&estrelas='+estrelas
-    +'&obs='+encodeURIComponent(obs)
-    +'&supervisor='+encodeURIComponent(sup)
-
-  try {
-    const r = await fetch(url, {method:'POST'})
-    const d = await r.json()
-    if(d.ok){
-      document.getElementById('modal-nota-sup').style.display='none'
-      loadComportamento()
-    } else {
-      alert('Erro: '+(d.erro||'Falha'))
-    }
-  } catch(e){ alert('Erro: '+e.message) }
-}
-
 async function loadDestaques(){
   const el = document.getElementById('destaques-content')
   if(!el) return
@@ -3766,9 +3358,6 @@ async function loadTecnicos(){
 // AUTOMAÇÕES LOGS
 // ═══════════════════════════════════════════════════
 async function loadAutoLogs(){
-  return loadLogs()
-}
-async function _loadAutoLogsOld(){
   // Usa tabela sais_automacoes_log diretamente via endpoint genérico
   const el=document.getElementById('auto-logs-content')
   try{
@@ -4422,121 +4011,200 @@ function switchTab(modalId, tabId, el){
 }
 
 // ═══════════════════════════════════════════════════
-// MODO TV
-// ═══════════════════════════════════════════════════
-let tvInterval=null
-
+// MODO TV — SLIDES
+let tvSlideInterval=null,tvRefreshInterval=null,tvSlideAtual=0,tvDados={}
+const TV_SLIDES=[
+  {id:'campo',      label:'Em execucao e atrasadas'},
+  {id:'ranking',    label:'Top tecnicos por pontuacao'},
+  {id:'meta',       label:'Progresso da equipe'},
+  {id:'recentes',   label:'OS concluidas hoje'},
+  {id:'qualidade',  label:'Qualidade pos-instalacao'},
+  {id:'eficiencia', label:'Analise de eficiencia'},
+]
 async function abrirTV(){
   document.getElementById('tv-overlay').classList.add('active')
   iniciarRelogioTV()
-  await loadTV()
-  tvInterval=setInterval(loadTV,30000)
-  // Buscar popups pendentes
-  setInterval(loadTVPopups,10000)
+  tvSlideAtual=0
+  // Mostra loading
+  var area=document.getElementById('tv-slides-area')
+  if(area) area.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:18px">Carregando...</div>'
+  // Carrega dados primeiro, depois inicia slides
+  await tvCarregarDados()
+  tvIniciarSlides()
+  tvRefreshInterval=setInterval(tvCarregarDados,600000)
 }
-
 function fecharTV(){
   document.getElementById('tv-overlay').classList.remove('active')
-  if(tvInterval) clearInterval(tvInterval)
+  if(tvSlideInterval) clearInterval(tvSlideInterval)
+  if(tvRefreshInterval) clearInterval(tvRefreshInterval)
 }
-
 function iniciarRelogioTV(){
-  const tick=()=>{
-    const now=new Date()
-    document.getElementById('tv-clock').textContent=now.toLocaleTimeString('pt-BR')
-    document.getElementById('tv-date').textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})
+  var tick=function(){
+    var now=new Date()
+    var el=document.getElementById('tv-clock'),el2=document.getElementById('tv-date')
+    if(el) el.textContent=now.toLocaleTimeString('pt-BR')
+    if(el2) el2.textContent=now.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})
   }
-  tick()
-  setInterval(tick,1000)
+  tick();setInterval(tick,1000)
 }
-
-async function loadTV(){
+async function tvCarregarDados(){
   try{
-    const d=await apiFetch(`${SAIS}/tv/estado`)
-    const k=d.kpis||{}
-
-    // KPIs
-    document.getElementById('tv-kpis').innerHTML=`
-      <div class="tv-kpi" style="--ac:var(--cyan)">
-        <div class="tv-kpi-val">${k.total||0}</div><div class="tv-kpi-lbl">Total OS</div>
-      </div>
-      <div class="tv-kpi" style="--ac:var(--green)">
-        <div class="tv-kpi-val">${k.finalizadas||0}</div><div class="tv-kpi-lbl">Finalizadas</div>
-      </div>
-      <div class="tv-kpi" style="--ac:var(--orange)">
-        <div class="tv-kpi-val">${k.pct_meta||0}%</div><div class="tv-kpi-lbl">Meta ${k.meta||150}</div>
-      </div>
-    `
-
-    // Ranking
-    document.getElementById('tv-ranking').innerHTML=(d.top5||[]).map((t,i)=>`
-      <div class="tv-ranking-item">
-        <div class="tv-rank-pos rpos ${rposCls(i)}">${i+1}</div>
-        <div class="tv-rank-nome">${t.nome}</div>
-        <div class="tv-rank-os">${t.total_os}</div>
-        <span class="badge ${t.pct_meta>=80?'green':t.pct_meta>=50?'amber':'red'}">${t.pct_meta}%</span>
-      </div>
-    `).join('')||`<div style="color:var(--muted);font-size:11px;padding:8px">Nenhum dado</div>`
-
-    // Recentes
-    document.getElementById('tv-recentes').innerHTML=(d.recentes||[]).map(o=>`
-      <div class="tv-recent-item">
-        <span class="tv-recent-id">#${o.ixc_os_id}</span>
-        <strong>${o.tecnico||'—'}</strong> · ${o.assunto?.slice(0,30)||'—'}
-        <div style="font-size:10px;color:var(--muted)">${fmtHora(o.data_fechamento)}</div>
-      </div>
-    `).join('')||`<div style="color:var(--muted);font-size:11px;padding:8px">Nenhuma OS finalizada</div>`
-
-    // Alertas
-    document.getElementById('tv-alertas').innerHTML=(d.alertas||[]).map(a=>`
-      <div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px">
-        <span style="color:${a.criticidade==='critico'?'var(--red)':'var(--amber)'}">${a.titulo}</span>
-      </div>
-    `).join('')||`<div style="color:var(--green);font-size:11px;padding:8px">✅ Sem alertas críticos</div>`
-
-  }catch(e){console.error('tv:',e)}
+    var area=document.getElementById('tv-slides-area')
+    if(area&&!tvDados.estado) area.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:18px">Carregando dados...</div>'
+    var res=await Promise.all([
+      apiFetch(SAIS+'/tv/estado'),
+      apiFetch(SAIS+'/pontuacao/ranking'),
+      apiFetch(SAIS+'/agenda/qualidade-instalacao?dias=60'),
+      apiFetch(SAIS+'/produtividade/eficiencia'),
+    ])
+    tvDados.estado=res[0];tvDados.ranking=res[1];tvDados.qualidade=res[2];tvDados.eficiencia=res[3]
+    tvDados.atualizado=new Date().toLocaleTimeString('pt-BR')
+    tvAtualizarMarquee()
+    tvRenderSlide(tvSlideAtual)
+    console.log('TV dados carregados OK, slide='+tvSlideAtual)
+  }catch(e){
+    console.error('tv erro:',e)
+    var area2=document.getElementById('tv-slides-area')
+    if(area2) area2.innerHTML='<div style="color:var(--red);padding:40px;text-align:center">Erro: '+e.message+'</div>'
+  }
 }
-
-async function loadTVPopups(){
-  const d=await apiFetch(`${SAIS}/tv/popups-pendentes`)
-  ;(d.popups||[]).forEach(p=>{
-    mostrarPopupTV(p)
-    fetch(`${SAIS}/tv/popups/${p.id}/exibido`,{method:'POST'})
-  })
+function tvIniciarSlides(){
+  var dots=document.getElementById('tv-dots')
+  if(dots) dots.innerHTML=TV_SLIDES.map(function(s,i){
+    return '<div id="tv-dot-'+i+'" onclick="tvIrSlide('+i+')" style="width:8px;height:8px;border-radius:50%;background:'+(i===0?'var(--cyan)':'rgba(255,255,255,.2)')+';cursor:pointer;transition:.3s"></div>'
+  }).join('')
+  tvRenderSlide(0)
+  tvSlideInterval=setInterval(function(){tvSlideAtual=(tvSlideAtual+1)%TV_SLIDES.length;tvRenderSlide(tvSlideAtual)},30000)
 }
-
-const POPUP_CFG={
-  os_finalizada:{cor:'green',icone:'✅',dur:6000},
-  sla_estourado:{cor:'red',icone:'🚨',dur:10000},
-  sla_em_risco:{cor:'amber',icone:'⚠️',dur:8000},
-  meta_atingida:{cor:'green',icone:'🏆',dur:8000},
-  meta_em_risco:{cor:'amber',icone:'📉',dur:7000},
-  tecnico_ocioso:{cor:'amber',icone:'💤',dur:7000},
-  auditoria_grave:{cor:'red',icone:'🔍',dur:10000},
-  os_atrasada:{cor:'red',icone:'⏰',dur:8000},
+function tvIrSlide(idx){
+  tvSlideAtual=idx;tvRenderSlide(idx)
+  clearInterval(tvSlideInterval)
+  tvSlideInterval=setInterval(function(){tvSlideAtual=(tvSlideAtual+1)%TV_SLIDES.length;tvRenderSlide(tvSlideAtual)},30000)
 }
-
-function mostrarPopupTV(dados){
-  const cfg=POPUP_CFG[dados.tipo]||{cor:'amber',icone:'•',dur:6000}
-  const el=document.createElement('div')
-  el.className=`tv-popup ${cfg.cor}`
-  el.innerHTML=`
-    <div class="tv-popup-header">
-      <span class="tv-popup-icon">${cfg.icone}</span>
-      <span class="tv-popup-titulo">${dados.titulo||dados.tipo}</span>
-    </div>
-    <div class="tv-popup-sub">${dados.subtitulo||dados.mensagem||''}</div>
-    <div class="tv-popup-bar"><div class="tv-popup-bar-fill ${cfg.cor}" style="width:100%;transition-duration:${cfg.dur}ms"></div></div>
-  `
-  document.getElementById('tv-popup-container').prepend(el)
-  setTimeout(()=>el.style.transition='opacity .5s', 100)
-  setTimeout(()=>el.style.opacity='0', cfg.dur-500)
-  setTimeout(()=>el.remove(), cfg.dur)
-  // Animar barra
-  setTimeout(()=>{
-    const bar=el.querySelector('.tv-popup-bar-fill')
-    if(bar){bar.style.width='0%'}
-  }, 200)
+var FOTOS_TV={"ALEXANDRE":"/static/fotos/alexandre.jpeg","DENISON":"/static/fotos/denison.jpeg","JOSEILTON":"/static/fotos/Joseilton.jpeg","LEANDRO":"/static/fotos/leandro.jpeg","RICARDO":"/static/fotos/Ricardo.jpeg","RODRIGO":"/static/fotos/rodrigo.jpeg","ROGERIO":"/static/fotos/Richardson.jpeg","VICTOR":"/static/fotos/Victor.jpeg","WELLINGTON":"/static/fotos/Wellington.jpeg"}
+function tvFoto(nome){var e=Object.entries(FOTOS_TV).find(function(x){return nome.toUpperCase().includes(x[0])});return e?e[1]:''}
+function tvRenderSlide(idx){
+  TV_SLIDES.forEach(function(_,i){var dot=document.getElementById('tv-dot-'+i);if(dot)dot.style.background=i===idx?'var(--cyan)':'rgba(255,255,255,.2)'})
+  var lbl=document.getElementById('tv-slide-label')
+  if(lbl)lbl.textContent=TV_SLIDES[idx].label+(tvDados.atualizado?' - '+tvDados.atualizado:'')
+  var area=document.getElementById('tv-slides-area')
+  if(!area)return
+  var d=tvDados.estado||{},rank=tvDados.ranking||{},q=tvDados.qualidade||{},ef=tvDados.eficiencia||{}
+  var slide=TV_SLIDES[idx].id
+  var html='<div style="padding:20px 24px;height:100%;box-sizing:border-box;overflow-y:auto">'
+  if(slide==='campo'){
+    var criticas=d.os_criticas||[]
+    var emCampo=criticas.filter(function(o){return o.horas_abertas<=8})
+    var atrasadas=criticas.filter(function(o){return o.horas_abertas>8})
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">'
+    html+='<div><div style="font-size:13px;font-weight:800;color:var(--cyan);margin-bottom:12px">EM CAMPO ('+emCampo.length+')</div>'
+    if(emCampo.length){emCampo.slice(0,7).forEach(function(o){
+      html+='<div style="padding:10px 14px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.12);border-radius:10px;margin-bottom:8px"><div style="font-weight:800;font-size:15px">'+o.tecnico+'</div><div style="font-size:12px;color:var(--muted)">OS #'+o.ixc_os_id+' - '+(o.assunto||'').substring(0,24)+'</div><div style="font-size:12px;color:var(--cyan);margin-top:4px">'+o.horas_abertas+'h em campo</div></div>'
+    })}else{html+='<div style="color:var(--muted);padding:20px;text-align:center">Nenhuma em execucao</div>'}
+    html+='</div><div><div style="font-size:13px;font-weight:800;color:var(--red);margin-bottom:12px">ATRASADAS ('+atrasadas.length+')</div>'
+    if(atrasadas.length){atrasadas.slice(0,7).forEach(function(o){
+      var cor=o.horas_abertas>24?'var(--red)':'var(--amber)'
+      html+='<div style="padding:10px 14px;background:rgba(255,77,79,.06);border:1px solid rgba(255,77,79,.15);border-radius:10px;margin-bottom:8px"><div style="font-weight:800;font-size:15px">'+o.tecnico+'</div><div style="font-size:12px;color:var(--muted)">OS #'+o.ixc_os_id+' - '+(o.assunto||'').substring(0,24)+'</div><div style="font-size:13px;font-weight:800;color:'+cor+';margin-top:4px">'+o.horas_abertas+'h atrasada</div></div>'
+    })}else{html+='<div style="color:var(--green);padding:20px;text-align:center">Sem OS atrasadas</div>'}
+    html+='</div></div>'
+  }else if(slide==='ranking'){
+    var top=(rank.ranking||[]).slice(0,6)
+    var maxPts=top[0]?top[0].total_pontos||1:1
+    html+='<div style="font-size:13px;font-weight:800;color:var(--amber);margin-bottom:14px">RANKING DE HOJE</div>'
+    html+='<div style="display:flex;flex-direction:column;gap:10px">'
+    top.forEach(function(t,i){
+      var cor=i===0?'gold':i===1?'silver':i===2?'#cd7f32':'var(--muted)'
+      var pct=Math.round(t.total_pontos/maxPts*100)
+      var corMeta=t.pct_meta>=80?'var(--green)':t.pct_meta>=50?'var(--amber)':'var(--red)'
+      var foto=tvFoto(t.nome)
+      html+='<div style="display:flex;align-items:center;gap:14px;padding:10px 16px;background:rgba(255,255,255,.04);border-radius:12px">'+(foto?'<img src="'+foto+'" style="width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid '+cor+'" onerror="this.style.display=String()">':'<div style="width:40px;height:40px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-weight:800;color:'+cor+'">'+(i+1)+'</div>')+'<div style="flex:1"><div style="font-size:16px;font-weight:800">'+t.nome.split(' ')[0]+'</div><div style="background:var(--border);border-radius:4px;height:5px;margin-top:5px"><div style="background:'+cor+';width:'+pct+'%;height:5px;border-radius:4px"></div></div></div><div style="text-align:right"><div style="font-size:22px;font-weight:800;color:'+cor+'">'+t.total_pontos+'</div><div style="font-size:12px;color:'+corMeta+'">'+t.pct_meta+'% meta</div></div></div>'
+    })
+    html+='</div>'
+  }else if(slide==='meta'){
+    var k=d.kpis||{}
+    var totalPts=k.total_pontos||0,metaPts=1760
+    var pctMeta=Math.min(Math.round(totalPts/metaPts*100),100)
+    var corMeta2=pctMeta>=80?'var(--green)':pctMeta>=50?'var(--amber)':'var(--red)'
+    html+='<div style="text-align:center;padding:16px 0 20px"><div style="font-size:13px;color:var(--muted);margin-bottom:6px">META DO DIA - EQUIPE</div><div style="font-size:72px;font-weight:800;color:'+corMeta2+';line-height:1">'+pctMeta+'%</div><div style="font-size:14px;color:var(--muted);margin-top:6px">'+totalPts+' de '+metaPts+' pts</div><div style="background:rgba(255,255,255,.08);border-radius:10px;height:14px;margin:16px auto;max-width:600px"><div style="background:linear-gradient(90deg,var(--cyan),'+corMeta2+');width:'+pctMeta+'%;height:14px;border-radius:10px"></div></div></div>'
+    var top5=(rank.ranking||[]).slice(0,5)
+    html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">'
+    top5.forEach(function(t){
+      var corT=t.pct_meta>=80?'var(--green)':t.pct_meta>=50?'var(--amber)':'var(--red)'
+      var foto=tvFoto(t.nome)
+      html+='<div style="text-align:center;padding:12px;background:rgba(255,255,255,.03);border-radius:10px">'+(foto?'<img src="'+foto+'" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid '+corT+';margin:0 auto 8px;display:block" onerror="this.style.display=String()">':'')+'<div style="font-size:13px;font-weight:700">'+t.nome.split(' ')[0]+'</div><div style="font-size:20px;font-weight:800;color:'+corT+';margin-top:4px">'+t.pct_meta+'%</div><div style="font-size:11px;color:var(--muted)">'+t.total_pontos+' pts</div></div>'
+    })
+    html+='</div>'
+  }else if(slide==='recentes'){
+    var recentes=d.recentes||[]
+    html+='<div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:14px">ULTIMAS FINALIZACOES</div>'
+    if(recentes.length){
+      html+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">'
+      recentes.slice(0,8).forEach(function(o){
+        html+='<div style="padding:12px 16px;background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.1);border-radius:10px"><div style="display:flex;justify-content:space-between"><span style="font-family:monospace;color:var(--cyan);font-size:12px">#'+o.ixc_os_id+'</span><span style="font-size:11px;color:var(--muted)">'+fmtHora(o.data_fechamento)+'</span></div><div style="font-weight:800;font-size:15px;margin-top:4px">'+(o.tecnico||'').split(' ')[0]+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">'+(o.assunto||'').substring(0,28)+'</div></div>'
+      })
+      html+='</div>'
+    }else{html+='<div style="text-align:center;color:var(--muted);padding:40px">Nenhuma OS finalizada hoje</div>'}
+  }else if(slide==='qualidade'){
+    var qr=q.retornos||[],qrank=q.ranking_tecnicos||[]
+    var taxa=q.total_instalacoes>0?Math.round(q.total/q.total_instalacoes*100):0
+    var corTaxa=taxa<=5?'var(--green)':taxa<=10?'var(--amber)':'var(--red)'
+    html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">'
+    html+='<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;text-align:center"><div style="font-size:26px;font-weight:800;color:'+corTaxa+'">'+taxa+'%</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Taxa retorno</div></div>'
+    html+='<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;text-align:center"><div style="font-size:26px;font-weight:800;color:var(--cyan)">'+(q.total_instalacoes||0)+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Instalacoes</div></div>'
+    html+='<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;text-align:center"><div style="font-size:26px;font-weight:800;color:var(--red)">'+(q.total||0)+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Retornos</div></div>'
+    html+='<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;text-align:center"><div style="font-size:26px;font-weight:800;color:var(--green)">5%</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Meta ideal</div></div>'
+    html+='</div>'
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'
+    html+='<div><div style="font-size:12px;font-weight:800;color:var(--amber);margin-bottom:10px">RANKING TECNICOS</div>'
+    var maxR=qrank[0]?qrank[0].total||1:1
+    qrank.slice(0,6).forEach(function(t,i){
+      var cor=i===0?'var(--red)':i===1?'var(--amber)':'var(--muted)'
+      var pct=Math.round(t.total/maxR*100)
+      var taxa2=t.taxa||0,corT=taxa2<=5?'var(--green)':taxa2<=10?'var(--amber)':'var(--red)'
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.03);border-radius:8px;margin-bottom:6px"><div style="font-weight:800;color:var(--muted);min-width:20px">'+(i+1)+'</div><div style="flex:1"><div style="font-size:13px;font-weight:700">'+t.nome.split(' ')[0]+'</div><div style="background:var(--border);border-radius:3px;height:4px;margin-top:3px"><div style="background:'+cor+';width:'+pct+'%;height:4px;border-radius:3px"></div></div></div><div style="text-align:right"><div style="font-weight:800;color:'+cor+'">'+t.total+'</div><div style="font-size:10px;color:'+corT+'">'+taxa2+'%</div></div><div style="font-size:11px;color:var(--muted);min-width:45px;text-align:right">'+(t.instalacoes||0)+' inst</div></div>'
+    })
+    html+='</div>'
+    html+='<div><div style="font-size:12px;font-weight:800;color:var(--red);margin-bottom:10px">RETORNOS RECENTES</div>'
+    qr.slice(0,7).forEach(function(r){
+      var corD=r.dias_apos<=7?'var(--red)':r.dias_apos<=30?'var(--amber)':'var(--muted)'
+      html+='<div style="padding:7px 10px;background:rgba(255,77,79,.04);border:1px solid rgba(255,77,79,.1);border-radius:8px;margin-bottom:6px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700">'+r.cliente.substring(0,18)+'</div><div style="font-size:11px;color:var(--muted)">'+r.tecnico_inst.split(' ')[0]+' > '+r.tecnico_sup.split(' ')[0]+'</div></div><div style="text-align:right"><div style="font-weight:800;color:'+corD+'">'+r.dias_apos+'d</div><div style="font-size:10px;color:var(--muted)">'+r.servico_sup.substring(0,14)+'</div></div></div></div>'
+    })
+    html+='</div></div>'
+  }else if(slide==='eficiencia'){
+    var g=ef.geral||{},tecs=(ef.por_tecnico||[]).slice(0,7)
+    var kpis3=[
+      {v:(g.aproveitamento||0)+'%',l:'Aproveitamento',c:'var(--green)'},
+      {v:(g.tempo_medio_min||0)+'min',l:'Tempo medio',c:'var(--cyan)'},
+      {v:(g.qualidade||0)+'%',l:'Qualidade',c:'var(--amber)'},
+      {v:(g.total_os||0),l:'OS Finalizadas',c:'var(--muted)'},
+      {v:(g.pontos_total||0),l:'Pontos',c:'var(--purple)'},
+    ]
+    html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">'
+    kpis3.forEach(function(k2){html+='<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:800;color:'+k2.c+'">'+k2.v+'</div><div style="font-size:11px;color:var(--muted);margin-top:3px">'+k2.l+'</div></div>'})
+    html+='</div>'
+    html+='<div style="font-size:12px;font-weight:800;color:var(--cyan);margin-bottom:10px">EFICIENCIA POR TECNICO</div>'
+    html+='<table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr style="border-bottom:1px solid rgba(255,255,255,.08);color:var(--muted)"><th style="padding:8px 6px;text-align:left">Tecnico</th><th style="padding:8px 6px;text-align:center">OS</th><th style="padding:8px 6px;text-align:center">Tempo</th><th style="padding:8px 6px;text-align:center">Pontos</th><th style="padding:8px 6px;text-align:center">Qual.</th><th style="padding:8px 6px;text-align:center">Pts/h</th><th style="padding:8px 6px">Barra</th></tr></thead><tbody>'
+    var maxPts3=tecs[0]?tecs[0].pontos_total||1:1
+    tecs.forEach(function(t){
+      var foto=tvFoto(t.nome)
+      var corT=t.tempo_medio_min<=45?'var(--green)':t.tempo_medio_min<=75?'var(--amber)':'var(--red)'
+      var ico=t.tempo_medio_min<=45?'OK':t.tempo_medio_min<=75?'AVG':'LENTO'
+      var pctBar=Math.round(t.pontos_total/maxPts3*100)
+      html+='<tr style="border-bottom:1px solid rgba(255,255,255,.04)"><td style="padding:8px 6px">'+(foto?'<img src="'+foto+'" style="width:30px;height:30px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px" onerror="this.style.display=String()">':'')+'<span style="font-weight:700">'+t.nome.split(' ')[0]+'</span></td><td style="padding:8px 6px;text-align:center;font-weight:700">'+t.total_os+'</td><td style="padding:8px 6px;text-align:center;color:'+corT+'">'+t.tempo_medio_min+'min</td><td style="padding:8px 6px;text-align:center;font-weight:700;color:var(--cyan)">'+t.pontos_total+'</td><td style="padding:8px 6px;text-align:center;color:var(--green)">'+t.qualidade+'%</td><td style="padding:8px 6px;text-align:center;color:var(--amber);font-weight:700">'+t.pts_por_hora+'</td><td style="padding:8px 6px;min-width:80px"><div style="background:var(--border);border-radius:3px;height:5px"><div style="background:var(--cyan);width:'+pctBar+'%;height:5px;border-radius:3px"></div></div></td></tr>'
+    })
+    html+='</tbody></table>'
+  }
+  html+='</div>'
+  area.innerHTML=html
+  // Busca popups se disponivel
+  if(typeof loadTVPopups === 'function') loadTVPopups()
+}
+function tvAtualizarMarquee(){
+  var d=tvDados.estado||{},k=d.kpis||{}
+  var atr=(d.os_criticas||[]).filter(function(o){return o.horas_abertas>8}).length
+  var msg='Total OS: '+(k.total||0)+'   Finalizadas: '+(k.finalizadas||0)+'   Atrasadas: '+atr+'   Meta: '+(k.pct_meta||0)+'%   '+new Date().toLocaleTimeString('pt-BR')+'          '
+  var el=document.getElementById('tv-marquee')
+  if(el) el.textContent=msg+msg+msg
 }
 
 // ═══════════════════════════════════════════════════
@@ -4615,37 +4283,6 @@ loadDashboard()
         <button onclick="document.getElementById('modal-reincid').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">x</button>
       </div>
       <div id="modal-reincid-body"></div>
-    </div>
-  </div>
-
-  <div id="modal-nota-sup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
-    <div style="background:#0d1117;border:1px solid #1e2731;border-radius:14px;padding:24px;width:440px;max-width:95vw">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-        <div><div style="font-size:16px;font-weight:800">Avaliacao do Supervisor</div>
-        <div id="nota-tec-nome" style="font-size:13px;color:var(--cyan);margin-top:2px"></div></div>
-        <button onclick="document.getElementById('modal-nota-sup').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">x</button>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:14px">
-        <div>
-          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;text-transform:uppercase;font-weight:700">Nota (1 a 5 estrelas)</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input id="nota-estrelas" type="range" min="1" max="5" value="5" oninput="document.getElementById('nota-estrelas-val').textContent='estrela '.repeat(this.value)" style="flex:1">
-            <span id="nota-estrelas-val" style="font-size:14px;min-width:90px;color:gold">5 estrelas</span>
-          </div>
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;text-transform:uppercase;font-weight:700">Observacao</label>
-          <textarea id="nota-obs" rows="3" placeholder="Comentario sobre o tecnico..." style="width:100%;background:#131920;border:1px solid #1e2731;border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
-        </div>
-        <div>
-          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:6px;text-transform:uppercase;font-weight:700">Seu nome (supervisor)</label>
-          <input id="nota-supervisor-nome" type="text" placeholder="Nome do supervisor" style="width:100%;background:#131920;border:1px solid #1e2731;border-radius:8px;padding:10px;color:var(--text);font-size:14px;box-sizing:border-box">
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
-        <button onclick="document.getElementById('modal-nota-sup').style.display='none'" style="background:transparent;border:1px solid var(--border);color:var(--muted);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">Cancelar</button>
-        <button onclick="salvarNotaSupervisor()" style="background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:var(--cyan);padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700">Salvar</button>
-      </div>
     </div>
   </div>
 </body>
