@@ -24,7 +24,7 @@ def hoje_brt():
 
 @router.get("/os-criticas")
 async def get_os_criticas():
-    """OS atrasadas e em risco de SLA."""
+    """OS atrasadas com 3 métricas de SLA real."""
     db = get_db()
     agora = datetime.now()
     limite_4h = (agora - timedelta(hours=4)).strftime("%Y-%m-%d %H:%M:%S")
@@ -33,9 +33,17 @@ async def get_os_criticas():
         SELECT
             o.ixc_os_id, o.status, o.categoria,
             o.data_abertura, o.data_fechamento,
+            o.data_hora_assumido, o.data_hora_execucao,
+            o.sla_fila_min, o.sla_desloc_min,
+            o.sla_exec_min, o.sla_tecnico_min,
             t.nome AS tecnico,
             COALESCE(a.assunto, 'Assunto ' || o.ixc_assunto_id) AS assunto,
-            ROUND((julianday('now') - julianday(o.data_abertura)) * 24, 1) AS horas_abertas
+            ROUND((julianday('now') - julianday(o.data_abertura)) * 24, 1) AS horas_abertas,
+            CASE
+                WHEN o.data_hora_assumido IS NOT NULL
+                THEN ROUND((julianday('now') - julianday(o.data_hora_assumido)) * 24, 1)
+                ELSE NULL
+            END AS horas_tecnico
         FROM prod_os_cache o
         LEFT JOIN prod_tecnicos t ON t.id = o.tecnico_id
         LEFT JOIN prod_assuntos a ON a.id = o.ixc_assunto_id
@@ -45,7 +53,17 @@ async def get_os_criticas():
     """, (limite_4h,)).fetchall()
     db.close()
 
-    return {"os_criticas": [dict(r) for r in rows], "total": len(rows)}
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["horas_sla_real"] = d["horas_tecnico"] if d["horas_tecnico"] is not None else d["horas_abertas"]
+        h = d["horas_sla_real"]
+        d["status_sla"] = "estourado" if h > 4 else "em_risco" if h > 3 else "no_prazo"
+        d["tecnico_assumiu"] = d["data_hora_assumido"] is not None
+        result.append(d)
+
+    return {"os_criticas": result, "total": len(result)}
+
 
 
 @router.get("/tecnicos-ociosos")

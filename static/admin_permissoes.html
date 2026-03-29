@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>Permissões — HubProducao</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0d1117;--card:#161b22;--border:#21262d;--border2:#30363d;--text:#e6edf3;--muted:#8b949e;--muted2:#6e7681;--primary:#00c8a0;--amber:#f0a000;--red:#f85149;--blue:#58a6ff}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;display:flex;min-height:100vh}
+.sidebar{width:220px;min-height:100vh;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.sb-logo-mark{font-size:20px;font-weight:700;color:var(--primary);letter-spacing:-.02em}
+.sb-logo-sub{font-size:10px;color:var(--muted2);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.sb-nav{padding:12px 0;flex:1}
+.sb-section{font-size:10px;color:var(--muted2);letter-spacing:1.5px;text-transform:uppercase;padding:10px 18px 4px;font-weight:600}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:13px;color:var(--muted);cursor:pointer;border-left:3px solid transparent;transition:all .15s}
+.sb-item:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.sb-item.active{color:var(--primary);border-left-color:var(--primary);background:rgba(0,200,160,.06)}
+.sb-item svg{width:15px;height:15px;flex-shrink:0}
+.sb-footer{padding:14px 18px;border-top:1px solid var(--border);margin-top:auto}
+.sb-user strong{color:var(--text);display:block;font-size:13px}
+.sb-user span{font-size:11px;color:var(--muted2)}
+.sb-logout{display:block;margin-top:10px;font-size:12px;color:var(--muted2);cursor:pointer;background:none;border:none;font-family:inherit;padding:0;text-align:left}
+.sb-logout:hover{color:var(--red)}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column}
+header{padding:20px 28px 16px;border-bottom:1px solid var(--border);background:var(--card)}
+.header-title{font-size:20px;font-weight:700}
+.header-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.content{padding:24px 28px;flex:1}
+/* TABS GRUPOS */
+.grupos-tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+.grupo-tab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border2);color:var(--muted);transition:all .15s;background:none}
+.grupo-tab:hover{color:var(--text);border-color:var(--border)}
+.grupo-tab.active{background:rgba(0,200,160,.12);color:var(--primary);border-color:rgba(0,200,160,.3)}
+/* CARDS DE MÓDULOS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.menu-item{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border)}
+.menu-item:last-child{border-bottom:none}
+.menu-nome{font-size:13px;font-weight:500}
+.menu-desc{font-size:11px;color:var(--muted2);margin-top:2px}
+/* TOGGLE */
+.toggle{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:24px;transition:.3s}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:var(--muted);border-radius:50%;transition:.3s}
+input:checked+.slider{background:var(--primary)}
+input:checked+.slider:before{transform:translateX(20px);background:#0d1117}
+.btn-salvar{padding:12px 24px;border-radius:8px;background:var(--primary);color:#0d1117;border:none;font-size:13px;font-weight:700;cursor:pointer;width:100%;margin-top:4px;font-family:inherit}
+.btn-salvar:hover{opacity:.9}
+.info-dev{padding:12px 18px;background:rgba(240,160,0,.08);border:1px solid rgba(240,160,0,.2);border-radius:8px;font-size:12px;color:var(--amber);margin-bottom:20px}
+.msg{padding:10px 16px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none}
+.msg.ok{background:rgba(0,200,160,.1);color:var(--primary);border:1px solid rgba(0,200,160,.2)}
+.msg.err{background:rgba(248,81,73,.1);color:var(--red);border:1px solid rgba(248,81,73,.2)}
+.msg.on{display:block}
+.sp{display:inline-block;width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+footer{padding:14px 28px;text-align:right;font-size:11px;color:var(--muted2);border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">HubProducao</div>
+    <div class="sb-logo-sub">Iatch · Sistema</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Sistema</div>
+    <div class="sb-item" onclick="location.href='/'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Dashboard
+    </div>
+    <div class="sb-section">Administração</div>
+    <div class="sb-item" onclick="location.href='/admin-sistema'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>Usuários
+    </div>
+    <div class="sb-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Permissões
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <strong id="sb-nome">—</strong>
+      <span id="sb-grupo">—</span>
+    </div>
+    <button class="sb-logout" onclick="doLogout()">Sair →</button>
+  </div>
+</nav>
+<div class="main">
+  <header>
+    <div class="header-title">🔐 Permissões por Grupo</div>
+    <div class="header-sub">Configure quais módulos cada grupo pode acessar</div>
+  </header>
+  <div class="content">
+    <div class="msg" id="msg-global"></div>
+
+    <!-- TABS DE GRUPOS -->
+    <div class="grupos-tabs" id="grupos-tabs">
+      <span style="color:var(--muted);font-size:13px"><span class="sp"></span>Carregando grupos...</span>
+    </div>
+
+    <!-- AVISO DEV -->
+    <div class="info-dev" id="info-dev" style="display:none">
+      ⚠ O grupo <strong>Desenvolvimento</strong> tem acesso total ao sistema e não pode ser restringido.
+    </div>
+
+    <!-- MÓDULOS -->
+    <div id="modulos-container"></div>
+
+    <button class="btn-salvar" id="btn-salvar" onclick="salvarPermissoes()" style="display:none">
+      ✓ Salvar Permissões do Grupo
+    </button>
+  </div>
+  <footer>HubProducao v2.0 · Desenvolvido por Iatch@2026</footer>
+</div>
+<script>
+const TOKEN = localStorage.getItem('sais_token');
+const GRUPOS_LABEL = {supervisao_tecnica:'Supervisão Técnica',rh:'RH',agendamento:'Agendamento',admin:'Administrador',desenvolvimento:'Desenvolvimento'};
+
+if (!TOKEN) { location.replace('/login'); }
+
+const _u = localStorage.getItem('sais_user'), _g = localStorage.getItem('sais_grupo');
+if (_u) document.getElementById('sb-nome').textContent = _u;
+if (_g) document.getElementById('sb-grupo').textContent = GRUPOS_LABEL[_g] || _g;
+
+function doLogout() {
+  ['sais_token','sais_user','sais_nivel','sais_grupo'].forEach(k => localStorage.removeItem(k));
+  location.replace('/login');
+}
+
+// Definição dos módulos do SAIS
+const MODULOS = {
+  'Visão Geral': [
+    { id: 'dashboard_dia',    nome: 'Dashboard do Dia',      desc: 'Resumo diário de OS e técnicos' },
+    { id: 'eventos_rt',       nome: 'Eventos em Tempo Real', desc: 'Feed de eventos via WebSocket' },
+    { id: 'ultimas_os',       nome: 'Últimas OS',            desc: 'OS recentes do dia' },
+  ],
+  'Central Operacional': [
+    { id: 'os_atrasadas',     nome: 'OS Atrasadas',          desc: 'Em campo há mais de 4 horas' },
+    { id: 'risco_sla',        nome: 'Risco de SLA',          desc: 'OS que podem estourar o prazo' },
+    { id: 'tecnicos_ociosos', nome: 'Técnicos Ociosos',      desc: 'Sem OS há mais de 1.5h' },
+    { id: 'alertas',          nome: 'Alertas',               desc: 'Central de alertas do sistema' },
+  ],
+  'Agenda Inteligente': [
+    { id: 'monitor_live',     nome: 'Monitor ao Vivo',       desc: 'Acompanhamento em tempo real' },
+    { id: 'reincidencias',    nome: 'Reincidências',         desc: 'Clientes com OS recorrentes' },
+    { id: 'qualidade_pos',    nome: 'Qualidade Pós-Inst.',   desc: 'Clientes instalados com OS abertas' },
+    { id: 'agenda_dia',       nome: 'Agenda do Dia',         desc: 'OS agendadas para hoje' },
+    { id: 'agenda_futura',    nome: 'Agenda Futura',         desc: 'Próximos 7 dias' },
+    { id: 'reagendamentos',   nome: 'Reagendamentos',        desc: 'OS de datas passadas não executadas' },
+  ],
+  'Produtividade': [
+    { id: 'ranking',          nome: 'Ranking Técnicos',      desc: 'Pontuação e metas diárias' },
+    { id: 'por_tipo',         nome: 'Por Tipo de OS',        desc: 'Distribuição por assunto' },
+    { id: 'destaques',        nome: 'Destaques',             desc: 'Bônus por pontualidade' },
+    { id: 'premiacao',        nome: 'Premiação',             desc: 'Pódio do período' },
+    { id: 'eficiencia',       nome: 'Eficiência',            desc: 'Análise de desempenho' },
+  ],
+  'Auditoria': [
+    { id: 'auditoria_ind',    nome: 'Auditoria Individual',  desc: 'Validação por técnico' },
+    { id: 'auditoria_est',    nome: 'Auditoria de Estoque',  desc: 'Materiais por técnico' },
+    { id: 'auditoria_sla',    nome: 'SLA',                   desc: 'Conformidade de tempo' },
+    { id: 'comportamento',    nome: 'Comportamento',         desc: 'Notas de comportamento' },
+  ],
+  'Indicadores': [
+    { id: 'indicadores_sla',  nome: 'SLA',                   desc: 'Indicadores de prazo' },
+    { id: 'produtividade',    nome: 'Produtividade',         desc: 'Indicadores de produção' },
+    { id: 'tendencias',       nome: 'Tendências',            desc: 'Análise de tendências' },
+  ],
+  'Técnicos': [
+    { id: 'status_atual',     nome: 'Status Atual',          desc: 'Situação em campo' },
+    { id: 'performance',      nome: 'Performance',           desc: 'Histórico de desempenho' },
+    { id: 'cad_estoque',      nome: 'Cadastro de Estoque',   desc: 'Base de produtos por técnico' },
+  ],
+  'Automações': [
+    { id: 'logs_automacao',   nome: 'Logs de Execução',      desc: 'Histórico das automações' },
+  ],
+  'Admin': [
+    { id: 'admin_usuarios',   nome: 'Usuários',              desc: 'Gestão de usuários e acessos' },
+    { id: 'admin_permissoes', nome: 'Permissões',            desc: 'Configuração de grupos' },
+  ],
+};
+
+// Permissões padrão por grupo
+const PERMS_PADRAO = {
+  supervisao_tecnica: ['dashboard_dia','eventos_rt','ultimas_os','os_atrasadas','risco_sla','tecnicos_ociosos','alertas','monitor_live','reincidencias','qualidade_pos','agenda_dia','agenda_futura','reagendamentos','ranking','por_tipo','destaques','premiacao','eficiencia','auditoria_ind','auditoria_est','auditoria_sla','comportamento','indicadores_sla','produtividade','tendencias','status_atual','performance'],
+  rh:                 ['dashboard_dia','ranking','por_tipo','destaques','premiacao','eficiencia','auditoria_ind','indicadores_sla','produtividade'],
+  agendamento:        ['dashboard_dia','ultimas_os','os_atrasadas','alertas','monitor_live','reincidencias','agenda_dia','agenda_futura','reagendamentos'],
+  admin:              Object.values(MODULOS).flat().map(m => m.id),
+  desenvolvimento:    Object.values(MODULOS).flat().map(m => m.id),
+};
+
+let grupoAtivo = 'supervisao_tecnica';
+let permsAtuais = {};
+
+// Carregar do localStorage se existir
+function getPerms(grupo) {
+  const saved = localStorage.getItem('sais_perms_' + grupo);
+  if (saved) return JSON.parse(saved);
+  return PERMS_PADRAO[grupo] || [];
+}
+
+function savePerms(grupo, perms) {
+  localStorage.setItem('sais_perms_' + grupo, JSON.stringify(perms));
+}
+
+function renderGruposTabs() {
+  const grupos = ['supervisao_tecnica','rh','agendamento','admin','desenvolvimento'];
+  document.getElementById('grupos-tabs').innerHTML = grupos.map(g => `
+    <button class="grupo-tab ${g === grupoAtivo ? 'active' : ''}" onclick="selecionarGrupo('${g}')">
+      ${GRUPOS_LABEL[g]}
+    </button>`).join('');
+}
+
+function selecionarGrupo(grupo) {
+  grupoAtivo = grupo;
+  renderGruposTabs();
+  renderModulos();
+  const infoDiv = document.getElementById('info-dev');
+  infoDiv.style.display = grupo === 'desenvolvimento' ? 'block' : 'none';
+  document.getElementById('btn-salvar').style.display = grupo === 'desenvolvimento' ? 'none' : 'block';
+}
+
+function renderModulos() {
+  const perms = getPerms(grupoAtivo);
+  const isDev = grupoAtivo === 'desenvolvimento';
+  const container = document.getElementById('modulos-container');
+
+  container.innerHTML = Object.entries(MODULOS).map(([secao, itens]) => `
+    <div class="card">
+      <div class="card-title">
+        <span>${secao}</span>
+        <span style="font-size:11px;color:var(--muted2)">${itens.length} módulos</span>
+      </div>
+      ${itens.map(item => `
+        <div class="menu-item">
+          <div>
+            <div class="menu-nome">${item.nome}</div>
+            <div class="menu-desc">${item.desc}</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" data-id="${item.id}"
+              ${perms.includes(item.id) || isDev ? 'checked' : ''}
+              ${isDev ? 'disabled' : ''}
+              onchange="togglePerm('${item.id}', this.checked)"/>
+            <span class="slider"></span>
+          </label>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function togglePerm(id, checked) {
+  const perms = getPerms(grupoAtivo);
+  if (checked && !perms.includes(id)) perms.push(id);
+  if (!checked) { const i = perms.indexOf(id); if (i > -1) perms.splice(i, 1); }
+  savePerms(grupoAtivo, perms);
+}
+
+function salvarPermissoes() {
+  const perms = getPerms(grupoAtivo);
+  savePerms(grupoAtivo, perms);
+  const msg = document.getElementById('msg-global');
+  msg.textContent = `✓ Permissões do grupo "${GRUPOS_LABEL[grupoAtivo]}" salvas com sucesso!`;
+  msg.className = 'msg ok on';
+  setTimeout(() => msg.classList.remove('on'), 3000);
+}
+
+function showMsg(id, txt, tipo) {
+  const el = document.getElementById(id);
+  el.textContent = txt;
+  el.className = 'msg ' + tipo + ' on';
+  setTimeout(() => el.classList.remove('on'), 4000);
+}
+
+// Init
+renderGruposTabs();
+renderModulos();
+document.getElementById('btn-salvar').style.display = 'block';
+</script>
+</body>
+</html>

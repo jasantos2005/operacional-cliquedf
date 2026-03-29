@@ -21,6 +21,89 @@
   var now = Math.floor(Date.now()/1000);
   if(p.exp && p.exp < now){ logout(); return; }
   window._saisUser = { nome: p.nome || localStorage.getItem('sais_user') || 'Usuário', nivel: p.nivel || 1, grupo: p.grupo || '', sub: p.sub || '' };
+  // ── FILTRO DE MENU POR GRUPO ────────────────────────────
+  var _nivel = p.nivel || 1;
+  var _grupo = p.grupo || '';
+
+  var ACESSO_GRUPOS = {
+    supervisao_tecnica: ['grp-visao-geral','grp-central','grp-agenda','grp-produtividade','grp-auditoria','grp-indicadores','grp-tecnicos'],
+    rh:                 ['grp-visao-geral','grp-produtividade','grp-indicadores'],
+    agendamento:        ['grp-visao-geral','grp-central','grp-agenda'],
+    admin:              ['grp-visao-geral','grp-central','grp-agenda','grp-produtividade','grp-auditoria','grp-indicadores','grp-tecnicos','grp-automacoes','grp-admin'],
+    desenvolvimento:    null
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var permitidos = ACESSO_GRUPOS[_grupo];
+    if (permitidos === null || permitidos === undefined) return;
+
+    var todos = ['grp-visao-geral','grp-central','grp-agenda','grp-produtividade','grp-auditoria','grp-indicadores','grp-tecnicos','grp-automacoes','grp-admin'];
+    todos.forEach(function(id) {
+      var sub = document.getElementById(id);
+      if (!sub) return;
+      var hdr = sub.previousElementSibling;
+      var esconder = permitidos.indexOf(id) === -1;
+      if (esconder) {
+        sub.style.display = 'none';
+        if (hdr) hdr.style.display = 'none';
+      }
+    });
+
+    // Admin só para nível 4+
+    if (_nivel < 4) {
+      var adminSub = document.getElementById('grp-admin');
+      var adminHdr = adminSub ? adminSub.previousElementSibling : null;
+      if (adminSub) adminSub.style.display = 'none';
+      if (adminHdr) adminHdr.style.display = 'none';
+    }
+  });
+  // ── FIM FILTRO ───────────────────────────────────────────
+
+  // ── FILTRO DE MENU POR GRUPO ─────────────────────────────
+  var _nivel = p.nivel || 1;
+  var _grupo = p.grupo || '';
+
+  // Módulos permitidos por grupo
+  var ACESSO = {
+    supervisao_tecnica: ['grp-visao','grp-central','grp-agenda','grp-prod','grp-audit','grp-indicadores','grp-tecnicos','grp-admin'],
+    rh:                 ['grp-visao','grp-prod','grp-indicadores'],
+    agendamento:        ['grp-visao','grp-central','grp-agenda'],
+    admin:              ['grp-visao','grp-central','grp-agenda','grp-prod','grp-audit','grp-indicadores','grp-tecnicos','grp-automacoes','grp-admin'],
+    desenvolvimento:    null // null = tudo liberado
+  };
+
+  window._filtrarMenu = function() {
+    var permitidos = ACESSO[_grupo];
+    if (permitidos === null || permitidos === undefined) return; // dev = tudo
+
+    // Esconder grupos não permitidos
+    var grupos = ['grp-visao','grp-central','grp-agenda','grp-prod','grp-audit','grp-indicadores','grp-tecnicos','grp-automacoes','grp-admin'];
+    grupos.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var header = el.previousElementSibling;
+      if (permitidos.indexOf(id) === -1) {
+        el.style.display = 'none';
+        if (header) header.style.display = 'none';
+      } else {
+        el.style.display = '';
+        if (header) header.style.display = '';
+      }
+    });
+
+    // Esconder admin para nível < 4
+    if (_nivel < 4) {
+      var adminGrp = document.getElementById('grp-admin');
+      var adminHdr = adminGrp ? adminGrp.previousElementSibling : null;
+      if (adminGrp) adminGrp.style.display = 'none';
+      if (adminHdr) adminHdr.style.display = 'none';
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    window._filtrarMenu();
+  });
+
   document.addEventListener('DOMContentLoaded', function(){
     var uname = document.querySelector('.sb-uname');
     var urole = document.querySelector('.sb-role');
@@ -34,6 +117,10 @@
     if(logoutBtn) logoutBtn.addEventListener('click', function(){ ['sais_token','sais_user','sais_nivel','sais_grupo'].forEach(function(k){localStorage.removeItem(k);}); location.replace('/login'); });
   });
 })();
+function saisLogout(){
+  ["sais_token","sais_user","sais_nivel","sais_grupo"].forEach(function(k){localStorage.removeItem(k);});
+  location.replace("/login");
+}
 </script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -41,9 +128,9 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
 <style>
 :root{
-  --bg:#07090c;--s1:#0d1117;--s2:#131920;--s3:#1c2333;--border:#1e2731;
-  --text:#c9d4e0;--muted:#46586a;--sub:#2d3d50;
-  --cyan:#00d4ff;--green:#00e5a0;--red:#ff4d6a;--amber:#ffb83f;--orange:#ff7849;--purple:#a78bfa;
+  --bg:#0d1117;--s1:#161b22;--s2:#1c2128;--s3:#21262d;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--sub:#444c56;
+  --cyan:#00c8a0;--green:#3fb950;--red:#f85149;--amber:#d29922;--orange:#f0883e;--purple:#bc8cff;
   --sw:220px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -575,8 +662,8 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
         <span class="ic">⚙️</span> Admin <span class="arrow">›</span>
       </div>
       <div class="sb-sub" id="grp-admin">
-        <div class="sb-item" onclick="nav('usuarios','admin')"><span class="dot"></span> Usuários</div>
-        <div class="sb-item" onclick="nav('admin-grupos','admin')"><span class="dot"></span> Perm. Grupos</div>
+        <div class="sb-item" onclick="location.href='/admin-sistema'"><span class="dot"></span> Usuários</div>
+        <div class="sb-item" onclick="location.href='/admin-permissoes'"><span class="dot"></span> Perm. Grupos</div>
       </div>
     </div>
   </div>
@@ -858,8 +945,105 @@ tbody tr:hover td{background:rgba(255,255,255,.015);cursor:pointer}
 
     <!-- ══ TÉCNICOS STATUS ══════════════════════ -->
     <div class="page" id="page-tec-status">
-      <div class="pg-hd"><div><div class="pg-title">Equipe <span>Técnica</span></div><div class="pg-sub">Status e desempenho em tempo real</div></div></div>
-      <div class="card-grid c3" id="tec-cards"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+      <div class="pg-hd">
+        <div><div class="pg-title">Equipe <span>Técnica</span></div>
+        <div class="pg-sub">Status em tempo real</div></div>
+        <button class="tf-btn" onclick="loadTecStatus()">↻ Atualizar</button>
+      </div>
+      <div class="kpi-grid c4" id="tec-status-kpis"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head">👷 Status Individual</div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>Técnico</th><th class="r">OS Hoje</th><th class="r">Finalizadas</th><th class="r">Pontos</th><th class="r">Meta%</th><th class="r">Status</th></tr></thead>
+          <tbody id="tec-status-table"></tbody>
+        </table></div>
+      </div>
+      <div class="card-grid c2" style="margin-top:14px">
+        <div class="card"><div class="card-head">😴 Técnicos Ociosos</div><div id="tec-status-ociosos"></div></div>
+        <div class="card"><div class="card-head">🔴 OS Críticas Abertas</div><div id="tec-status-criticas"></div></div>
+      </div>
+    </div>
+
+    <!-- ══ INDICADORES SLA ══════════════════════════════ -->
+    <div class="page" id="page-ind-sla">
+      <div class="pg-hd">
+        <div><div class="pg-title">Indicadores de <span>SLA</span></div>
+        <div class="pg-sub">Cumprimento de prazos e OS em risco</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="tf-btn active" onclick="indSlaSetPeriodo('hoje',this)">Hoje</button>
+          <button class="tf-btn" onclick="indSlaSetPeriodo('semana',this)">7 dias</button>
+          <button class="tf-btn" onclick="indSlaSetPeriodo('mes',this)">Mês</button>
+        </div>
+      </div>
+      <div class="kpi-grid c4" id="ind-sla-kpis"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+      <div class="card-grid c2" style="margin-top:14px">
+        <div class="card"><div class="card-head">⚠️ OS em Risco de SLA</div><div id="ind-sla-risco"></div></div>
+        <div class="card"><div class="card-head">📊 Ocorrências por Tipo</div><div id="ind-sla-tipos"></div></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head">🔴 Auditoria SLA — Ocorrências Abertas</div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>OS</th><th>Técnico</th><th>Tipo</th><th class="r">Criticidade</th><th class="r">Descrição</th><th class="r">Data</th></tr></thead>
+          <tbody id="ind-sla-table"></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ INDICADORES PRODUTIVIDADE ════════════════════ -->
+    <div class="page" id="page-ind-produtividade">
+      <div class="pg-hd">
+        <div><div class="pg-title">Indicadores de <span>Produtividade</span></div>
+        <div class="pg-sub">Pontos, aproveitamento e eficiência da equipe</div></div>
+        <div style="display:flex;gap:8px">
+          <button class="tf-btn active" onclick="indProdSetPeriodo('hoje',this)">Hoje</button>
+          <button class="tf-btn" onclick="indProdSetPeriodo('semana',this)">7 dias</button>
+          <button class="tf-btn" onclick="indProdSetPeriodo('mes',this)">Mês</button>
+        </div>
+      </div>
+      <div class="kpi-grid c4" id="ind-prod-kpis"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+      <div class="card-grid c2" style="margin-top:14px">
+        <div class="card">
+          <div class="card-head">🏆 Ranking de Pontos</div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>#</th><th>Técnico</th><th class="r">OS</th><th class="r">Pontos</th><th class="r">Aproveit.</th><th class="r">Tempo Méd.</th><th class="r">Meta</th></tr></thead>
+            <tbody id="ind-prod-ranking"></tbody>
+          </table></div>
+        </div>
+        <div class="card"><div class="card-head">📋 Por Serviço</div><div id="ind-prod-assunto"></div></div>
+      </div>
+    </div>
+
+    <!-- ══ TENDÊNCIAS ════════════════════════════════════ -->
+    <div class="page" id="page-ind-tendencias">
+      <div class="pg-hd">
+        <div><div class="pg-title"><span>Tendências</span> Operacionais</div>
+        <div class="pg-sub">Evolução dos últimos 30 dias</div></div>
+      </div>
+      <div class="kpi-grid c4" id="ind-tend-kpis"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+      <div class="card-grid c2" style="margin-top:14px">
+        <div class="card"><div class="card-head">📈 Evolução Equipe 30 dias</div><div id="ind-tend-grafico" style="max-height:240px;overflow-y:auto"></div></div>
+        <div class="card"><div class="card-head">🔧 Top Serviços do Mês</div><div id="ind-tend-servicos"></div></div>
+      </div>
+    </div>
+
+    <!-- ══ PERFORMANCE TÉCNICOS ══════════════════════════ -->
+    <div class="page" id="page-tec-performance">
+      <div class="pg-hd">
+        <div><div class="pg-title">Performance <span>Individual</span></div>
+        <div class="pg-sub">Histórico e evolução por técnico — 30 dias</div></div>
+      </div>
+      <div class="kpi-grid c4" id="perf-kpis"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+      <div class="card-grid c2" style="margin-top:14px">
+        <div class="card"><div class="card-head">📊 Ranking 30 dias</div><div id="perf-historico" style="max-height:280px;overflow-y:auto"></div></div>
+        <div class="card"><div class="card-head">📋 OS por Categoria</div><div id="perf-categorias"></div></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="card-head">⚠️ Ocorrências de Auditoria</div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>OS</th><th>Tipo</th><th class="r">Criticidade</th><th class="r">Descrição</th><th class="r">Data</th></tr></thead>
+          <tbody id="perf-audit-table"></tbody>
+        </table></div>
+      </div>
     </div>
 
     <!-- ══ AUTOMAÇÕES LOGS ══════════════════════ -->
@@ -1265,11 +1449,11 @@ const PAGES_CFG = {
   'audit-tempo':       {title:'Auditoria de Tempo',     path:'/auditoria/tempo',              load:()=>loadAuditoriaTipo('tempo')},
   'audit-sla':         {title:'Auditoria de SLA',       path:'/auditoria/sla',                load:()=>loadAuditoriaTipo('sla')},
   'audit-comportamento':{title:'Auditoria Comportamento',path:'/auditoria/comportamento',    load:()=>loadAuditoriaTipo('comportamento')},
-  'ind-sla':           {title:'Indicadores de SLA',     path:'/indicadores/sla',              load:loadDashboard},
-  'ind-produtividade': {title:'Indicadores Produtividade',path:'/indicadores/produtividade',  load:()=>loadRanking(null)},
-  'ind-tendencias':    {title:'Tendências',             path:'/indicadores/tendencias',       load:loadDashboard},
-  'tec-status':        {title:'Status Técnicos',        path:'/tecnicos/status',              load:loadTecnicos},
-  'tec-performance':   {title:'Performance Técnicos',   path:'/tecnicos/performance',         load:()=>loadRanking(null)},
+  'ind-sla':           {title:'Indicadores de SLA',     path:'/indicadores/sla',              load:loadIndSla},
+  'ind-produtividade': {title:'Indicadores Produtividade',path:'/indicadores/produtividade',  load:loadIndProd},
+  'ind-tendencias':    {title:'Tendências',             path:'/indicadores/tendencias',       load:loadIndTendencias},
+  'tec-status':        {title:'Status Técnicos',        path:'/tecnicos/status',              load:loadTecStatus},
+  'tec-performance':   {title:'Performance Técnicos',   path:'/tecnicos/performance',         load:loadTecPerformance},
   'auto-logs':         {title:'Logs Automações',        path:'/automacoes/logs',              load:loadAutoLogs},
   'usuarios':          {title:'Usuários',               path:'/admin/usuarios',               load:loadUsuarios},
   'permissoes':        {title:'Permissões',             path:'/admin/permissoes',             load:loadPermissoes},
@@ -3564,13 +3748,30 @@ async function loadTecnicos(){
 // AUTOMAÇÕES LOGS
 // ═══════════════════════════════════════════════════
 async function loadAutoLogs(){
-  // Usa tabela sais_automacoes_log diretamente via endpoint genérico
   const el=document.getElementById('auto-logs-content')
+  el.innerHTML='<div class="loading"><div class="spinner"></div>Carregando...</div>'
   try{
-    const d=await apiFetch('/api/sais/auditoria/ocorrencias?limit=1') // teste
-    el.innerHTML=`<div class="empty"><div class="empty-icon">🤖</div>Endpoint de logs em desenvolvimento — verifique /var/log/sais_auditoria.log no servidor</div>`
+    const d=await apiFetch('/api/logs')
+    const NOMES={sync:'Sync IXC (Delta)',sync_full:'Sync IXC (Full)',estoque:'Sync Estoque',auditoria:'Auditoria',destaques:'Destaques'}
+    let html='<div style="display:flex;flex-direction:column;gap:12px">'
+    for(const [key,log] of Object.entries(d)){
+      const nome=NOMES[key]||key
+      const cor=log.ok?'var(--green)':'var(--red)'
+      const status=log.ok?'✅':'❌'
+      html+=`<div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:700;color:${cor}">${status} ${nome}</div>
+          <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace">${log.modificado||'—'} · ${log.total_linhas||0} linhas</div>
+        </div>
+        <div style="padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);max-height:160px;overflow-y:auto;line-height:1.7">
+          ${(log.linhas||[]).slice(-10).map(l=>`<div>${l.replace(/✅/g,'✅').replace(/❌/g,'❌')}</div>`).join('')||'<div style="color:var(--muted)">Sem registros</div>'}
+        </div>
+      </div>`
+    }
+    html+='</div>'
+    el.innerHTML=html
   }catch(e){
-    el.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar logs</div>`
+    el.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div>Erro ao carregar logs: ${e.message}</div>`
   }
 }
 
@@ -4467,20 +4668,67 @@ function tvRenderSlide(idx){
   var slide=TV_SLIDES[idx].id
   var html='<div style="padding:20px 24px;height:100%;box-sizing:border-box;overflow-y:auto">'
   if(slide==='campo'){
-    var criticas=d.os_criticas||[]
-    var emCampo=criticas.filter(function(o){return o.horas_abertas<=8})
-    var atrasadas=criticas.filter(function(o){return o.horas_abertas>8})
-    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">'
-    html+='<div><div style="font-size:13px;font-weight:800;color:var(--cyan);margin-bottom:12px">EM CAMPO ('+emCampo.length+')</div>'
-    if(emCampo.length){emCampo.slice(0,7).forEach(function(o){
-      html+='<div style="padding:10px 14px;background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.12);border-radius:10px;margin-bottom:8px"><div style="font-weight:800;font-size:15px">'+o.tecnico+'</div><div style="font-size:12px;color:var(--muted)">OS #'+o.ixc_os_id+' - '+(o.assunto||'').substring(0,24)+'</div><div style="font-size:12px;color:var(--cyan);margin-top:4px">'+o.horas_abertas+'h em campo</div></div>'
-    })}else{html+='<div style="color:var(--muted);padding:20px;text-align:center">Nenhuma em execucao</div>'}
-    html+='</div><div><div style="font-size:13px;font-weight:800;color:var(--red);margin-bottom:12px">ATRASADAS ('+atrasadas.length+')</div>'
-    if(atrasadas.length){atrasadas.slice(0,7).forEach(function(o){
-      var cor=o.horas_abertas>24?'var(--red)':'var(--amber)'
-      html+='<div style="padding:10px 14px;background:rgba(255,77,79,.06);border:1px solid rgba(255,77,79,.15);border-radius:10px;margin-bottom:8px"><div style="font-weight:800;font-size:15px">'+o.tecnico+'</div><div style="font-size:12px;color:var(--muted)">OS #'+o.ixc_os_id+' - '+(o.assunto||'').substring(0,24)+'</div><div style="font-size:13px;font-weight:800;color:'+cor+';margin-top:4px">'+o.horas_abertas+'h atrasada</div></div>'
-    })}else{html+='<div style="color:var(--green);padding:20px;text-align:center">Sem OS atrasadas</div>'}
-    html+='</div></div>'
+    // Dados reais da API: kpis, top5, recentes, alertas
+    var k=d.kpis||{}
+    var emCampo=d.recentes||[]
+    var alertasOS=(d.alertas||[]).filter(function(a){return a.tipo==='os_atrasada'})
+    var fins=k.finalizadas||0, meta=k.meta||150
+    var pctMeta=Math.round(fins/meta*100)
+    var corMeta=pctMeta>=80?'var(--green)':pctMeta>=50?'var(--amber)':'var(--red)'
+
+    // KPIs no topo
+    html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px">'
+    html+='<div style="background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);border-radius:10px;padding:14px;text-align:center"><div style="font-size:30px;font-weight:800;color:var(--cyan)">'+k.total+'</div><div style="font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.1em">Total OS</div></div>'
+    html+='<div style="background:rgba(0,229,160,.06);border:1px solid rgba(0,229,160,.15);border-radius:10px;padding:14px;text-align:center"><div style="font-size:30px;font-weight:800;color:var(--green)">'+fins+'</div><div style="font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.1em">Finalizadas</div></div>'
+    html+='<div style="background:rgba(255,184,63,.06);border:1px solid rgba(255,184,63,.15);border-radius:10px;padding:14px;text-align:center"><div style="font-size:30px;font-weight:800;color:var(--amber)">'+(k.em_campo||0)+'</div><div style="font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.1em">Em Campo</div></div>'
+    html+='<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;text-align:center"><div style="font-size:30px;font-weight:800;color:'+corMeta+'">'+pctMeta+'%</div><div style="font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.1em">Meta</div></div>'
+    html+='</div>'
+
+    // Barra de meta
+    html+='<div style="background:rgba(255,255,255,.06);border-radius:6px;height:8px;margin-bottom:16px;overflow:hidden"><div style="background:linear-gradient(90deg,var(--cyan),'+corMeta+');width:'+Math.min(pctMeta,100)+'%;height:8px;border-radius:6px;transition:width 1s"></div></div>'
+
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'
+
+    // Últimas OS finalizadas
+    html+='<div>'
+    html+='<div style="font-size:12px;font-weight:800;color:var(--green);margin-bottom:10px;text-transform:uppercase;letter-spacing:.1em">✅ Últimas Finalizadas ('+emCampo.length+')</div>'
+    if(emCampo.length){
+      emCampo.slice(0,6).forEach(function(o){
+        var foto=tvFoto(o.tecnico||'')
+        var hora=fmtHora(o.data_fechamento)
+        var corCat=o.categoria==='servico'?'var(--cyan)':o.categoria==='suporte'?'var(--amber)':o.categoria==='infra'?'var(--purple)':'var(--muted)'
+        html+='<div style="padding:10px 14px;background:rgba(0,229,160,.04);border:1px solid rgba(0,229,160,.1);border-radius:10px;margin-bottom:7px;display:flex;align-items:center;gap:10px">'
+        html+=(foto?'<img src="'+foto+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--green)" onerror="this.style.display=String()">':'<div style="width:38px;height:38px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">✅</div>')
+        html+='<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px">'+(o.tecnico||'').split(' ')[0]+'</div><div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(o.assunto||'').substring(0,26)+'</div></div>'
+        html+='<div style="text-align:right;flex-shrink:0"><div style="font-size:12px;font-family:monospace;color:var(--green)">'+hora+'</div><div style="font-size:10px;color:'+corCat+';text-transform:uppercase;margin-top:2px">'+o.categoria+'</div></div>'
+        html+='</div>'
+      })
+    }else{
+      html+='<div style="color:var(--muted);padding:30px;text-align:center;font-size:14px">Nenhuma OS finalizada hoje</div>'
+    }
+    html+='</div>'
+
+    // Alertas — OS atrasadas
+    html+='<div>'
+    html+='<div style="font-size:12px;font-weight:800;color:var(--red);margin-bottom:10px;text-transform:uppercase;letter-spacing:.1em">⚠️ OS Atrasadas ('+alertasOS.length+')</div>'
+    if(alertasOS.length){
+      alertasOS.slice(0,6).forEach(function(a){
+        var horas=parseFloat((a.mensagem||'').match(/[\d.]+h/)?.[0])||0
+        var cor=horas>200?'var(--red)':horas>48?'var(--amber)':'var(--orange)'
+        var tecNome=(a.mensagem||'').split('·')[0].trim()
+        var foto=tvFoto(tecNome)
+        html+='<div style="padding:10px 14px;background:rgba(255,77,79,.05);border:1px solid rgba(255,77,79,.18);border-radius:10px;margin-bottom:7px;display:flex;align-items:center;gap:10px">'
+        html+=(foto?'<img src="'+foto+'" style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid '+cor+'" onerror="this.style.display=String()">':'<div style="width:38px;height:38px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🔴</div>')
+        html+='<div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px">'+a.titulo+'</div><div style="font-size:11px;color:var(--muted)">'+a.mensagem+'</div></div>'
+        html+='<div style="font-size:12px;font-weight:800;color:'+cor+';flex-shrink:0">'+a.criticidade.toUpperCase()+'</div>'
+        html+='</div>'
+      })
+    }else{
+      html+='<div style="color:var(--green);padding:30px;text-align:center;font-size:14px">✅ Sem OS atrasadas</div>'
+    }
+    html+='</div>'
+
+    html+='</div>'
   }else if(slide==='ranking'){
     var top=(rank.ranking||[]).slice(0,6)
     var maxPts=top[0]?top[0].total_pontos||1:1
@@ -4575,7 +4823,7 @@ function tvRenderSlide(idx){
 }
 function tvAtualizarMarquee(){
   var d=tvDados.estado||{},k=d.kpis||{}
-  var atr=(d.os_criticas||[]).filter(function(o){return o.horas_abertas>8}).length
+  var atr=(d.os_criticas||[]).filter(function(o){return (o.horas_sla_real||o.horas_abertas)>4}).length
   var msg='Total OS: '+(k.total||0)+'   Finalizadas: '+(k.finalizadas||0)+'   Atrasadas: '+atr+'   Meta: '+(k.pct_meta||0)+'%   '+new Date().toLocaleTimeString('pt-BR')+'          '
   var el=document.getElementById('tv-marquee')
   if(el) el.textContent=msg+msg+msg
@@ -4585,6 +4833,199 @@ function tvAtualizarMarquee(){
 // INIT
 // ═══════════════════════════════════════════════════
 loadDashboard()
+function saisLogout(){
+  ["sais_token","sais_user","sais_nivel","sais_grupo"].forEach(function(k){localStorage.removeItem(k);});
+  location.replace("/login");
+}
+
+// ═══════════════════════════════════════════════════
+// INDICADORES SLA
+// ═══════════════════════════════════════════════════
+var _indSlaPeriodo='hoje'
+function indSlaSetPeriodo(p,btn){_indSlaPeriodo=p;document.querySelectorAll('#page-ind-sla .tf-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');loadIndSla()}
+async function loadIndSla(){
+  try{
+    var [resumo,ocorr,criticas]=await Promise.allSettled([apiFetch(SAIS+'/auditoria/resumo'),apiFetch(SAIS+'/auditoria/ocorrencias?tipo=sla&limit=30'),apiFetch('/api/sais/central/os-criticas')])
+    var r=resumo.status==='fulfilled'?resumo.value:{}
+    var oc=ocorr.status==='fulfilled'?ocorr.value:{}
+    var cr=criticas.status==='fulfilled'?criticas.value:{}
+    var tot=r.totais||{},porTipo=r.por_tipo||[]
+    var slaTipo=porTipo.find(t=>t.tipo==='sla')||{}
+    document.getElementById('ind-sla-kpis').innerHTML=`
+      <div class="kpi" style="--ac:var(--red)"><div class="kpi-lbl">Ocorrências SLA</div><div class="kpi-val">${slaTipo.total||0}</div><div class="kpi-sub">abertas</div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kpi-lbl">OS Críticas</div><div class="kpi-val">${(cr.os_criticas||[]).length}</div><div class="kpi-sub">em risco agora</div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kpi-lbl">Resolvidas</div><div class="kpi-val">${tot.resolvidas||0}</div><div class="kpi-sub">total histórico</div></div>
+      <div class="kpi" style="--ac:var(--cyan)"><div class="kpi-lbl">Total Auditoria</div><div class="kpi-val">${tot.total||0}</div><div class="kpi-sub">ocorrências</div></div>`
+    var crit=(cr.os_criticas||[]).slice(0,6)
+    document.getElementById('ind-sla-risco').innerHTML=crit.length?crit.map(o=>{
+      var hReal=o.horas_sla_real||o.horas_abertas
+      var hTec=o.horas_tecnico
+      var cor=hReal>24?'var(--red)':hReal>8?'var(--amber)':'var(--orange)'
+      var assumiuLabel=o.tecnico_assumiu
+        ?`<span style="color:var(--amber);font-size:10px">assumiu ${hTec?hTec+'h':''}</span>`
+        :`<span style="color:var(--muted);font-size:10px">sem técnico</span>`
+      var slaLabel=o.status_sla==='estourado'
+        ?`<span class="badge red">${hReal}h</span>`
+        :`<span class="badge amber">${hReal}h</span>`
+      return`<div style="padding:9px 12px;background:rgba(255,77,79,.05);border:1px solid rgba(255,77,79,.15);border-radius:8px;margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:700;font-size:13px">${o.tecnico||'—'} ${assumiuLabel}</div>
+            <div style="font-size:11px;color:var(--muted)">#${o.ixc_os_id} · ${(o.assunto||'').substring(0,28)}</div>
+          </div>
+          <div style="text-align:right">
+            ${slaLabel}
+            <div style="font-size:10px;color:var(--muted);margin-top:2px">total: ${o.horas_abertas}h</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;font-size:10px">
+          ${o.sla_fila_min?`<span style="color:var(--muted)">fila: <b style="color:var(--amber)">${Math.round(o.sla_fila_min)}min</b></span>`:''}
+          ${o.sla_desloc_min?`<span style="color:var(--muted)">desloc: <b style="color:var(--cyan)">${Math.round(o.sla_desloc_min)}min</b></span>`:''}
+          ${o.horas_tecnico?`<span style="color:var(--muted)">c/ técnico: <b style="color:var(--red)">${o.horas_tecnico}h</b></span>`:''}
+        </div>
+      </div>`
+    }).join(''):'<div style="color:var(--green);padding:20px;text-align:center">✅ Sem OS em risco</div>'
+    var maxT=Math.max(...porTipo.map(t=>t.total),1)
+    document.getElementById('ind-sla-tipos').innerHTML=porTipo.map(t=>{
+      var cor=t.criticidade==='critica'?'var(--red)':t.criticidade==='alta'?'var(--amber)':'var(--muted)'
+      return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:700;text-transform:capitalize">${t.tipo}</span><span style="color:${cor};font-size:11px">${t.total} · ${t.criticidade}</span></div><div style="background:var(--border);border-radius:3px;height:4px"><div style="background:${cor};width:${Math.round(t.total/maxT*100)}%;height:4px;border-radius:3px"></div></div></div>`
+    }).join('')
+    var rows=oc.ocorrencias||[]
+    document.getElementById('ind-sla-table').innerHTML=rows.length?rows.slice(0,15).map(o=>{
+      var cor=o.criticidade==='critica'?'var(--red)':o.criticidade==='alta'?'var(--amber)':'var(--muted)'
+      return`<tr><td style="font-family:monospace;color:var(--cyan)">${o.os_id||'—'}</td><td><strong>${o.tecnico_nome||'—'}</strong></td><td>${o.tipo||'—'}</td><td class="r"><span class="badge" style="background:${cor}22;color:${cor}">${o.criticidade}</span></td><td class="r" style="color:var(--muted)">${(o.descricao||'').substring(0,35)}</td><td class="r" style="color:var(--muted)">${(o.criado_em||'').substring(0,16)}</td></tr>`
+    }).join(''):'<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Sem ocorrências</td></tr>'
+  }catch(e){console.error('indSla:',e)}
+}
+
+// ═══════════════════════════════════════════════════
+// INDICADORES PRODUTIVIDADE
+// ═══════════════════════════════════════════════════
+var _indProdPeriodo='hoje'
+function indProdSetPeriodo(p,btn){_indProdPeriodo=p;document.querySelectorAll('#page-ind-produtividade .tf-btn').forEach(b=>b.classList.remove('active'));if(btn)btn.classList.add('active');loadIndProd()}
+async function loadIndProd(){
+  try{
+    var hoje=new Date().toISOString().slice(0,10),di=hoje
+    if(_indProdPeriodo==='semana'){var d=new Date();d.setDate(d.getDate()-7);di=d.toISOString().slice(0,10)}
+    else if(_indProdPeriodo==='mes'){var d=new Date();d.setDate(1);di=d.toISOString().slice(0,10)}
+    var ef=await apiFetch(SAIS+'/produtividade/eficiencia?data_inicio='+di+'&data_fim='+hoje)
+    var g=ef.geral||{},tecs=ef.por_tecnico||[],ass=ef.por_assunto||[]
+    document.getElementById('ind-prod-kpis').innerHTML=`
+      <div class="kpi" style="--ac:var(--cyan)"><div class="kpi-lbl">OS Finalizadas</div><div class="kpi-val">${g.total_os||0}</div><div class="kpi-sub">no período</div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kpi-lbl">Total Pontos</div><div class="kpi-val">${g.pontos_total||0}</div><div class="kpi-sub">acumulados</div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kpi-lbl">Tempo Médio</div><div class="kpi-val">${g.tempo_medio_min||0}min</div><div class="kpi-sub">por OS</div></div>
+      <div class="kpi" style="--ac:var(--purple)"><div class="kpi-lbl">Aproveitamento</div><div class="kpi-val">${g.aproveitamento||0}%</div><div class="kpi-sub">pontos obtidos/máx</div></div>`
+    var maxPts=tecs[0]?tecs[0].pontos_total||1:1
+    document.getElementById('ind-prod-ranking').innerHTML=tecs.length?tecs.map((t,i)=>{
+      var cor=i===0?'var(--amber)':i===1?'var(--cyan)':i===2?'var(--green)':'var(--muted)'
+      var corMeta=t.pct_meta>=80?'var(--green)':t.pct_meta>=50?'var(--amber)':'var(--red)'
+      var corTempo=t.tempo_medio_min<=45?'var(--green)':t.tempo_medio_min<=75?'var(--amber)':'var(--red)'
+      return`<tr><td><span class="rpos ${['p1','p2','p3','pn'][i]||'pn'}">${i+1}</span></td><td><strong>${t.nome}</strong></td><td class="r">${t.total_os}</td><td class="r" style="color:var(--cyan);font-weight:700">${t.pontos_total}</td><td class="r"><span class="badge ${t.aproveitamento>=80?'green':t.aproveitamento>=50?'amber':'red'}">${t.aproveitamento}%</span></td><td class="r" style="color:${corTempo}">${t.tempo_medio_min}min</td><td class="r"><span class="badge" style="background:${corMeta}22;color:${corMeta}">${t.pct_meta}%</span></td></tr>`
+    }).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Sem dados</td></tr>'
+    var maxA=ass[0]?ass[0].total_os||1:1
+    document.getElementById('ind-prod-assunto').innerHTML=ass.slice(0,8).map(a=>{
+      var cor=a.categoria==='servico'?'var(--cyan)':a.categoria==='suporte'?'var(--amber)':a.categoria==='infra'?'var(--purple)':'var(--muted)'
+      return`<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:600">${a.assunto.substring(0,28)}</span><span style="color:${cor};font-size:11px">${a.total_os} OS · ${a.pontos_total}pts</span></div><div style="background:var(--border);border-radius:3px;height:3px"><div style="background:${cor};width:${Math.round(a.total_os/maxA*100)}%;height:3px;border-radius:3px"></div></div><div style="font-size:10px;color:var(--muted);margin-top:2px">${a.tempo_medio_min}min médio</div></div>`
+    }).join('')
+  }catch(e){console.error('indProd:',e)}
+}
+
+// ═══════════════════════════════════════════════════
+// TENDÊNCIAS
+// ═══════════════════════════════════════════════════
+async function loadIndTendencias(){
+  try{
+    var hoje=new Date().toISOString().slice(0,10)
+    var d30=new Date();d30.setDate(d30.getDate()-30);var di=d30.toISOString().slice(0,10)
+    var [ef30,ra]=await Promise.allSettled([apiFetch(SAIS+'/produtividade/eficiencia?data_inicio='+di+'&data_fim='+hoje),apiFetch(SAIS+'/auditoria/resumo')])
+    var g=ef30.status==='fulfilled'?(ef30.value.geral||{}):{},tecs=ef30.status==='fulfilled'?(ef30.value.por_tecnico||[]):[],ass=ef30.status==='fulfilled'?(ef30.value.por_assunto||[]):[]
+    var r=ra.status==='fulfilled'?ra.value:{}
+    document.getElementById('ind-tend-kpis').innerHTML=`
+      <div class="kpi" style="--ac:var(--cyan)"><div class="kpi-lbl">OS em 30 dias</div><div class="kpi-val">${g.total_os||0}</div><div class="kpi-sub">~${Math.round((g.total_os||0)/30)}/dia</div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kpi-lbl">Pontos 30 dias</div><div class="kpi-val">${g.pontos_total||0}</div><div class="kpi-sub">acumulados</div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kpi-lbl">Tempo Médio</div><div class="kpi-val">${g.tempo_medio_min||0}min</div><div class="kpi-sub">por OS</div></div>
+      <div class="kpi" style="--ac:var(--red)"><div class="kpi-lbl">Auditoria Críticas</div><div class="kpi-val">${(r.totais||{}).criticas||0}</div><div class="kpi-sub">abertas</div></div>`
+    var maxPts=tecs[0]?tecs[0].pontos_total||1:1
+    document.getElementById('ind-tend-grafico').innerHTML=tecs.map((t,i)=>{
+      var corMeta=t.pct_meta>=80?'var(--green)':t.pct_meta>=50?'var(--amber)':'var(--red)'
+      return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="min-width:110px;font-weight:700;font-size:13px">${t.nome.split(' ')[0]}</div><div style="flex:1;background:var(--border);border-radius:3px;height:6px"><div style="background:${corMeta};width:${Math.min(t.pct_meta,100)}%;height:6px;border-radius:3px"></div></div><div style="min-width:44px;text-align:right;font-family:monospace;font-size:12px;color:${corMeta}">${t.pct_meta}%</div><div style="min-width:52px;text-align:right;font-size:11px;color:var(--muted)">${t.pontos_total}pts</div></div>`
+    }).join('')
+    var maxA=ass[0]?ass[0].total_os||1:1
+    document.getElementById('ind-tend-servicos').innerHTML=ass.slice(0,8).map(a=>{
+      var cor=a.categoria==='servico'?'var(--cyan)':a.categoria==='suporte'?'var(--amber)':a.categoria==='infra'?'var(--purple)':'var(--muted)'
+      return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:600">${a.assunto.substring(0,26)}</span><span style="color:${cor};font-size:11px">${a.total_os}</span></div><div style="background:var(--border);border-radius:3px;height:3px"><div style="background:${cor};width:${Math.round(a.total_os/maxA*100)}%;height:3px;border-radius:3px"></div></div></div>`
+    }).join('')
+  }catch(e){console.error('indTend:',e)}
+}
+
+// ═══════════════════════════════════════════════════
+// STATUS TÉCNICOS
+// ═══════════════════════════════════════════════════
+async function loadTecStatus(){
+  try{
+    var [ranking,ociosos,criticas]=await Promise.allSettled([apiFetch(SAIS+'/produtividade/ranking'),apiFetch('/api/sais/central/tecnicos-ociosos'),apiFetch('/api/sais/central/os-criticas')])
+    var rank=ranking.status==='fulfilled'?(ranking.value.ranking||[]):[]
+    var oc=ociosos.status==='fulfilled'?(ociosos.value.ociosos||[]):[]
+    var cr=criticas.status==='fulfilled'?(criticas.value.os_criticas||[]):[]
+    var ativos=rank.filter(t=>(t.total_os||0)>0).length
+    var totalOS=rank.reduce((s,t)=>s+(t.total_os||0),0)
+    document.getElementById('tec-status-kpis').innerHTML=`
+      <div class="kpi" style="--ac:var(--cyan)"><div class="kpi-lbl">Técnicos Ativos</div><div class="kpi-val">${ativos}</div><div class="kpi-sub">com OS hoje</div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kpi-lbl">Ociosos</div><div class="kpi-val">${oc.length}</div><div class="kpi-sub">sem OS recente</div></div>
+      <div class="kpi" style="--ac:var(--red)"><div class="kpi-lbl">OS Críticas</div><div class="kpi-val">${cr.length}</div><div class="kpi-sub">abertas há +4h</div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kpi-lbl">Total OS Hoje</div><div class="kpi-val">${totalOS}</div><div class="kpi-sub">equipe toda</div></div>`
+    document.getElementById('tec-status-table').innerHTML=rank.map(t=>{
+      var pct=Math.round(t.pct_meta||0)
+      var corMeta=pct>=100?'var(--green)':pct>=50?'var(--amber)':'var(--red)'
+      var isOc=oc.some(o=>o.tecnico_id===t.tecnico_id)
+      var lbl=isOc?'<span class="badge amber">Ocioso</span>':(t.total_os||0)>0?'<span class="badge green">Ativo</span>':'<span class="badge muted">Sem OS</span>'
+      return`<tr><td><strong>${t.nome}</strong></td><td class="r">${t.total_os||0}</td><td class="r" style="color:var(--green)">${t.total_os||0}</td><td class="r" style="color:var(--cyan);font-weight:700">${t.total_pontos||0}</td><td class="r"><span class="badge" style="background:${corMeta}22;color:${corMeta}">${pct}%</span></td><td class="r">${lbl}</td></tr>`
+    }).join('')
+    document.getElementById('tec-status-ociosos').innerHTML=oc.length?oc.map(t=>`<div style="padding:9px 12px;background:rgba(255,184,63,.05);border:1px solid rgba(255,184,63,.15);border-radius:8px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;font-size:13px">${t.nome||'—'}</div><div style="font-size:11px;color:var(--muted)">Última OS: ${t.ultima_os||'—'}</div></div><div style="color:var(--amber);font-weight:800;font-family:monospace">${t.horas_ocioso||0}h</div></div>`).join(''):'<div style="color:var(--green);padding:20px;text-align:center">✅ Nenhum técnico ocioso</div>'
+    document.getElementById('tec-status-criticas').innerHTML=cr.slice(0,6).map(o=>{
+      var hReal=o.horas_sla_real||o.horas_abertas
+      var cor=hReal>24?'var(--red)':hReal>8?'var(--amber)':'var(--orange)'
+      var tecLabel=o.tecnico_assumiu?` · c/técnico: ${o.horas_tecnico||'?'}h`:' · sem técnico'
+      return`<div style="padding:9px 12px;background:rgba(255,77,79,.05);border:1px solid rgba(255,77,79,.15);border-radius:8px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:700;font-size:13px">${o.tecnico||'—'}</div><div style="font-size:11px;color:var(--muted)">#${o.ixc_os_id} · ${(o.assunto||'').substring(0,22)}${tecLabel}</div></div><div style="text-align:right;font-family:monospace;font-weight:800;color:${cor}">${hReal}h<div style="font-size:9px;color:var(--muted)">total: ${o.horas_abertas}h</div></div></div>`
+    }).join('')||'<div style="color:var(--green);padding:20px;text-align:center">✅ Sem OS críticas</div>'
+  }catch(e){console.error('tecStatus:',e)}
+}
+
+// ═══════════════════════════════════════════════════
+// PERFORMANCE TÉCNICOS
+// ═══════════════════════════════════════════════════
+async function loadTecPerformance(){
+  try{
+    var hoje=new Date().toISOString().slice(0,10)
+    var d30=new Date();d30.setDate(d30.getDate()-30);var di=d30.toISOString().slice(0,10)
+    var [ef,audit]=await Promise.allSettled([apiFetch(SAIS+'/produtividade/eficiencia?data_inicio='+di+'&data_fim='+hoje),apiFetch(SAIS+'/auditoria/ocorrencias?limit=50')])
+    var g=ef.status==='fulfilled'?(ef.value.geral||{}):{},tecs=ef.status==='fulfilled'?(ef.value.por_tecnico||[]):[],ass=ef.status==='fulfilled'?(ef.value.por_assunto||[]):[]
+    var ocorr=audit.status==='fulfilled'?(audit.value.ocorrencias||[]):[]
+    document.getElementById('perf-kpis').innerHTML=`
+      <div class="kpi" style="--ac:var(--cyan)"><div class="kpi-lbl">OS em 30 dias</div><div class="kpi-val">${g.total_os||0}</div><div class="kpi-sub">equipe toda</div></div>
+      <div class="kpi" style="--ac:var(--green)"><div class="kpi-lbl">Pontos Totais</div><div class="kpi-val">${g.pontos_total||0}</div><div class="kpi-sub">30 dias</div></div>
+      <div class="kpi" style="--ac:var(--amber)"><div class="kpi-lbl">Aproveitamento</div><div class="kpi-val">${g.aproveitamento||0}%</div><div class="kpi-sub">pontos obtidos/máx</div></div>
+      <div class="kpi" style="--ac:var(--purple)"><div class="kpi-lbl">Tempo Médio</div><div class="kpi-val">${g.tempo_medio_min||0}min</div><div class="kpi-sub">por OS</div></div>`
+    var maxPts=tecs[0]?tecs[0].pontos_total||1:1
+    document.getElementById('perf-historico').innerHTML=tecs.map((t,i)=>{
+      var cor=i===0?'var(--amber)':i===1?'var(--cyan)':i===2?'var(--green)':'var(--muted)'
+      var corMeta=t.pct_meta>=80?'var(--green)':t.pct_meta>=50?'var(--amber)':'var(--red)'
+      return`<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><div><span class="rpos ${['p1','p2','p3','pn'][i]||'pn'}">${i+1}</span><strong style="font-size:13px">${t.nome}</strong></div><div style="text-align:right"><span style="font-family:monospace;color:var(--cyan);font-weight:700">${t.pontos_total}pts</span><span style="font-size:10px;color:${corMeta};margin-left:6px">${t.pct_meta}% meta</span></div></div><div style="display:flex;gap:10px;font-size:11px;color:var(--muted)"><span>${t.total_os} OS</span><span>${t.tempo_medio_min}min/OS</span><span>${t.aproveitamento}% aproveit.</span><span style="color:var(--green)">${t.os_perfeitas} perfeitas</span></div><div style="background:var(--border);border-radius:3px;height:4px;margin-top:6px"><div style="background:${cor};width:${Math.round(t.pontos_total/maxPts*100)}%;height:4px;border-radius:3px"></div></div></div>`
+    }).join('')
+    var cats=[{k:'servico',n:'Serviço',c:'var(--cyan)'},{k:'suporte',n:'Suporte',c:'var(--amber)'},{k:'infra',n:'Infra',c:'var(--purple)'},{k:'retirada',n:'Retirada',c:'var(--orange)'}]
+    var catTot={};ass.forEach(a=>{catTot[a.categoria]=(catTot[a.categoria]||0)+a.total_os})
+    var maxC=Math.max(...Object.values(catTot),1)
+    document.getElementById('perf-categorias').innerHTML=cats.map(c=>{
+      var v=catTot[c.k]||0
+      return`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;font-weight:700">${c.n}</span><span style="font-family:monospace;color:${c.c}">${v} OS</span></div><div style="background:var(--border);border-radius:4px;height:6px"><div style="background:${c.c};width:${Math.round(v/maxC*100)}%;height:6px;border-radius:4px"></div></div></div>`
+    }).join('')
+    document.getElementById('perf-audit-table').innerHTML=ocorr.slice(0,12).map(o=>{
+      var cor=o.criticidade==='critica'?'var(--red)':o.criticidade==='alta'?'var(--amber)':'var(--muted)'
+      return`<tr><td style="font-family:monospace;color:var(--cyan)">${o.os_id||'—'}</td><td>${o.tipo}</td><td class="r"><span class="badge" style="background:${cor}22;color:${cor}">${o.criticidade}</span></td><td class="r" style="color:var(--muted)">${(o.descricao||'').substring(0,35)}</td><td class="r" style="color:var(--muted)">${(o.criado_em||'').substring(0,16)}</td></tr>`
+    }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Sem ocorrências</td></tr>'
+  }catch(e){console.error('tecPerf:',e)}
+}
+
 </script>
 
   <!-- ══ MODAL EDIÇÃO OS AUDITORIA ══════════════════ -->

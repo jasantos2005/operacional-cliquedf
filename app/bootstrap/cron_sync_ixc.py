@@ -100,9 +100,28 @@ def upsert_os(db, os_list):
                 return None
             return str(v)
 
-        data_fechamento = clean_dt(o.get("data_fechamento"))
-        data_agenda     = clean_dt(o.get("data_agenda"))
-        data_abertura   = clean_dt(o.get("data_abertura"))
+        data_fechamento    = clean_dt(o.get("data_fechamento"))
+        data_agenda        = clean_dt(o.get("data_agenda"))
+        data_abertura      = clean_dt(o.get("data_abertura"))
+        data_hora_assumido = clean_dt(o.get("data_hora_assumido"))
+        data_hora_execucao = clean_dt(o.get("data_hora_execucao"))
+
+        # Calcular SLAs em minutos
+        def diff_min(a, b):
+            if not a or not b: return None
+            try:
+                from datetime import datetime as _dt
+                fmt = "%Y-%m-%d %H:%M:%S"
+                ta = _dt.strptime(str(a)[:19], fmt)
+                tb = _dt.strptime(str(b)[:19], fmt)
+                diff = (tb - ta).total_seconds() / 60
+                return round(diff, 1) if diff >= 0 else None
+            except: return None
+
+        sla_fila_min    = diff_min(data_abertura,      data_hora_assumido)
+        sla_desloc_min  = diff_min(data_hora_assumido, data_hora_execucao)
+        sla_exec_min    = diff_min(data_hora_execucao, data_fechamento)
+        sla_tecnico_min = diff_min(data_hora_assumido, data_fechamento)
 
         existing = db.execute(
             "SELECT id FROM prod_os_cache WHERE ixc_os_id=?", (o["ixc_os_id"],)
@@ -113,9 +132,16 @@ def upsert_os(db, os_list):
                 UPDATE prod_os_cache SET
                     status=?, categoria=?,
                     data_fechamento=?, data_agenda=?,
+                    data_hora_assumido=?, data_hora_execucao=?,
+                    sla_fila_min=?, sla_desloc_min=?,
+                    sla_exec_min=?, sla_tecnico_min=?,
                     sincronizado_em=datetime('now','-3 hours')
                 WHERE ixc_os_id=?
-            """, (status, categoria, data_fechamento, data_agenda, o["ixc_os_id"]))
+            """, (status, categoria, data_fechamento, data_agenda,
+                    data_hora_assumido, data_hora_execucao,
+                    sla_fila_min, sla_desloc_min,
+                    sla_exec_min, sla_tecnico_min,
+                    o["ixc_os_id"]))
             atualizados += 1
         else:
             # Busca tecnico_id interno
@@ -128,12 +154,17 @@ def upsert_os(db, os_list):
             db.execute("""
                 INSERT INTO prod_os_cache
                     (ixc_os_id, tecnico_id, ixc_assunto_id, categoria, status,
-                     data_abertura, data_fechamento, data_agenda, sincronizado_em)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now','-3 hours'))
+                     data_abertura, data_fechamento, data_agenda,
+                     data_hora_assumido, data_hora_execucao,
+                     sla_fila_min, sla_desloc_min, sla_exec_min, sla_tecnico_min,
+                     sincronizado_em)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now','-3 hours'))
             """, (
                 o["ixc_os_id"], tec_id, o["ixc_assunto_id"],
                 categoria, status,
                 data_abertura, data_fechamento, data_agenda,
+                data_hora_assumido, data_hora_execucao,
+                sla_fila_min, sla_desloc_min, sla_exec_min, sla_tecnico_min,
             ))
             inseridos += 1
 
@@ -171,7 +202,9 @@ def sync_full(db, ids_ixc):
                 o.status            AS status_raw,
                 o.data_abertura,
                 o.data_fechamento,
-                o.data_agenda
+                o.data_agenda,
+                o.data_hora_assumido,
+                o.data_hora_execucao
             FROM su_oss_chamado o
             WHERE o.id_tecnico IN ({placeholders})
               AND (
@@ -214,7 +247,9 @@ def sync_delta(db, ids_ixc, minutos=30):
                 o.status            AS status_raw,
                 o.data_abertura,
                 o.data_fechamento,
-                o.data_agenda
+                o.data_agenda,
+                o.data_hora_assumido,
+                o.data_hora_execucao
             FROM su_oss_chamado o
             WHERE o.id_tecnico IN ({placeholders})
               AND o.ultima_atualizacao >= NOW() - INTERVAL {minutos} MINUTE
@@ -250,7 +285,9 @@ def sync_critico(db, ids_ixc):
                 o.status            AS status_raw,
                 o.data_abertura,
                 o.data_fechamento,
-                o.data_agenda
+                o.data_agenda,
+                o.data_hora_assumido,
+                o.data_hora_execucao
             FROM su_oss_chamado o
             WHERE o.id_tecnico IN ({placeholders})
               AND o.status IN ('EN','AS','EX','A')

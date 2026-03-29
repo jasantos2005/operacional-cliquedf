@@ -73,6 +73,16 @@ async def startup_event():
     except Exception as e:
         print(f"[SAIS] Aviso na init do auth: {e}")
 
+
+@app.get("/admin-sistema", response_class=HTMLResponse)
+async def admin_page():
+    with open("/opt/automacoes/cliquedf/operacional/static/admin.html") as f:
+        return f.read()
+@app.get("/admin-permissoes", response_class=HTMLResponse)
+async def admin_permissoes_page():
+    with open("/opt/automacoes/cliquedf/operacional/static/admin_permissoes.html") as f:
+        return f.read()
+
 @app.get("/health")
 async def health():
     return {
