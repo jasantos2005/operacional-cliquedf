@@ -460,14 +460,14 @@ def msg_destaques():
         FROM sais_destaques d
         LEFT JOIN prod_tecnicos t ON t.id=d.tecnico_id
         WHERE d.data=?
-        ORDER BY d.pontos_bonus DESC
+        ORDER BY d.bonus_pts DESC
         LIMIT 10
     """, (data,)).fetchall()
 
     # Premiação acumulada do mês
     mes = data[:7]
     premio_mes = db.execute("""
-        SELECT t.nome, SUM(d.pontos_bonus) pts_bonus, COUNT(*) destaques
+        SELECT t.nome, SUM(d.bonus_pts) pts_bonus, COUNT(*) destaques
         FROM sais_destaques d
         JOIN prod_tecnicos t ON t.id=d.tecnico_id
         WHERE strftime('%Y-%m', d.data)=?
@@ -479,7 +479,7 @@ def msg_destaques():
         linhas_hoje = "  Nenhum destaque hoje"
     else:
         linhas_hoje = "\n".join(
-            f"  ⭐ {r['tecnico_nome'].split()[0]}: {r['descricao'] if 'descricao' in r.keys() else ''} +{r['pontos_bonus']}pts"
+            f"  ⭐ {r['tecnico_nome'].split()[0]}: {r['descricao'] if 'descricao' in r.keys() else ''} +{r['bonus_pts']}pts"
             for r in rows
         )
 
