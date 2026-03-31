@@ -98,10 +98,11 @@ async def get_logs():
     import os
     LOGS = {
         "sync":      "/var/log/sais_sync.log",
-        "sync_full": "/var/log/sais_sync_full.log",
-        "estoque":   "/var/log/sais_estoque.log",
         "auditoria": "/var/log/sais_auditoria.log",
+        "estoque":   "/var/log/sais_estoque.log",
         "destaques": "/var/log/sais_destaques.log",
+        "telegram":  "/var/log/sais_telegram.log",
+        "erros":     "/var/log/hubprod_cliquedf_err.log",
     }
     resultado = {}
     for nome, path in LOGS.items():
